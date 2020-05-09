@@ -1,0 +1,40 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
+
+description = "The Agent."
+
+dependencies {
+    implementation group: "org.ow2.asm", name: "asm", version: property("asm.version")
+    implementation group: "org.ow2.asm", name: "asm-util", version: property("asm.version")
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes(
+                "Premain-Class": "Agent",
+                "Can-Redefine-Classes": "true",
+                "Can-Retransform-Classes": "true",
+                "Can-Set-Native-Method-Prefix": "true"
+        )
+    }
+}
+
+def agentLibName = "agent-lib-all"
+def agentLibAllResource = buildDir.toPath().resolve(agentLibName)
+
+def copyAgentLibShadowJarTask = task("copyAgentLibShadowJar", type: Copy) {
+    dependsOn(":agent-lib:shadowJar")
+    from({ project(":agent-lib").tasks.named("shadowJar") })
+    into(buildDir)
+    rename { agentLibName }
+}
+
+shadowJar {
+    dependsOn(copyAgentLibShadowJarTask)
+    from({ agentLibAllResource })
+}
