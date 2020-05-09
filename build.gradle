@@ -19,6 +19,7 @@ subprojects {
 
     spotless {
         java {
+            googleJavaFormat("1.8")
             removeUnusedImports()
             indentWithSpaces(4)
             trimTrailingWhitespace()
