@@ -1,3 +1,5 @@
+package com.octogonapus.omj.agent;
+
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
 import java.util.regex.Pattern;
@@ -14,6 +16,10 @@ public class OMJClassFileTransformer implements ClassFileTransformer {
                             final Class<?> classBeingRedefined,
                             final ProtectionDomain protectionDomain,
                             final byte[] classfileBuffer) {
+        return transformClassBytes(classfileBuffer);
+    }
+
+    public static byte[] transformClassBytes(final byte[] classfileBuffer) {
         final var classReader = new ClassReader(classfileBuffer);
         final var classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         classReader.accept(new OMJClassAdapter(Opcodes.ASM8,

@@ -1,3 +1,5 @@
+package com.octogonapus.omj.agent;
+
 import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.util.jar.JarFile;

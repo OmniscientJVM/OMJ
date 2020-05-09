@@ -1,3 +1,5 @@
+package com.octogonapus.omj.agent;
+
 import java.util.regex.Pattern;
 
 import org.objectweb.asm.ClassVisitor;

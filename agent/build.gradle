@@ -7,6 +7,11 @@ description = "The Agent."
 dependencies {
     implementation group: "org.ow2.asm", name: "asm", version: property("asm.version")
     implementation group: "org.ow2.asm", name: "asm-util", version: property("asm.version")
+
+    testImplementation group: "org.junit.jupiter", name: "junit-jupiter-api", version: property("junit.version")
+    testImplementation group: "org.junit.jupiter", name: "junit-jupiter-engine", version: property("junit.version")
+    testImplementation group: "net.bytebuddy", name: "byte-buddy", version: property("byte-buddy.version")
+    testRuntimeOnly project(":agent-lib")
 }
 
 test {
@@ -16,7 +21,7 @@ test {
 jar {
     manifest {
         attributes(
-                "Premain-Class": "Agent",
+                "Premain-Class": "com.octogonapus.omj.agent.Agent",
                 "Can-Redefine-Classes": "true",
                 "Can-Retransform-Classes": "true",
                 "Can-Set-Native-Method-Prefix": "true"

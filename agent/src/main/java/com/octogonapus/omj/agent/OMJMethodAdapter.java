@@ -1,3 +1,5 @@
+package com.octogonapus.omj.agent;
+
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -28,7 +30,7 @@ public class OMJMethodAdapter extends MethodVisitor implements Opcodes {
         final var packagePrefix = packagePathPrefix.replace('/', '.');
         super.visitLdcInsn(packagePrefix + currentClassSource + ":" + currentLineNumber);
         super.visitMethodInsn(INVOKESTATIC,
-                              "org/omdb/agentlib/OMDB",
+                              "com/octogonapus/omj/agentlib/OMJAgentLib",
                               "methodCall",
                               "(Ljava/lang/String;)V",
                               false);
