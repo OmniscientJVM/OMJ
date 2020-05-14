@@ -31,6 +31,7 @@ public class ParsedMethodDescriptor {
 
     @Override
     public String toString() {
-        return "ParsedDescriptor{" + "argumentTypes=" + argumentTypes + ", returnType=" + returnType + '}';
+        return "ParsedDescriptor{" + "argumentTypes=" + argumentTypes + ", returnType=" +
+               returnType + '}';
     }
 }

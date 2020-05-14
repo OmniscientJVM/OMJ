@@ -36,14 +36,17 @@ class OMJClassFileTransformerTest {
             IllegalAccessException,
             InvocationTargetException,
             InstantiationException {
-        final var classBytes = new ByteBuddy().subclass(Object.class)
-                .name("DynamicFoo")
-                .defineMethod("foo", Void.class, Modifier.PUBLIC)
-                .intercept(MethodCall.run(() -> {
-                    System.out.println("hello from new class");
-                }))
-                .make()
-                .getBytes();
+        final var classBytes =
+                new ByteBuddy().subclass(Object.class)
+                        .name("DynamicFoo")
+                        .defineMethod("foo",
+                                      Void.class,
+                                      Modifier.PUBLIC)
+                        .intercept(MethodCall.run(() -> {
+                            System.out.println("hello from new class");
+                        }))
+                        .make()
+                        .getBytes();
 
         final var newBytes = OMJClassFileTransformer.transformClassBytes(classBytes);
 

@@ -22,7 +22,9 @@ public class Parser {
         final var type = scanNextFieldType(chars, i);
 
         if (type.nextStartingIndex != chars.length) {
-            throw new IllegalStateException("Descriptor continues past first type: " + descriptor + " (index " + type.nextStartingIndex + ")");
+            throw new IllegalStateException(
+                    "Descriptor continues past first type: " + descriptor + " (index " +
+                    type.nextStartingIndex + ")");
         }
 
         return type.fieldType;
@@ -69,7 +71,9 @@ public class Parser {
         final var returnTypePair = scanNextFieldType(chars, i);
         final var returnType = returnTypePair.fieldType;
         if (returnTypePair.nextStartingIndex != chars.length) {
-            throw new IllegalStateException("Descriptor continues past return type: " + descriptor + " (index " + returnTypePair.nextStartingIndex + ")");
+            throw new IllegalStateException(
+                    "Descriptor continues past return type: " + descriptor + " (index " +
+                    returnTypePair.nextStartingIndex + ")");
         }
 
         return new ParsedMethodDescriptor(parameters, returnType);
@@ -135,7 +139,8 @@ public class Parser {
                 return new NextFieldType('V', startingIndex + 1);
 
             default:
-                throw new IllegalStateException("Unknown field type beginning: " + descriptor[startingIndex]);
+                throw new IllegalStateException(
+                        "Unknown field type beginning: " + descriptor[startingIndex]);
         }
     }
 }

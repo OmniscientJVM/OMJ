@@ -1,7 +1,10 @@
 package com.octogonapus.omj.agent;
 
 import com.octogonapus.omj.agent.parser.Parser;
-import org.objectweb.asm.*;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.util.Arrays;
 
@@ -52,7 +55,8 @@ public class OMJMethodAdapter extends MethodVisitor implements Opcodes {
                               false);
 
         final Type[] argumentTypes = Type.getArgumentTypes(descriptor);
-        int i = 0;
+        System.out.println("argumentTypes = " + Arrays.toString(argumentTypes));
+
         final int virtualOffset;
 
         if (!isStatic) {
@@ -62,21 +66,20 @@ public class OMJMethodAdapter extends MethodVisitor implements Opcodes {
                                   "methodCall_argument_" + Type.OBJECT,
                                   "(Ljava/lang/Object;)V",
                                   false);
-            i++;
             virtualOffset = 1;
         } else {
             virtualOffset = 0;
         }
 
-        for (; i < argumentTypes.length + virtualOffset; i++) {
+        for (int i = 0; i < argumentTypes.length; i++) {
             final Type argumentType = argumentTypes[i];
 
             final String methodName = "methodCall_argument_" + getAdaptedSort(argumentType);
             final String methodDesc = "(" + getAdaptedDescriptor(argumentType) + ")V";
-            System.out.println("methodName = " + methodName);
-            System.out.println("methodDesc = " + methodDesc);
+            System.out.println("Generated methodName = " + methodName);
+            System.out.println("Generated methodDesc = " + methodDesc);
 
-            super.visitVarInsn(argumentType.getOpcode(ILOAD), i);
+            super.visitVarInsn(argumentType.getOpcode(ILOAD), i + virtualOffset);
             super.visitMethodInsn(INVOKESTATIC,
                                   "com/octogonapus/omj/agentlib/OMJAgentLib",
                                   methodName,

@@ -14,7 +14,8 @@ public class OMJAgentLib {
     public static void methodCall_start(String methodIdentifier) {
         currentMethodIdentifier.set(methodIdentifier);
         System.out.println("OMJAgentLib.methodCall_start");
-        System.out.println("Method call start (" + methodCounter.incrementAndGet() + "): " + methodIdentifier);
+        System.out.println(
+                "Method call start (" + methodCounter.incrementAndGet() + "): " + methodIdentifier);
     }
 
     public static void methodCall_end() {
