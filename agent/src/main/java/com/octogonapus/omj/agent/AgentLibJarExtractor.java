@@ -4,9 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 
-public class AgentLibJarExtractor {
+final public class AgentLibJarExtractor {
 
     /**
      * Extracts the agent-lib jar from our jar and into a file.
@@ -20,13 +19,12 @@ public class AgentLibJarExtractor {
                 throw new IOException("Could not locate agent-lib-all resource.");
             }
 
-            final var file = Paths.get(System.getProperty("user.home"), ".OMJ", "agent-lib-all.jar")
-                    .toFile();
+            final var file = Util.cacheDir.resolve("agent-lib-all.jar").toFile();
 
             // The lib contents can change all the time so we should re-extract it each time
             file.deleteOnExit();
             if (file.exists() && !file.delete()) {
-                throw new IOException("Failed to delte file " + file.getPath());
+                throw new IOException("Failed to delete file " + file.getPath());
             } else if (!file.getParentFile().mkdirs() && !file.getParentFile().exists()) {
                 throw new IOException("Failed to make parent dirs for file " + file.getPath());
             }

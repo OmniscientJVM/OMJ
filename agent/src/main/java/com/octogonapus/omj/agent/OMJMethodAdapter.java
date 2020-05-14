@@ -8,31 +8,26 @@ import org.objectweb.asm.Type;
 
 import java.util.Arrays;
 
-public class OMJMethodAdapter extends MethodVisitor implements Opcodes {
+final public class OMJMethodAdapter extends MethodVisitor implements Opcodes {
 
-    private final String currentClassName;
+    private final DynamicClassDefiner dynamicClassDefiner;
     private final String currentClassSource;
-    private final String name;
-    private final String descriptor;
-    private final String signature;
+    private final String methodDescriptor;
     private int currentLineNumber;
     private final String packagePrefix;
     private final boolean isStatic;
 
     public OMJMethodAdapter(final int api,
                             final MethodVisitor methodVisitor,
+                            final DynamicClassDefiner dynamicClassDefiner,
                             final String currentClassName,
                             final String currentClassSource,
-                            final String methodName,
                             final String methodDescriptor,
-                            final String methodSignature,
                             final boolean isStatic) {
         super(api, methodVisitor);
-        this.currentClassName = currentClassName;
+        this.dynamicClassDefiner = dynamicClassDefiner;
         this.currentClassSource = currentClassSource;
-        this.name = methodName;
-        this.descriptor = methodDescriptor;
-        this.signature = methodSignature;
+        this.methodDescriptor = methodDescriptor;
         packagePrefix = currentClassName.substring(0, currentClassName.lastIndexOf('/') + 1)
                 .replace('/', '.');
         this.isStatic = isStatic;
@@ -42,10 +37,7 @@ public class OMJMethodAdapter extends MethodVisitor implements Opcodes {
     public void visitCode() {
         super.visitCode();
 
-        System.out.println("OMJMethodAdapter.visitCode");
-        System.out.println(name);
-        System.out.println(descriptor);
-        System.out.println(signature);
+        dynamicClassDefiner.defineClassForMethod(methodDescriptor);
 
         super.visitLdcInsn(packagePrefix + currentClassSource + ":" + currentLineNumber);
         super.visitMethodInsn(INVOKESTATIC,
@@ -54,7 +46,7 @@ public class OMJMethodAdapter extends MethodVisitor implements Opcodes {
                               "(Ljava/lang/String;)V",
                               false);
 
-        final Type[] argumentTypes = Type.getArgumentTypes(descriptor);
+        final Type[] argumentTypes = Type.getArgumentTypes(methodDescriptor);
         System.out.println("argumentTypes = " + Arrays.toString(argumentTypes));
 
         final int virtualOffset;

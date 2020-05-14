@@ -1,70 +1,63 @@
 package com.octogonapus.omj.agentlib;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class OMJAgentLib {
+final public class OMJAgentLib {
 
     static {
         System.out.println("OMJ agent-lib loaded.");
     }
 
     private static final AtomicInteger methodCounter = new AtomicInteger(0);
-    private static final ThreadLocal<String> currentMethodIdentifier = new ThreadLocal<>();
+    private static final ThreadLocal<MethodTrace> currentMethodTrace = new ThreadLocal<>();
+    private static final ConcurrentLinkedQueue<MethodTrace> methodTraceQueue =
+            new ConcurrentLinkedQueue<>();
 
-    public static void methodCall_start(String methodIdentifier) {
-        currentMethodIdentifier.set(methodIdentifier);
+    public static void methodCall_start(MethodTrace methodTrace) {
         System.out.println("OMJAgentLib.methodCall_start");
-        System.out.println(
-                "Method call start (" + methodCounter.incrementAndGet() + "): " + methodIdentifier);
+        currentMethodTrace.set(methodTrace);
     }
 
     public static void methodCall_end() {
-        System.out.println("OMJAgentLib.methodCall_end");
-        System.out.println("Method call end: " + currentMethodIdentifier.get());
+        final MethodTrace trace = currentMethodTrace.get();
+        currentMethodTrace.remove();
+        methodTraceQueue.add(trace);
     }
 
     public static void methodCall_argument_1(boolean value) {
-        System.out.println("OMJAgentLib.methodCall_argument_1");
-        System.out.println("value = " + value);
+        currentMethodTrace.get().set_argument_1(value);
     }
 
     public static void methodCall_argument_2(char value) {
-        System.out.println("OMJAgentLib.methodCall_argument_2");
-        System.out.println("value = " + value);
+        currentMethodTrace.get().set_argument_2(value);
     }
 
     public static void methodCall_argument_3(byte value) {
-        System.out.println("OMJAgentLib.methodCall_argument_3");
-        System.out.println("value = " + value);
+        currentMethodTrace.get().set_argument_3(value);
     }
 
     public static void methodCall_argument_4(short value) {
-        System.out.println("OMJAgentLib.methodCall_argument_4");
-        System.out.println("value = " + value);
+        currentMethodTrace.get().set_argument_4(value);
     }
 
     public static void methodCall_argument_5(int value) {
-        System.out.println("OMJAgentLib.methodCall_argument_5");
-        System.out.println("value = " + value);
+        currentMethodTrace.get().set_argument_5(value);
     }
 
     public static void methodCall_argument_6(float value) {
-        System.out.println("OMJAgentLib.methodCall_argument_6");
-        System.out.println("value = " + value);
+        currentMethodTrace.get().set_argument_6(value);
     }
 
     public static void methodCall_argument_7(long value) {
-        System.out.println("OMJAgentLib.methodCall_argument_7");
-        System.out.println("value = " + value);
+        currentMethodTrace.get().set_argument_7(value);
     }
 
     public static void methodCall_argument_8(double value) {
-        System.out.println("OMJAgentLib.methodCall_argument_8");
-        System.out.println("value = " + value);
+        currentMethodTrace.get().set_argument_8(value);
     }
 
     public static void methodCall_argument_10(Object value) {
-        System.out.println("OMJAgentLib.methodCall_argument_10");
-        System.out.println("value = " + value);
+        currentMethodTrace.get().set_argument_10(value);
     }
 }

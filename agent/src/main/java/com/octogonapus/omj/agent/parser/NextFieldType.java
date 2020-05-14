@@ -1,6 +1,6 @@
 package com.octogonapus.omj.agent.parser;
 
-class NextFieldType {
+final class NextFieldType {
 
     char fieldType;
     int nextStartingIndex;

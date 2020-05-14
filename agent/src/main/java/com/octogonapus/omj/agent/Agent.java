@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.lang.instrument.Instrumentation;
 import java.util.jar.JarFile;
 
-public class Agent {
+final public class Agent {
 
-    public static void premain(String args, Instrumentation instrumentation) {
-        instrumentation.addTransformer(new OMJClassFileTransformer());
+    public static void premain(final String args, final Instrumentation instrumentation) {
+        final DynamicClassDefiner dynamicClassDefiner = new DynamicClassDefiner(instrumentation);
+
+        instrumentation.addTransformer(new OMJClassFileTransformer(dynamicClassDefiner));
 
         try {
             // Extract the agent-lib jar from our jar and let the instrumented jvm load from it

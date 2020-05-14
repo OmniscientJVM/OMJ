@@ -2,7 +2,7 @@ package com.octogonapus.omj.agent.parser;
 
 import java.util.ArrayList;
 
-public class Parser {
+final public class Parser {
 
     /**
      * Parses a field descriptor to get its type.

@@ -6,13 +6,17 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
 
-public class OMJClassAdapter extends ClassVisitor implements Opcodes {
+final public class OMJClassAdapter extends ClassVisitor implements Opcodes {
 
+    private final DynamicClassDefiner dynamicClassDefiner;
     private String currentClassName;
     private String currentClassSource;
 
-    public OMJClassAdapter(final int api, final ClassVisitor classVisitor) {
+    public OMJClassAdapter(final int api,
+                           final ClassVisitor classVisitor,
+                           final DynamicClassDefiner dynamicClassDefiner) {
         super(api, classVisitor);
+        this.dynamicClassDefiner = dynamicClassDefiner;
     }
 
     @Override
@@ -48,11 +52,10 @@ public class OMJClassAdapter extends ClassVisitor implements Opcodes {
 
             return new OMJMethodAdapter(api,
                                         visitor,
+                                        dynamicClassDefiner,
                                         currentClassName,
                                         currentClassSource,
-                                        name,
                                         descriptor,
-                                        signature,
                                         isStatic);
         } else {
             return visitor;
