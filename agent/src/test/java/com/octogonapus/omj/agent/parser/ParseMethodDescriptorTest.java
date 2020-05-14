@@ -7,7 +7,7 @@ import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ParserTest {
+class ParseMethodDescriptorTest {
 
     @Test
     void testEmptyVoid() {
@@ -77,78 +77,68 @@ class ParserTest {
 
     @Test
     void testArrayIntVoid() {
-        assertEquals(new ParsedMethodDescriptor(Arrays.asList('L'), 'V'),
+        assertEquals(new ParsedMethodDescriptor(Collections.singletonList('L'), 'V'),
                      Parser.parseMethodDescriptor("([I)V"));
     }
 
     @Test
     void testArrayArrayIntVoid() {
-        assertEquals(new ParsedMethodDescriptor(Arrays.asList('L'), 'V'),
+        assertEquals(new ParsedMethodDescriptor(Collections.singletonList('L'), 'V'),
                      Parser.parseMethodDescriptor("([[I)V"));
     }
 
     @Test
     void testEmptyArrayArrayInt() {
-        assertEquals(new ParsedMethodDescriptor(Arrays.asList(), 'L'),
+        assertEquals(new ParsedMethodDescriptor(Collections.emptyList(), 'L'),
                      Parser.parseMethodDescriptor("()[[I"));
     }
 
     @Test
     void testRefVoid() {
-        assertEquals(new ParsedMethodDescriptor(Arrays.asList('L'), 'V'),
+        assertEquals(new ParsedMethodDescriptor(Collections.singletonList('L'), 'V'),
                      Parser.parseMethodDescriptor("(Ljava/lang/Object;)V"));
     }
 
     @Test
     void testEmptyRef() {
-        assertEquals(new ParsedMethodDescriptor(Arrays.asList(), 'L'),
+        assertEquals(new ParsedMethodDescriptor(Collections.emptyList(), 'L'),
                      Parser.parseMethodDescriptor("()Ljava/lang/Object;"));
     }
 
     @Test
     void testArrayRefVoid() {
-        assertEquals(new ParsedMethodDescriptor(Arrays.asList('L'), 'V'),
+        assertEquals(new ParsedMethodDescriptor(Collections.singletonList('L'), 'V'),
                      Parser.parseMethodDescriptor("([Ljava/lang/Object;)V"));
     }
 
     @Test
     void testArrayArrayRefVoid() {
-        assertEquals(new ParsedMethodDescriptor(Arrays.asList('L'), 'V'),
+        assertEquals(new ParsedMethodDescriptor(Collections.singletonList('L'), 'V'),
                      Parser.parseMethodDescriptor("([[Ljava/lang/Object;)V"));
     }
 
     @Test
     void testEmpty() {
-        assertThrows(IllegalStateException.class, () -> {
-            Parser.parseMethodDescriptor("");
-        });
+        assertThrows(IllegalStateException.class, () -> Parser.parseMethodDescriptor(""));
     }
 
     @Test
     void testBadStart() {
-        assertThrows(IllegalStateException.class, () -> {
-            Parser.parseMethodDescriptor("[)V");
-        });
+        assertThrows(IllegalStateException.class, () -> Parser.parseMethodDescriptor("[)V"));
     }
 
     @Test
     void testBadParameterListEndArray() {
-        assertThrows(IllegalStateException.class, () -> {
-            Parser.parseMethodDescriptor("(D[I");
-        });
+        assertThrows(IllegalStateException.class, () -> Parser.parseMethodDescriptor("(D[I"));
     }
 
     @Test
     void testBadParameterListEnd() {
-        assertThrows(IllegalStateException.class, () -> {
-            Parser.parseMethodDescriptor("(D(V");
-        });
+        assertThrows(IllegalStateException.class, () -> Parser.parseMethodDescriptor("(D(V"));
     }
 
     @Test
     void testExtraLongDescriptor() {
-        assertThrows(IllegalStateException.class, () -> {
-            Parser.parseMethodDescriptor("(ID)B[I");
-        });
+        assertThrows(IllegalStateException.class, () -> Parser.parseMethodDescriptor("(ID)B[I"));
     }
 }

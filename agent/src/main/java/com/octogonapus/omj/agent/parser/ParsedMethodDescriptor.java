@@ -3,10 +3,10 @@ package com.octogonapus.omj.agent.parser;
 import java.util.List;
 import java.util.Objects;
 
-class ParsedMethodDescriptor {
+public class ParsedMethodDescriptor {
 
-    List<Character> argumentTypes;
-    Character returnType;
+    public List<Character> argumentTypes;
+    public Character returnType;
 
     ParsedMethodDescriptor(final List<Character> argumentTypes, final Character returnType) {
         this.argumentTypes = argumentTypes;

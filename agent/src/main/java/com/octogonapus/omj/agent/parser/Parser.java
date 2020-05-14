@@ -2,7 +2,31 @@ package com.octogonapus.omj.agent.parser;
 
 import java.util.ArrayList;
 
-class Parser {
+public class Parser {
+
+    /**
+     * Parses a field descriptor to get its type.
+     *
+     * @param descriptor The descriptor string to parse, like "I" or "Ljava/lang/String;". See
+     *                   Section 4.3.2 for the definition.
+     * @return The type of the field.
+     */
+    public static char parseFieldDescriptor(final String descriptor) {
+        if (descriptor.isEmpty()) {
+            throw new IllegalStateException("Descriptor is empty.");
+        }
+
+        final var chars = descriptor.toCharArray();
+        int i = 0;
+
+        final var type = scanNextFieldType(chars, i);
+
+        if (type.nextStartingIndex != chars.length) {
+            throw new IllegalStateException("Descriptor continues past first type: " + descriptor + " (index " + type.nextStartingIndex + ")");
+        }
+
+        return type.fieldType;
+    }
 
     /**
      * Parses a method descriptor to extract its parameter list and return type.
@@ -11,7 +35,7 @@ class Parser {
      *                   "(ID[Ljava/lang/Object;)B". See Section 4.3.3 for the definition.
      * @return The {@link ParsedMethodDescriptor}.
      */
-    static ParsedMethodDescriptor parseMethodDescriptor(final String descriptor) {
+    public static ParsedMethodDescriptor parseMethodDescriptor(final String descriptor) {
         if (descriptor.isEmpty()) {
             throw new IllegalStateException("Descriptor is empty.");
         }
