@@ -36,16 +36,18 @@ public class OMJClassAdapter extends ClassVisitor implements Opcodes {
         System.out.println(
                 "access = " + access + ", name = " + name + ", descriptor = " + descriptor +
                 ", signature = " + signature + ", exceptions = " + Arrays.deepToString(exceptions));
-        final var result = super.visitMethod(access, name, descriptor, signature, exceptions);
-        if (result == null) {
-            return null;
-        } else if (!name.equals("<init>") && !name.equals("<clinit>")) {
-            System.out.println("ADAPTING METHOD");
+
+        final var visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
+
+        if (!name.equals("<init>") && !name.equals("<clinit>")) {
             // TODO: Handle init and clinit. Need to grab the this pointer after the superclass
             //  ctor is called.
+
+            System.out.println("ADAPTING METHOD");
             final var isStatic = (access & ACC_STATIC) == ACC_STATIC;
+
             return new OMJMethodAdapter(api,
-                                        result,
+                                        visitor,
                                         currentClassName,
                                         currentClassSource,
                                         name,
@@ -53,7 +55,7 @@ public class OMJClassAdapter extends ClassVisitor implements Opcodes {
                                         signature,
                                         isStatic);
         } else {
-            return result;
+            return visitor;
         }
     }
 
