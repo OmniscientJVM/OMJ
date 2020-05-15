@@ -15,10 +15,6 @@ dependencies {
     testRuntime project(path: ":agent", configuration: "shadow")
 }
 
-test {
-    useJUnitPlatform()
-}
-
 jar {
     manifest {
         attributes(

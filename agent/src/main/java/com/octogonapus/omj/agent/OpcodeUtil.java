@@ -4,166 +4,324 @@ import org.objectweb.asm.Opcodes;
 
 final public class OpcodeUtil {
 
-    public static String getNameOfOpcode(final int opcode) {
-        return switch (opcode) {
-            case Opcodes.NOP -> "NOP";
-            case Opcodes.ACONST_NULL -> "ACONST_NULL";
-            case Opcodes.ICONST_M1 -> "ICONST_M1";
-            case Opcodes.ICONST_0 -> "ICONST_0";
-            case Opcodes.ICONST_1 -> "ICONST_1";
-            case Opcodes.ICONST_2 -> "ICONST_2";
-            case Opcodes.ICONST_3 -> "ICONST_3";
-            case Opcodes.ICONST_4 -> "ICONST_4";
-            case Opcodes.ICONST_5 -> "ICONST_5";
-            case Opcodes.LCONST_0 -> "LCONST_0";
-            case Opcodes.LCONST_1 -> "LCONST_1";
-            case Opcodes.FCONST_0 -> "FCONST_0";
-            case Opcodes.FCONST_1 -> "FCONST_1";
-            case Opcodes.FCONST_2 -> "FCONST_2";
-            case Opcodes.DCONST_0 -> "DCONST_0";
-            case Opcodes.DCONST_1 -> "DCONST_1";
-            case Opcodes.BIPUSH -> "BIPUSH";
-            case Opcodes.SIPUSH -> "SIPUSH";
-            case Opcodes.LDC -> "LDC";
-            case Opcodes.ILOAD -> "ILOAD";
-            case Opcodes.LLOAD -> "LLOAD";
-            case Opcodes.FLOAD -> "FLOAD";
-            case Opcodes.DLOAD -> "DLOAD";
-            case Opcodes.ALOAD -> "ALOAD";
-            case Opcodes.IALOAD -> "IALOAD";
-            case Opcodes.LALOAD -> "LALOAD";
-            case Opcodes.FALOAD -> "FALOAD";
-            case Opcodes.DALOAD -> "DALOAD";
-            case Opcodes.AALOAD -> "AALOAD";
-            case Opcodes.BALOAD -> "BALOAD";
-            case Opcodes.CALOAD -> "CALOAD";
-            case Opcodes.SALOAD -> "SALOAD";
-            case Opcodes.ISTORE -> "ISTORE";
-            case Opcodes.LSTORE -> "LSTORE";
-            case Opcodes.FSTORE -> "FSTORE";
-            case Opcodes.DSTORE -> "DSTORE";
-            case Opcodes.ASTORE -> "ASTORE";
-            case Opcodes.IASTORE -> "IASTORE";
-            case Opcodes.LASTORE -> "LASTORE";
-            case Opcodes.FASTORE -> "FASTORE";
-            case Opcodes.DASTORE -> "DASTORE";
-            case Opcodes.AASTORE -> "AASTORE";
-            case Opcodes.BASTORE -> "BASTORE";
-            case Opcodes.CASTORE -> "CASTORE";
-            case Opcodes.SASTORE -> "SASTORE";
-            case Opcodes.POP -> "POP";
-            case Opcodes.POP2 -> "POP2";
-            case Opcodes.DUP -> "DUP";
-            case Opcodes.DUP_X1 -> "DUP_X1";
-            case Opcodes.DUP_X2 -> "DUP_X2";
-            case Opcodes.DUP2 -> "DUP2";
-            case Opcodes.DUP2_X1 -> "DUP2_X1";
-            case Opcodes.DUP2_X2 -> "DUP2_X2";
-            case Opcodes.SWAP -> "SWAP";
-            case Opcodes.IADD -> "IADD";
-            case Opcodes.LADD -> "LADD";
-            case Opcodes.FADD -> "FADD";
-            case Opcodes.DADD -> "DADD";
-            case Opcodes.ISUB -> "ISUB";
-            case Opcodes.LSUB -> "LSUB";
-            case Opcodes.FSUB -> "FSUB";
-            case Opcodes.DSUB -> "DSUB";
-            case Opcodes.IMUL -> "IMUL";
-            case Opcodes.LMUL -> "LMUL";
-            case Opcodes.FMUL -> "FMUL";
-            case Opcodes.DMUL -> "DMUL";
-            case Opcodes.IDIV -> "IDIV";
-            case Opcodes.LDIV -> "LDIV";
-            case Opcodes.FDIV -> "FDIV";
-            case Opcodes.DDIV -> "DDIV";
-            case Opcodes.IREM -> "IREM";
-            case Opcodes.LREM -> "LREM";
-            case Opcodes.FREM -> "FREM";
-            case Opcodes.DREM -> "DREM";
-            case Opcodes.INEG -> "INEG";
-            case Opcodes.LNEG -> "LNEG";
-            case Opcodes.FNEG -> "FNEG";
-            case Opcodes.DNEG -> "DNEG";
-            case Opcodes.ISHL -> "ISHL";
-            case Opcodes.LSHL -> "LSHL";
-            case Opcodes.ISHR -> "ISHR";
-            case Opcodes.LSHR -> "LSHR";
-            case Opcodes.IUSHR -> "IUSHR";
-            case Opcodes.LUSHR -> "LUSHR";
-            case Opcodes.IAND -> "IAND";
-            case Opcodes.LAND -> "LAND";
-            case Opcodes.IOR -> "IOR";
-            case Opcodes.LOR -> "LOR";
-            case Opcodes.IXOR -> "IXOR";
-            case Opcodes.LXOR -> "LXOR";
-            case Opcodes.IINC -> "IINC";
-            case Opcodes.I2L -> "I2L";
-            case Opcodes.I2F -> "I2F";
-            case Opcodes.I2D -> "I2D";
-            case Opcodes.L2I -> "L2I";
-            case Opcodes.L2F -> "L2F";
-            case Opcodes.L2D -> "L2D";
-            case Opcodes.F2I -> "F2I";
-            case Opcodes.F2L -> "F2L";
-            case Opcodes.F2D -> "F2D";
-            case Opcodes.D2I -> "D2I";
-            case Opcodes.D2L -> "D2L";
-            case Opcodes.D2F -> "D2F";
-            case Opcodes.I2B -> "I2B";
-            case Opcodes.I2C -> "I2C";
-            case Opcodes.I2S -> "I2S";
-            case Opcodes.LCMP -> "LCMP";
-            case Opcodes.FCMPL -> "FCMPL";
-            case Opcodes.FCMPG -> "FCMPG";
-            case Opcodes.DCMPL -> "DCMPL";
-            case Opcodes.DCMPG -> "DCMPG";
-            case Opcodes.IFEQ -> "IFEQ";
-            case Opcodes.IFNE -> "IFNE";
-            case Opcodes.IFLT -> "IFLT";
-            case Opcodes.IFGE -> "IFGE";
-            case Opcodes.IFGT -> "IFGT";
-            case Opcodes.IFLE -> "IFLE";
-            case Opcodes.IF_ICMPEQ -> "IF_ICMPEQ";
-            case Opcodes.IF_ICMPNE -> "IF_ICMPNE";
-            case Opcodes.IF_ICMPLT -> "IF_ICMPLT";
-            case Opcodes.IF_ICMPGE -> "IF_ICMPGE";
-            case Opcodes.IF_ICMPGT -> "IF_ICMPGT";
-            case Opcodes.IF_ICMPLE -> "IF_ICMPLE";
-            case Opcodes.IF_ACMPEQ -> "IF_ACMPEQ";
-            case Opcodes.IF_ACMPNE -> "IF_ACMPNE";
-            case Opcodes.GOTO -> "GOTO";
-            case Opcodes.JSR -> "JSR";
-            case Opcodes.RET -> "RET";
-            case Opcodes.TABLESWITCH -> "TABLESWITCH";
-            case Opcodes.LOOKUPSWITCH -> "LOOKUPSWITCH";
-            case Opcodes.IRETURN -> "IRETURN";
-            case Opcodes.LRETURN -> "LRETURN";
-            case Opcodes.FRETURN -> "FRETURN";
-            case Opcodes.DRETURN -> "DRETURN";
-            case Opcodes.ARETURN -> "ARETURN";
-            case Opcodes.RETURN -> "RETURN";
-            case Opcodes.GETSTATIC -> "GETSTATIC";
-            case Opcodes.PUTSTATIC -> "PUTSTATIC";
-            case Opcodes.GETFIELD -> "GETFIELD";
-            case Opcodes.PUTFIELD -> "PUTFIELD";
-            case Opcodes.INVOKEVIRTUAL -> "INVOKEVIRTUAL";
-            case Opcodes.INVOKESPECIAL -> "INVOKESPECIAL";
-            case Opcodes.INVOKESTATIC -> "INVOKESTATIC";
-            case Opcodes.INVOKEINTERFACE -> "INVOKEINTERFACE";
-            case Opcodes.INVOKEDYNAMIC -> "INVOKEDYNAMIC";
-            case Opcodes.NEW -> "NEW";
-            case Opcodes.NEWARRAY -> "NEWARRAY";
-            case Opcodes.ANEWARRAY -> "ANEWARRAY";
-            case Opcodes.ARRAYLENGTH -> "ARRAYLENGTH";
-            case Opcodes.ATHROW -> "ATHROW";
-            case Opcodes.CHECKCAST -> "CHECKCAST";
-            case Opcodes.INSTANCEOF -> "INSTANCEOF";
-            case Opcodes.MONITORENTER -> "MONITORENTER";
-            case Opcodes.MONITOREXIT -> "MONITOREXIT";
-            case Opcodes.MULTIANEWARRAY -> "MULTIANEWARRAY";
-            case Opcodes.IFNULL -> "IFNULL";
-            case Opcodes.IFNONNULL -> "IFNONNULL";
-            default -> throw new IllegalStateException("Unknown opcode: " + opcode);
-        };
+  public static String getNameOfOpcode(final int opcode) {
+    switch (opcode) {
+      case Opcodes.NOP:
+        return "NOP";
+      case Opcodes.ACONST_NULL:
+        return "ACONST_NULL";
+      case Opcodes.ICONST_M1:
+        return "ICONST_M1";
+      case Opcodes.ICONST_0:
+        return "ICONST_0";
+      case Opcodes.ICONST_1:
+        return "ICONST_1";
+      case Opcodes.ICONST_2:
+        return "ICONST_2";
+      case Opcodes.ICONST_3:
+        return "ICONST_3";
+      case Opcodes.ICONST_4:
+        return "ICONST_4";
+      case Opcodes.ICONST_5:
+        return "ICONST_5";
+      case Opcodes.LCONST_0:
+        return "LCONST_0";
+      case Opcodes.LCONST_1:
+        return "LCONST_1";
+      case Opcodes.FCONST_0:
+        return "FCONST_0";
+      case Opcodes.FCONST_1:
+        return "FCONST_1";
+      case Opcodes.FCONST_2:
+        return "FCONST_2";
+      case Opcodes.DCONST_0:
+        return "DCONST_0";
+      case Opcodes.DCONST_1:
+        return "DCONST_1";
+      case Opcodes.BIPUSH:
+        return "BIPUSH";
+      case Opcodes.SIPUSH:
+        return "SIPUSH";
+      case Opcodes.LDC:
+        return "LDC";
+      case Opcodes.ILOAD:
+        return "ILOAD";
+      case Opcodes.LLOAD:
+        return "LLOAD";
+      case Opcodes.FLOAD:
+        return "FLOAD";
+      case Opcodes.DLOAD:
+        return "DLOAD";
+      case Opcodes.ALOAD:
+        return "ALOAD";
+      case Opcodes.IALOAD:
+        return "IALOAD";
+      case Opcodes.LALOAD:
+        return "LALOAD";
+      case Opcodes.FALOAD:
+        return "FALOAD";
+      case Opcodes.DALOAD:
+        return "DALOAD";
+      case Opcodes.AALOAD:
+        return "AALOAD";
+      case Opcodes.BALOAD:
+        return "BALOAD";
+      case Opcodes.CALOAD:
+        return "CALOAD";
+      case Opcodes.SALOAD:
+        return "SALOAD";
+      case Opcodes.ISTORE:
+        return "ISTORE";
+      case Opcodes.LSTORE:
+        return "LSTORE";
+      case Opcodes.FSTORE:
+        return "FSTORE";
+      case Opcodes.DSTORE:
+        return "DSTORE";
+      case Opcodes.ASTORE:
+        return "ASTORE";
+      case Opcodes.IASTORE:
+        return "IASTORE";
+      case Opcodes.LASTORE:
+        return "LASTORE";
+      case Opcodes.FASTORE:
+        return "FASTORE";
+      case Opcodes.DASTORE:
+        return "DASTORE";
+      case Opcodes.AASTORE:
+        return "AASTORE";
+      case Opcodes.BASTORE:
+        return "BASTORE";
+      case Opcodes.CASTORE:
+        return "CASTORE";
+      case Opcodes.SASTORE:
+        return "SASTORE";
+      case Opcodes.POP:
+        return "POP";
+      case Opcodes.POP2:
+        return "POP2";
+      case Opcodes.DUP:
+        return "DUP";
+      case Opcodes.DUP_X1:
+        return "DUP_X1";
+      case Opcodes.DUP_X2:
+        return "DUP_X2";
+      case Opcodes.DUP2:
+        return "DUP2";
+      case Opcodes.DUP2_X1:
+        return "DUP2_X1";
+      case Opcodes.DUP2_X2:
+        return "DUP2_X2";
+      case Opcodes.SWAP:
+        return "SWAP";
+      case Opcodes.IADD:
+        return "IADD";
+      case Opcodes.LADD:
+        return "LADD";
+      case Opcodes.FADD:
+        return "FADD";
+      case Opcodes.DADD:
+        return "DADD";
+      case Opcodes.ISUB:
+        return "ISUB";
+      case Opcodes.LSUB:
+        return "LSUB";
+      case Opcodes.FSUB:
+        return "FSUB";
+      case Opcodes.DSUB:
+        return "DSUB";
+      case Opcodes.IMUL:
+        return "IMUL";
+      case Opcodes.LMUL:
+        return "LMUL";
+      case Opcodes.FMUL:
+        return "FMUL";
+      case Opcodes.DMUL:
+        return "DMUL";
+      case Opcodes.IDIV:
+        return "IDIV";
+      case Opcodes.LDIV:
+        return "LDIV";
+      case Opcodes.FDIV:
+        return "FDIV";
+      case Opcodes.DDIV:
+        return "DDIV";
+      case Opcodes.IREM:
+        return "IREM";
+      case Opcodes.LREM:
+        return "LREM";
+      case Opcodes.FREM:
+        return "FREM";
+      case Opcodes.DREM:
+        return "DREM";
+      case Opcodes.INEG:
+        return "INEG";
+      case Opcodes.LNEG:
+        return "LNEG";
+      case Opcodes.FNEG:
+        return "FNEG";
+      case Opcodes.DNEG:
+        return "DNEG";
+      case Opcodes.ISHL:
+        return "ISHL";
+      case Opcodes.LSHL:
+        return "LSHL";
+      case Opcodes.ISHR:
+        return "ISHR";
+      case Opcodes.LSHR:
+        return "LSHR";
+      case Opcodes.IUSHR:
+        return "IUSHR";
+      case Opcodes.LUSHR:
+        return "LUSHR";
+      case Opcodes.IAND:
+        return "IAND";
+      case Opcodes.LAND:
+        return "LAND";
+      case Opcodes.IOR:
+        return "IOR";
+      case Opcodes.LOR:
+        return "LOR";
+      case Opcodes.IXOR:
+        return "IXOR";
+      case Opcodes.LXOR:
+        return "LXOR";
+      case Opcodes.IINC:
+        return "IINC";
+      case Opcodes.I2L:
+        return "I2L";
+      case Opcodes.I2F:
+        return "I2F";
+      case Opcodes.I2D:
+        return "I2D";
+      case Opcodes.L2I:
+        return "L2I";
+      case Opcodes.L2F:
+        return "L2F";
+      case Opcodes.L2D:
+        return "L2D";
+      case Opcodes.F2I:
+        return "F2I";
+      case Opcodes.F2L:
+        return "F2L";
+      case Opcodes.F2D:
+        return "F2D";
+      case Opcodes.D2I:
+        return "D2I";
+      case Opcodes.D2L:
+        return "D2L";
+      case Opcodes.D2F:
+        return "D2F";
+      case Opcodes.I2B:
+        return "I2B";
+      case Opcodes.I2C:
+        return "I2C";
+      case Opcodes.I2S:
+        return "I2S";
+      case Opcodes.LCMP:
+        return "LCMP";
+      case Opcodes.FCMPL:
+        return "FCMPL";
+      case Opcodes.FCMPG:
+        return "FCMPG";
+      case Opcodes.DCMPL:
+        return "DCMPL";
+      case Opcodes.DCMPG:
+        return "DCMPG";
+      case Opcodes.IFEQ:
+        return "IFEQ";
+      case Opcodes.IFNE:
+        return "IFNE";
+      case Opcodes.IFLT:
+        return "IFLT";
+      case Opcodes.IFGE:
+        return "IFGE";
+      case Opcodes.IFGT:
+        return "IFGT";
+      case Opcodes.IFLE:
+        return "IFLE";
+      case Opcodes.IF_ICMPEQ:
+        return "IF_ICMPEQ";
+      case Opcodes.IF_ICMPNE:
+        return "IF_ICMPNE";
+      case Opcodes.IF_ICMPLT:
+        return "IF_ICMPLT";
+      case Opcodes.IF_ICMPGE:
+        return "IF_ICMPGE";
+      case Opcodes.IF_ICMPGT:
+        return "IF_ICMPGT";
+      case Opcodes.IF_ICMPLE:
+        return "IF_ICMPLE";
+      case Opcodes.IF_ACMPEQ:
+        return "IF_ACMPEQ";
+      case Opcodes.IF_ACMPNE:
+        return "IF_ACMPNE";
+      case Opcodes.GOTO:
+        return "GOTO";
+      case Opcodes.JSR:
+        return "JSR";
+      case Opcodes.RET:
+        return "RET";
+      case Opcodes.TABLESWITCH:
+        return "TABLESWITCH";
+      case Opcodes.LOOKUPSWITCH:
+        return "LOOKUPSWITCH";
+      case Opcodes.IRETURN:
+        return "IRETURN";
+      case Opcodes.LRETURN:
+        return "LRETURN";
+      case Opcodes.FRETURN:
+        return "FRETURN";
+      case Opcodes.DRETURN:
+        return "DRETURN";
+      case Opcodes.ARETURN:
+        return "ARETURN";
+      case Opcodes.RETURN:
+        return "RETURN";
+      case Opcodes.GETSTATIC:
+        return "GETSTATIC";
+      case Opcodes.PUTSTATIC:
+        return "PUTSTATIC";
+      case Opcodes.GETFIELD:
+        return "GETFIELD";
+      case Opcodes.PUTFIELD:
+        return "PUTFIELD";
+      case Opcodes.INVOKEVIRTUAL:
+        return "INVOKEVIRTUAL";
+      case Opcodes.INVOKESPECIAL:
+        return "INVOKESPECIAL";
+      case Opcodes.INVOKESTATIC:
+        return "INVOKESTATIC";
+      case Opcodes.INVOKEINTERFACE:
+        return "INVOKEINTERFACE";
+      case Opcodes.INVOKEDYNAMIC:
+        return "INVOKEDYNAMIC";
+      case Opcodes.NEW:
+        return "NEW";
+      case Opcodes.NEWARRAY:
+        return "NEWARRAY";
+      case Opcodes.ANEWARRAY:
+        return "ANEWARRAY";
+      case Opcodes.ARRAYLENGTH:
+        return "ARRAYLENGTH";
+      case Opcodes.ATHROW:
+        return "ATHROW";
+      case Opcodes.CHECKCAST:
+        return "CHECKCAST";
+      case Opcodes.INSTANCEOF:
+        return "INSTANCEOF";
+      case Opcodes.MONITORENTER:
+        return "MONITORENTER";
+      case Opcodes.MONITOREXIT:
+        return "MONITOREXIT";
+      case Opcodes.MULTIANEWARRAY:
+        return "MULTIANEWARRAY";
+      case Opcodes.IFNULL:
+        return "IFNULL";
+      case Opcodes.IFNONNULL:
+        return "IFNONNULL";
+      default:
+        throw new IllegalStateException("Unknown opcode: " + opcode);
     }
+  }
 }
