@@ -8,49 +8,49 @@ import java.nio.file.Paths;
 
 public class AgentLibJarExtractor {
 
-    /**
-     * Extracts the agent-lib jar from our jar and into a file.
-     *
-     * @return The file the agent-lib jar is extracted into.
-     * @throws IOException Any IO problems along the way. All fatal.
-     */
-    public static File extractJar() throws IOException {
-        try (final var agentLib = ClassLoader.getSystemResourceAsStream("agent-lib-all")) {
-            if (agentLib == null) {
-                throw new IOException("Could not locate agent-lib-all resource.");
-            }
+  /**
+   * Extracts the agent-lib jar from our jar and into a file.
+   *
+   * @return The file the agent-lib jar is extracted into.
+   * @throws IOException Any IO problems along the way. All fatal.
+   */
+  public static File extractJar() throws IOException {
+    try (final var agentLib = ClassLoader.getSystemResourceAsStream("agent-lib-all")) {
+      if (agentLib == null) {
+        throw new IOException("Could not locate agent-lib-all resource.");
+      }
 
-            final var file = Paths.get(System.getProperty("user.home"), ".OMJ", "agent-lib-all.jar")
-                    .toFile();
+      final var file =
+          Paths.get(System.getProperty("user.home"), ".OMJ", "agent-lib-all.jar").toFile();
 
-            // The lib contents can change all the time so we should re-extract it each time
-            file.deleteOnExit();
-            if (file.exists() && !file.delete()) {
-                throw new IOException("Failed to delte file " + file.getPath());
-            } else if (!file.getParentFile().mkdirs() && !file.getParentFile().exists()) {
-                throw new IOException("Failed to make parent dirs for file " + file.getPath());
-            }
+      // The lib contents can change all the time so we should re-extract it each time
+      file.deleteOnExit();
+      if (file.exists() && !file.delete()) {
+        throw new IOException("Failed to delte file " + file.getPath());
+      } else if (!file.getParentFile().mkdirs() && !file.getParentFile().exists()) {
+        throw new IOException("Failed to make parent dirs for file " + file.getPath());
+      }
 
-            copyStreamToFile(file, agentLib);
+      copyStreamToFile(file, agentLib);
 
-            return file;
-        }
+      return file;
     }
+  }
 
-    private static void copyStreamToFile(File file, InputStream lib) throws IOException {
-        try (final var os = Files.newOutputStream(file.toPath())) {
-            final var buffer = new byte[0xFFFF];
-            int readBytes;
-            while (true) {
-                readBytes = lib.read(buffer);
+  private static void copyStreamToFile(File file, InputStream lib) throws IOException {
+    try (final var os = Files.newOutputStream(file.toPath())) {
+      final var buffer = new byte[0xFFFF];
+      int readBytes;
+      while (true) {
+        readBytes = lib.read(buffer);
 
-                // -1 means end of stream
-                if (readBytes == -1) {
-                    break;
-                }
-
-                os.write(buffer, 0, readBytes);
-            }
+        // -1 means end of stream
+        if (readBytes == -1) {
+          break;
         }
+
+        os.write(buffer, 0, readBytes);
+      }
     }
+  }
 }
