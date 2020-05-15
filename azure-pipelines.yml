@@ -31,11 +31,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            gradleOptions: '-Xmx3072m'
             options: '--stacktrace -PlogTests'
-            javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '14'
-            jdkArchitectureOption: 'x64'
             publishJUnitResults: true
             testResultsFiles: '**/TEST-*.xml'
             tasks: 'check'
@@ -45,11 +41,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            gradleOptions: '-Xmx3072m'
             options: '--stacktrace -PlogTests'
-            javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '14'
-            jdkArchitectureOption: 'x64'
             publishJUnitResults: true
             testResultsFiles: '**/TEST-*.xml'
             tasks: 'jacocoRootReport'
@@ -69,11 +61,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            gradleOptions: '-Xmx3072m'
             options: '--stacktrace -PlogTests'
-            javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '14'
-            jdkArchitectureOption: 'x64'
             publishJUnitResults: false
             tasks: 'check'
 
@@ -82,11 +70,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            gradleOptions: '-Xmx3072m'
             options: '--stacktrace -PlogTests'
-            javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '14'
-            jdkArchitectureOption: 'x64'
             publishJUnitResults: true
             testResultsFiles: '**/TEST-*.xml'
             tasks: 'jacocoRootReport'
@@ -102,11 +86,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            gradleOptions: '-Xmx3072m'
             options: '--stacktrace -PlogTests'
-            javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '14'
-            jdkArchitectureOption: 'x64'
             publishJUnitResults: false
             tasks: 'check'
 
@@ -115,11 +95,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            gradleOptions: '-Xmx3072m'
             options: '--stacktrace -PlogTests'
-            javaHomeOption: 'JDKVersion'
-            jdkVersionOption: '14'
-            jdkArchitectureOption: 'x64'
             publishJUnitResults: true
             testResultsFiles: '**/TEST-*.xml'
             tasks: 'jacocoRootReport'
