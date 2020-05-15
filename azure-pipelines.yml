@@ -1,0 +1,114 @@
+trigger:
+  branches:
+    include:
+      - '*'
+  tags:
+    include:
+      - '*'
+
+stages:
+- stage: Build
+  jobs:
+    - job: Linux
+
+      pool:
+        vmImage: ubuntu-16.04
+
+      steps:
+        - task: Gradle@2
+          displayName: 'Check'
+          inputs:
+            workingDirectory: ''
+            gradleWrapperFile: 'gradlew'
+            gradleOptions: '-Xmx3072m'
+            options: '--stacktrace -PlogTests'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '1.14'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: true
+            testResultsFiles: '**/TEST-*.xml'
+            tasks: 'check'
+
+        - task: Gradle@2
+          displayName: 'JacocoRootReport'
+          inputs:
+            workingDirectory: ''
+            gradleWrapperFile: 'gradlew'
+            gradleOptions: '-Xmx3072m'
+            options: '--stacktrace -PlogTests'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '1.14'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: true
+            testResultsFiles: '**/TEST-*.xml'
+            tasks: 'jacocoRootReport'
+
+        - bash: bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
+          displayName: 'CodeCov'
+          workingDirectory: ''
+
+    - job: MacOS
+
+      pool:
+        vmImage: macOS-10.14
+
+      steps:
+        - task: Gradle@2
+          displayName: 'Check'
+          inputs:
+            workingDirectory: ''
+            gradleWrapperFile: 'gradlew'
+            gradleOptions: '-Xmx3072m'
+            options: '--stacktrace -PlogTests'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '1.14'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: false
+            tasks: 'check'
+
+        - task: Gradle@2
+          displayName: 'JacocoRootReport'
+          inputs:
+            workingDirectory: ''
+            gradleWrapperFile: 'gradlew'
+            gradleOptions: '-Xmx3072m'
+            options: '--stacktrace -PlogTests'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '1.14'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: true
+            testResultsFiles: '**/TEST-*.xml'
+            tasks: 'jacocoRootReport'
+
+    - job: Windows
+
+      pool:
+        vmImage: windows-2019
+
+      steps:
+        - task: Gradle@2
+          displayName: 'Check'
+          inputs:
+            workingDirectory: ''
+            gradleWrapperFile: 'gradlew'
+            gradleOptions: '-Xmx3072m'
+            options: '--stacktrace -PlogTests'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '1.14'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: false
+            tasks: 'check'
+
+        - task: Gradle@2
+          displayName: 'JacocoRootReport'
+          inputs:
+            workingDirectory: ''
+            gradleWrapperFile: 'gradlew'
+            gradleOptions: '-Xmx3072m'
+            options: '--stacktrace -PlogTests'
+            javaHomeOption: 'JDKVersion'
+            jdkVersionOption: '1.14'
+            jdkArchitectureOption: 'x64'
+            publishJUnitResults: true
+            testResultsFiles: '**/TEST-*.xml'
+            tasks: 'jacocoRootReport'
