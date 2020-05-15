@@ -2,7 +2,7 @@ package com.octogonapus.omj.agent;
 
 import org.objectweb.asm.Opcodes;
 
-final public class OpcodeUtil {
+public final class OpcodeUtil {
 
   public static String getNameOfOpcode(final int opcode) {
     switch (opcode) {
