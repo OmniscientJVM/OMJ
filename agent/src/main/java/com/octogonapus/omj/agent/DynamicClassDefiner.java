@@ -19,8 +19,7 @@ final class DynamicClassDefiner {
   private final Set<String> namesOfDynamicClasses = new HashSet<>();
   private final Instrumentation instrumentation;
   private final Path cacheDir;
-  private static final Path javaBin =
-      Paths.get("/home/salmon/zulu14.28.21-ca-jdk14.0.1-linux_x64/bin");
+  private static final Path javaBin = Paths.get(System.getProperty("java.home")).resolve("bin");
 
   DynamicClassDefiner(final Instrumentation instrumentation, final Path cacheDir) {
     this.instrumentation = instrumentation;
