@@ -1,11 +1,11 @@
 package com.octogonapus.omj.agent
 
+import java.io.File
+import java.io.IOException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import java.io.File
-import java.io.IOException
 
 internal class DynamicClassDefinerTest {
 
@@ -41,7 +41,10 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod("(IDD)V").body)
+
+                assertEquals(body, DynamicClassDefiner
+                        .generateClassCodeForMethod("(IDD)V").body
+                )
     }
 
     @Test
