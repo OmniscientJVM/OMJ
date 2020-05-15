@@ -3,10 +3,3 @@ plugins {
 }
 
 description = "The supporting library for the Agent."
-
-dependencies {
-}
-
-test {
-    useJUnitPlatform()
-}
