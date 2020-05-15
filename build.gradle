@@ -105,6 +105,7 @@ subprojects {
             removeUnusedImports()
             trimTrailingWhitespace()
             endWithNewline()
+            licenseHeaderFile(rootProject.rootDir.toPath().resolve("config").resolve("spotless").resolve("omj.license"))
         }
     }
 }

@@ -38,6 +38,7 @@ compileKotlin {
 spotless {
     kotlin {
         ktlint(property("ktlint.version") as String)
+        licenseHeaderFile(rootProject.rootDir.toPath().resolve("config").resolve("spotless").resolve("omj.license"))
     }
 }
 
