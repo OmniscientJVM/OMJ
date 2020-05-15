@@ -1,0 +1,1 @@
+[![Build Status](https://dev.azure.com/OmniscientJVM/OMJ/_apis/build/status/OmniscientJVM.OMJ?branchName=master)](https://dev.azure.com/OmniscientJVM/OMJ/_build/latest?definitionId=1&branchName=master)
