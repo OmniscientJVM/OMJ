@@ -20,8 +20,8 @@ final public class ParsedMethodDescriptor {
         if (o == null || getClass() != o.getClass())
             return false;
         final ParsedMethodDescriptor that = (ParsedMethodDescriptor) o;
-        return Objects.equals(argumentTypes, that.argumentTypes) && Objects.equals(returnType,
-                                                                                   that.returnType);
+        return Objects.equals(argumentTypes, that.argumentTypes) &&
+               Objects.equals(returnType, that.returnType);
     }
 
     @Override

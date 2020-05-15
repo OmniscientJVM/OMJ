@@ -3,6 +3,7 @@ package com.octogonapus.omj.agentlib;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressWarnings("unused")
 final public class OMJAgentLib {
 
     static {
@@ -14,7 +15,7 @@ final public class OMJAgentLib {
     private static final ConcurrentLinkedQueue<MethodTrace> methodTraceQueue =
             new ConcurrentLinkedQueue<>();
 
-    public static void methodCall_start(MethodTrace methodTrace) {
+    public static void methodCall_start(final MethodTrace methodTrace) {
         System.out.println("OMJAgentLib.methodCall_start");
         currentMethodTrace.set(methodTrace);
     }
@@ -25,39 +26,39 @@ final public class OMJAgentLib {
         methodTraceQueue.add(trace);
     }
 
-    public static void methodCall_argument_1(boolean value) {
-        currentMethodTrace.get().set_argument_1(value);
+    public static void methodCall_argument_boolean(boolean value) {
+        currentMethodTrace.get().set_argument_boolean(value);
     }
 
-    public static void methodCall_argument_2(char value) {
-        currentMethodTrace.get().set_argument_2(value);
+    public static void methodCall_argument_char(char value) {
+        currentMethodTrace.get().set_argument_char(value);
     }
 
-    public static void methodCall_argument_3(byte value) {
-        currentMethodTrace.get().set_argument_3(value);
+    public static void methodCall_argument_byte(byte value) {
+        currentMethodTrace.get().set_argument_byte(value);
     }
 
-    public static void methodCall_argument_4(short value) {
-        currentMethodTrace.get().set_argument_4(value);
+    public static void methodCall_argument_short(short value) {
+        currentMethodTrace.get().set_argument_short(value);
     }
 
-    public static void methodCall_argument_5(int value) {
-        currentMethodTrace.get().set_argument_5(value);
+    public static void methodCall_argument_int(int value) {
+        currentMethodTrace.get().set_argument_int(value);
     }
 
-    public static void methodCall_argument_6(float value) {
-        currentMethodTrace.get().set_argument_6(value);
+    public static void methodCall_argument_float(float value) {
+        currentMethodTrace.get().set_argument_float(value);
     }
 
-    public static void methodCall_argument_7(long value) {
-        currentMethodTrace.get().set_argument_7(value);
+    public static void methodCall_argument_long(long value) {
+        currentMethodTrace.get().set_argument_long(value);
     }
 
-    public static void methodCall_argument_8(double value) {
-        currentMethodTrace.get().set_argument_8(value);
+    public static void methodCall_argument_double(double value) {
+        currentMethodTrace.get().set_argument_double(value);
     }
 
-    public static void methodCall_argument_10(Object value) {
-        currentMethodTrace.get().set_argument_10(value);
+    public static void methodCall_argument_Object(Object value) {
+        currentMethodTrace.get().set_argument_Object(value);
     }
 }

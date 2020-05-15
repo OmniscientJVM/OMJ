@@ -7,7 +7,8 @@ import java.util.jar.JarFile;
 final public class Agent {
 
     public static void premain(final String args, final Instrumentation instrumentation) {
-        final DynamicClassDefiner dynamicClassDefiner = new DynamicClassDefiner(instrumentation);
+        final DynamicClassDefiner dynamicClassDefiner =
+                new DynamicClassDefiner(instrumentation, Util.cacheDir);
 
         instrumentation.addTransformer(new OMJClassFileTransformer(dynamicClassDefiner));
 
