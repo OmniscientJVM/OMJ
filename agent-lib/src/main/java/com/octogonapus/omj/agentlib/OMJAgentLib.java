@@ -6,14 +6,32 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings("unused")
 final public class OMJAgentLib {
 
-    static {
-        System.out.println("OMJ agent-lib loaded.");
-    }
-
     private static final AtomicInteger methodCounter = new AtomicInteger(0);
     private static final ThreadLocal<MethodTrace> currentMethodTrace = new ThreadLocal<>();
     private static final ConcurrentLinkedQueue<MethodTrace> methodTraceQueue =
             new ConcurrentLinkedQueue<>();
+
+    static {
+        System.out.println("OMJ agent-lib loaded.");
+
+        final var traceProcessorThread = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                final var methodTrace = methodTraceQueue.poll();
+                if (methodTrace != null) {
+                    System.out.println("methodTrace = " + methodTrace);
+                }
+
+                // TODO: Don't busy-wait here
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        Runtime.getRuntime().addShutdownHook(new Thread(traceProcessorThread::interrupt));
+        traceProcessorThread.start();
+    }
 
     public static void methodCall_start(final MethodTrace methodTrace) {
         System.out.println("OMJAgentLib.methodCall_start");
