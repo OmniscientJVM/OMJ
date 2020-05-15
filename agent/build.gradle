@@ -14,10 +14,6 @@ dependencies {
     testRuntimeOnly project(":agent-lib")
 }
 
-test {
-    useJUnitPlatform()
-}
-
 jar {
     manifest {
         attributes(
