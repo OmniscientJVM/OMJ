@@ -206,7 +206,7 @@ final class DynamicClassDefiner {
     return classNameBuilder.toString();
   }
 
-  private static class DynamicClass {
+  static class DynamicClass {
     String name;
     String body;
 
