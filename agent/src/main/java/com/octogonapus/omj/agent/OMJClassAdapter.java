@@ -20,9 +20,12 @@ import java.util.Arrays;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
 
+  private final Logger logger = LoggerFactory.getLogger(OMJClassAdapter.class);
   private final DynamicClassDefiner dynamicClassDefiner;
   private String currentClassName;
   private String currentClassSource;
@@ -54,18 +57,13 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
       final String descriptor,
       final String signature,
       final String[] exceptions) {
-    System.out.println("OMJClassAdapter.visitMethod");
-    System.out.println(
-        "access = "
-            + access
-            + ", name = "
-            + name
-            + ", descriptor = "
-            + descriptor
-            + ", signature = "
-            + signature
-            + ", exceptions = "
-            + Arrays.deepToString(exceptions));
+    logger.debug(
+        "access = {}, name = {}, descriptor = {}, signature = {}, exceptions = {}",
+        access,
+        name,
+        descriptor,
+        signature,
+        Arrays.deepToString(exceptions));
 
     final var visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
 
@@ -73,7 +71,7 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
       // TODO: Handle init and clinit. Need to grab the this pointer after the superclass
       //  ctor is called.
 
-      System.out.println("ADAPTING METHOD");
+      logger.debug("Adapting method.");
       final var isStatic = (access & ACC_STATIC) == ACC_STATIC;
 
       return new OMJMethodAdapter(

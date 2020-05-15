@@ -24,6 +24,9 @@ dependencies {
     implementation group: "net.bytebuddy", name: "byte-buddy", version: property("byte-buddy.version")
     implementation project(":agent-lib")
 
+    implementation group: "org.slf4j", name: "slf4j-log4j12", version: property("slf4j-log4j12.version")
+    runtimeOnly group: "log4j", name: "apache-log4j-extras", version: property("apache-log4j-extras.version")
+
     testImplementation group: "org.junit.jupiter", name: "junit-jupiter-api", version: property("junit.version")
     testImplementation group: "org.junit.jupiter", name: "junit-jupiter-engine", version: property("junit.version")
     testRuntime project(path: ":agent", configuration: "shadow")

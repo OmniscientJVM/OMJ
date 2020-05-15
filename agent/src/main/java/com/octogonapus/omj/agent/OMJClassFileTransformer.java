@@ -19,14 +19,18 @@ package com.octogonapus.omj.agent;
 import java.io.PrintWriter;
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.TraceClassVisitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class OMJClassFileTransformer implements ClassFileTransformer {
 
+  private final Logger logger = LoggerFactory.getLogger(OMJClassFileTransformer.class);
   private final DynamicClassDefiner dynamicClassDefiner;
 
   public OMJClassFileTransformer(final DynamicClassDefiner dynamicClassDefiner) {
@@ -40,22 +44,17 @@ public final class OMJClassFileTransformer implements ClassFileTransformer {
       final Class<?> classBeingRedefined,
       final ProtectionDomain protectionDomain,
       final byte[] classfileBuffer) {
-    System.out.println("OMJClassFileTransformer.transform");
-    System.out.println(
-        "loader = "
-            + loader
-            + ", className = "
-            + className
-            + ", "
-            + "classBeingRedefined = "
-            + classBeingRedefined
-            + ", "
-            + "protectionDomain = "
-            + protectionDomain);
+    logger.debug(
+        "loader = {}, className = {}, classBeingRedefined = {}, protectionDomain = {}",
+        loader,
+        className,
+        classBeingRedefined,
+        protectionDomain);
 
     // Check the include and exclude class filters as to whether we should transform this
     // class. We need to check this here so that we can return `null` to obey `transform`'s
     // contract.
+    // TODO: These filters will need to come from the user
     final Pattern includeFilter = Pattern.compile("com/octogonapus/[a-zA-Z]*");
     final Pattern excludeFilter = Pattern.compile("com/octogonapus/omj/[a-zA-Z]*");
     final boolean shouldAdapt =
@@ -69,6 +68,8 @@ public final class OMJClassFileTransformer implements ClassFileTransformer {
         return transformClassBytes(classfileBuffer);
       } catch (Throwable ex) {
         ex.printStackTrace();
+        logger.error(
+            "Failed to transform class bytes.\nBytes: " + Arrays.toString(classfileBuffer), ex);
         System.exit(1);
         return null;
       }

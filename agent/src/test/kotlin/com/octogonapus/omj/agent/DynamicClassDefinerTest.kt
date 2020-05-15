@@ -17,7 +17,6 @@
 package com.octogonapus.omj.agent
 
 import java.io.File
-import java.io.IOException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -27,7 +26,25 @@ internal class DynamicClassDefinerTest {
 
     @Test
     fun generateBooleanContainer() {
-        assertEquals(booleanBody, DynamicClassDefiner.generateClassCodeForMethod("(Z)V").body)
+        val body = """
+            import com.octogonapus.omj.agentlib.MethodTrace;
+            final public class OMJ_Generated_Z implements MethodTrace {
+            private String methodLocation;
+            private int boolean_counter = 0;
+            private boolean boolean_0;
+            public OMJ_Generated_Z(final String methodLocation) {
+            this.methodLocation = methodLocation;
+            }
+            @Override
+            public void set_argument_boolean(final boolean value) {
+            switch (boolean_counter) {
+            case 0: boolean_0 = value;
+            }
+            boolean_counter++;
+            }
+            }
+            """.trimIndent()
+        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod("(Z)V").body)
     }
 
     @Test
@@ -35,11 +52,15 @@ internal class DynamicClassDefinerTest {
         val body = """
             import com.octogonapus.omj.agentlib.MethodTrace;
             final public class OMJ_Generated_IDD implements MethodTrace {
+            private String methodLocation;
             private int double_counter = 0;
             private double double_0;
             private double double_1;
             private int int_counter = 0;
             private int int_0;
+            public OMJ_Generated_IDD(final String methodLocation) {
+            this.methodLocation = methodLocation;
+            }
             @Override
             public void set_argument_double(final double value) {
             switch (double_counter) {
@@ -57,10 +78,7 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-
-                assertEquals(body, DynamicClassDefiner
-                        .generateClassCodeForMethod("(IDD)V").body
-                )
+        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod("(IDD)V").body)
     }
 
     @Test
@@ -68,8 +86,12 @@ internal class DynamicClassDefinerTest {
         val body = """
             import com.octogonapus.omj.agentlib.MethodTrace;
             final public class OMJ_Generated_L implements MethodTrace {
+            private String methodLocation;
             private int Object_counter = 0;
             private Object Object_0;
+            public OMJ_Generated_L(final String methodLocation) {
+            this.methodLocation = methodLocation;
+            }
             @Override
             public void set_argument_Object(final Object value) {
             switch (Object_counter) {
@@ -88,13 +110,16 @@ internal class DynamicClassDefinerTest {
         val body = """
             import com.octogonapus.omj.agentlib.MethodTrace;
             final public class OMJ_Generated_ implements MethodTrace {
+            private String methodLocation;
+            public OMJ_Generated_(final String methodLocation) {
+            this.methodLocation = methodLocation;
+            }
             }
             """.trimIndent()
         assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod("()V)").body)
     }
 
     @Test
-    @Throws(IOException::class)
     fun generateAndCompileBooleanContainer(@TempDir tempDir: File) {
         val file = DynamicClassDefiner(null, tempDir.toPath())
                 .writeToJarFile(DynamicClassDefiner.generateClassCodeForMethod("(B)V"))
@@ -102,22 +127,5 @@ internal class DynamicClassDefinerTest {
         assertTrue(tempDir.toPath().resolve("OMJ_Generated_B.class").toFile().exists())
         assertTrue(tempDir.toPath().resolve("OMJ_Generated_B.jar").toFile().exists())
         assertEquals("OMJ_Generated_B.jar", file.name)
-    }
-
-    companion object {
-        private val booleanBody = """
-            import com.octogonapus.omj.agentlib.MethodTrace;
-            final public class OMJ_Generated_Z implements MethodTrace {
-            private int boolean_counter = 0;
-            private boolean boolean_0;
-            @Override
-            public void set_argument_boolean(final boolean value) {
-            switch (boolean_counter) {
-            case 0: boolean_0 = value;
-            }
-            boolean_counter++;
-            }
-            }
-            """.trimIndent()
     }
 }

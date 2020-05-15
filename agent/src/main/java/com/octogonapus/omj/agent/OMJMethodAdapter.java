@@ -21,9 +21,12 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
 
+  private final Logger logger = LoggerFactory.getLogger(OMJMethodAdapter.class);
   private final DynamicClassDefiner dynamicClassDefiner;
   private final String currentClassSource;
   private final String methodDescriptor;
@@ -53,10 +56,16 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
     super.visitCode();
 
     final String dynamicClassName = dynamicClassDefiner.defineClassForMethod(methodDescriptor);
+    final String methodLocation = packagePrefix + currentClassSource + ":" + currentLineNumber;
 
+    // Make a new instance of the dynamic class we just generated. Pass the method location to it so
+    // that this method can be identified later on. Then start pass the initialized instance to the
+    // agent lib.
     super.visitTypeInsn(NEW, dynamicClassName);
     super.visitInsn(DUP);
-    super.visitMethodInsn(INVOKESPECIAL, dynamicClassName, "<init>", "()V", false);
+    super.visitLdcInsn(methodLocation);
+    super.visitMethodInsn(
+        INVOKESPECIAL, dynamicClassName, "<init>", "(Ljava/lang/String;)V", false);
     super.visitMethodInsn(
         INVOKESTATIC,
         "com/octogonapus/omj/agentlib/OMJAgentLib",
@@ -65,7 +74,7 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
         false);
 
     final Type[] argumentTypes = Type.getArgumentTypes(methodDescriptor);
-    System.out.println("argumentTypes = " + Arrays.toString(argumentTypes));
+    logger.debug("argumentTypes = " + Arrays.toString(argumentTypes));
 
     final int virtualOffset;
 
@@ -87,8 +96,8 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
 
       final String methodName = "methodCall_argument_" + TypeUtil.getClassName(argumentType);
       final String methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V";
-      System.out.println("Generated methodName = " + methodName);
-      System.out.println("Generated methodDesc = " + methodDesc);
+      logger.debug("Generated methodName = " + methodName);
+      logger.debug("Generated methodDesc = " + methodDesc);
 
       super.visitVarInsn(argumentType.getOpcode(ILOAD), i + virtualOffset);
       super.visitMethodInsn(
