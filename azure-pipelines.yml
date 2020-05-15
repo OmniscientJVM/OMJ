@@ -92,7 +92,7 @@ stages:
         vmImage: windows-2019
 
       steps:
-        - bash: wget https://cdn.azul.com/zulu/bin/zulu14.28.21-ca-jdk14.0.1-win_x64.zip
+        - powershell: Invoke-WebRequest https://cdn.azul.com/zulu/bin/zulu14.28.21-ca-jdk14.0.1-win_x64.zip -OutFile zulu14.28.21-ca-jdk14.0.1-win_x64.zip
 
         - task: JavaToolInstaller@0
           inputs:
