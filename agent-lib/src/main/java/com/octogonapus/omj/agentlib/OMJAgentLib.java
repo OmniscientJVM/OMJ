@@ -1,6 +1,7 @@
 package com.octogonapus.omj.agentlib;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("unused")
@@ -14,7 +15,11 @@ final public class OMJAgentLib {
     static {
         System.out.println("OMJ agent-lib loaded.");
 
+        final Semaphore traceProcessorRunning = new Semaphore(1);
+
         final var traceProcessorThread = new Thread(() -> {
+            traceProcessorRunning.acquireUninterruptibly();
+
             while (!Thread.currentThread().isInterrupted()) {
                 final var methodTrace = methodTraceQueue.poll();
                 if (methodTrace != null) {
@@ -28,8 +33,18 @@ final public class OMJAgentLib {
                     Thread.currentThread().interrupt();
                 }
             }
+
+            traceProcessorRunning.release();
         });
-        Runtime.getRuntime().addShutdownHook(new Thread(traceProcessorThread::interrupt));
+
+        traceProcessorThread.setDaemon(true);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            traceProcessorThread.interrupt();
+            // Wait for the trace processor to finish
+            traceProcessorRunning.acquireUninterruptibly();
+        }));
+
         traceProcessorThread.start();
     }
 

@@ -65,7 +65,7 @@ class DynamicClassDefinerTest {
 
     @Test
     void generateAndCompileBooleanContainer(@TempDir final File tempDir) throws IOException {
-        final var file = new DynamicClassDefiner(null, tempDir.toPath()).writeAllToJarFile(
+        final var file = new DynamicClassDefiner(null, tempDir.toPath()).writeToJarFile(
                 DynamicClassDefiner.generateClassCodeForMethod("(B)V"));
         assertTrue(tempDir.toPath().resolve("OMJ_Generated_B.java").toFile().exists());
         assertTrue(tempDir.toPath().resolve("OMJ_Generated_B.class").toFile().exists());

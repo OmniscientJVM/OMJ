@@ -28,6 +28,12 @@ final class DynamicClassDefiner {
         this.cacheDir = cacheDir;
     }
 
+    /**
+     * Ensures that a container class exists for the method. This method is idempotent.
+     *
+     * @param methodDescriptor The method descriptor to generate a class for.
+     * @return The name of the generated class. It will be in the unnamed package.
+     */
     String defineClassForMethod(final String methodDescriptor) {
         final String className = generateClassName(Type.getArgumentTypes(methodDescriptor));
 
@@ -36,7 +42,7 @@ final class DynamicClassDefiner {
             final var dynamicClass = generateClassCodeForMethod(methodDescriptor);
 
             try {
-                instrumentation.appendToSystemClassLoaderSearch(new JarFile(writeAllToJarFile(
+                instrumentation.appendToSystemClassLoaderSearch(new JarFile(writeToJarFile(
                         dynamicClass)));
             } catch (IOException e) {
                 // This is a total system failure because the instrumented code needs this class
@@ -51,8 +57,15 @@ final class DynamicClassDefiner {
         return className;
     }
 
+    /**
+     * Compiles the generated class and puts it into a Jar file. Meant for internal use; you
+     * should call {@link #defineClassForMethod(String)} instead.
+     *
+     * @param dynamicClass The generated class to compile and put into a Jar file.
+     * @return The Jar file.
+     */
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    File writeAllToJarFile(final DynamicClass dynamicClass) throws IOException {
+    File writeToJarFile(final DynamicClass dynamicClass) throws IOException {
         final var jarFile = cacheDir.resolve(dynamicClass.name + ".jar").toFile();
         jarFile.deleteOnExit();
         jarFile.delete();
@@ -93,6 +106,12 @@ final class DynamicClassDefiner {
         return jarFile;
     }
 
+    /**
+     * Generates the code to define a container class for a method.
+     *
+     * @param methodDescriptor The method descriptor.
+     * @return The {@link DynamicClass} matching the method.
+     */
     static DynamicClass generateClassCodeForMethod(final String methodDescriptor) {
         // TODO: Also generate serialization code
         final var argumentTypes = Type.getArgumentTypes(methodDescriptor);
@@ -172,11 +191,11 @@ final class DynamicClassDefiner {
         return classNameBuilder.toString();
     }
 
-    static class DynamicClass {
+    private static class DynamicClass {
         String name;
         String body;
 
-        DynamicClass(final String name, final String body) {
+        private DynamicClass(final String name, final String body) {
             this.name = name;
             this.body = body;
         }
