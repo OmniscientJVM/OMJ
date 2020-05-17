@@ -14,13 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.agent;
+package com.octogonapus.omj.util;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-final class Util {
+public final class Util {
 
   /** The directory OMJ keeps all its data in. */
-  static final Path cacheDir = Paths.get(System.getProperty("user.home"), ".OMJ");
+  public static final Path cacheDir = Paths.get(System.getProperty("user.home"), ".OMJ");
 }

@@ -19,26 +19,31 @@ package com.octogonapus.omj.agentlib;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 
-@SuppressWarnings("unused")
-public interface MethodTrace {
+public class MethodTraceImpl implements MethodTrace {
 
-  default void set_argument_boolean(final boolean value) {}
+  private String methodLocation;
+  private int Object_counter = 0;
+  private Object Object_0;
 
-  default void set_argument_char(final char value) {}
+  public MethodTraceImpl(final String methodLocation) {
+    this.methodLocation = methodLocation;
+  }
 
-  default void set_argument_byte(final byte value) {}
+  @Override
+  public void set_argument_Object(final Object value) {
+    switch (Object_counter) {
+      case 0:
+        Object_0 = value;
+    }
+    Object_counter++;
+  }
 
-  default void set_argument_short(final short value) {}
-
-  default void set_argument_int(final int value) {}
-
-  default void set_argument_float(final float value) {}
-
-  default void set_argument_long(final long value) {}
-
-  default void set_argument_double(final double value) {}
-
-  default void set_argument_Object(final Object value) {}
-
-  void serialize(final BufferedOutputStream outputStream) throws IOException;
+  @Override
+  public void serialize(final BufferedOutputStream outputStream) throws IOException {
+    // { M Object <Object ref>
+    outputStream.write('{');
+    outputStream.write('M');
+    outputStream.write('L');
+    outputStream.write(System.identityHashCode(Object_0));
+  }
 }

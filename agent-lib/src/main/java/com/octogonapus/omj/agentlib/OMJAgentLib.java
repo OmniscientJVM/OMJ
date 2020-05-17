@@ -16,6 +16,10 @@
  */
 package com.octogonapus.omj.agentlib;
 
+import com.octogonapus.omj.util.Util;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,8 +33,6 @@ public final class OMJAgentLib {
       new ConcurrentLinkedQueue<>();
 
   static {
-    System.out.println("OMJ agent-lib loaded.");
-
     final Semaphore traceProcessorRunning = new Semaphore(1);
 
     final var traceProcessorThread =
@@ -38,18 +40,21 @@ public final class OMJAgentLib {
             () -> {
               traceProcessorRunning.acquireUninterruptibly();
 
-              while (!Thread.currentThread().isInterrupted()) {
-                final var methodTrace = methodTraceQueue.poll();
-                if (methodTrace != null) {
-                  System.out.println("methodTrace = " + methodTrace);
-                }
+              // TODO: This should probably use a memory-mapped file
+              final var traceFile =
+                  Util.cacheDir.resolve("trace_" + System.currentTimeMillis() + ".trace");
+              try (final var os = new BufferedOutputStream(Files.newOutputStream(traceFile))) {
+                loopWriteTraces(os);
+                os.flush();
+              } catch (IOException e) {
+                e.printStackTrace();
+                System.err.println(
+                    "OMJ Agent-lib could not open the trace file " + traceFile.toString());
 
-                // TODO: Don't busy-wait here
-                try {
-                  Thread.sleep(1);
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                }
+                // Need to release this here because System.exit does not return, so this is our
+                // only chance to release the semaphore for the shutdown hook that will run later.
+                traceProcessorRunning.release();
+                System.exit(1);
               }
 
               traceProcessorRunning.release();
@@ -62,15 +67,35 @@ public final class OMJAgentLib {
             new Thread(
                 () -> {
                   traceProcessorThread.interrupt();
-                  // Wait for the trace processor to finish
+
+                  // Wait for the trace processor to finish so data is flushed out
                   traceProcessorRunning.acquireUninterruptibly();
                 }));
 
     traceProcessorThread.start();
   }
 
+  private static void loopWriteTraces(final BufferedOutputStream os) {
+    while (!Thread.currentThread().isInterrupted()) {
+      final var methodTrace = methodTraceQueue.poll();
+      if (methodTrace != null) {
+        try {
+          methodTrace.serialize(os);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+      // TODO: Don't busy-wait here
+      try {
+        Thread.sleep(1);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
   public static void methodCall_start(final MethodTrace methodTrace) {
-    System.out.println("OMJAgentLib.methodCall_start");
     currentMethodTrace.set(methodTrace);
   }
 

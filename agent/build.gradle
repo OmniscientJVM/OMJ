@@ -16,19 +16,28 @@ repositories {
 }
 
 dependencies {
+    // Kotlin
     implementation group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: property("kotlin.version")
     implementation group: "org.jetbrains.kotlin", name: "kotlin-reflect", version: property("kotlin.version")
 
+    // Bytecode instrumentation
     implementation group: "org.ow2.asm", name: "asm", version: property("asm.version")
     implementation group: "org.ow2.asm", name: "asm-util", version: property("asm.version")
     implementation group: "net.bytebuddy", name: "byte-buddy", version: property("byte-buddy.version")
-    implementation project(":agent-lib")
 
+    // Other projects
+    implementation(project(":agent-lib"))
+    implementation(project(":util"))
+
+    // Logging
     implementation group: "org.slf4j", name: "slf4j-log4j12", version: property("slf4j-log4j12.version")
     runtimeOnly group: "log4j", name: "apache-log4j-extras", version: property("apache-log4j-extras.version")
 
+    // JUnit
     testImplementation group: "org.junit.jupiter", name: "junit-jupiter-api", version: property("junit.version")
     testImplementation group: "org.junit.jupiter", name: "junit-jupiter-engine", version: property("junit.version")
+
+    // Need the agent (yes, THIS project) shadow jar at runtime to dynamically load the agent-lib
     testRuntime project(path: ":agent", configuration: "shadow")
 }
 
