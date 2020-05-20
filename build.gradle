@@ -114,5 +114,5 @@ apply from: "gradle/jacocoRootReport.gradle.kts"
 
 wrapper {
     distributionType = Wrapper.DistributionType.ALL
-    version = "6.4"
+    version = "6.4.1"
 }

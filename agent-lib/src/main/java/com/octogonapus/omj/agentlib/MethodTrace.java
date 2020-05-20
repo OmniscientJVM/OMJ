@@ -16,29 +16,40 @@
  */
 package com.octogonapus.omj.agentlib;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 @SuppressWarnings("unused")
-public interface MethodTrace {
+public abstract class MethodTrace {
 
-  default void set_argument_boolean(final boolean value) {}
+  protected long index;
+  protected final String methodLocation;
 
-  default void set_argument_char(final char value) {}
+  public MethodTrace(final String methodLocation) {
+    this.methodLocation = methodLocation;
+  }
 
-  default void set_argument_byte(final byte value) {}
+  public void setIndex(final long index) {
+    this.index = index;
+  }
 
-  default void set_argument_short(final short value) {}
+  public void set_argument_boolean(final boolean value) {}
 
-  default void set_argument_int(final int value) {}
+  public void set_argument_char(final char value) {}
 
-  default void set_argument_float(final float value) {}
+  public void set_argument_byte(final byte value) {}
 
-  default void set_argument_long(final long value) {}
+  public void set_argument_short(final short value) {}
 
-  default void set_argument_double(final double value) {}
+  public void set_argument_int(final int value) {}
 
-  default void set_argument_Object(final Object value) {}
+  public void set_argument_float(final float value) {}
 
-  void serialize(final BufferedOutputStream outputStream) throws IOException;
+  public void set_argument_long(final long value) {}
+
+  public void set_argument_double(final double value) {}
+
+  public void set_argument_Object(final Object value) {}
+
+  public abstract void serialize(final OutputStream outputStream) throws IOException;
 }

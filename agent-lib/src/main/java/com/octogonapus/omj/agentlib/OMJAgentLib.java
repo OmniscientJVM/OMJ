@@ -22,12 +22,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @SuppressWarnings("unused")
 public final class OMJAgentLib {
 
-  private static final AtomicInteger methodCounter = new AtomicInteger(0);
+  private static final AtomicLong methodCounter = new AtomicLong(0);
   private static final ThreadLocal<MethodTrace> currentMethodTrace = new ThreadLocal<>();
   private static final ConcurrentLinkedQueue<MethodTrace> methodTraceQueue =
       new ConcurrentLinkedQueue<>();
@@ -96,6 +96,7 @@ public final class OMJAgentLib {
   }
 
   public static void methodCall_start(final MethodTrace methodTrace) {
+    methodTrace.setIndex(methodCounter.getAndIncrement());
     currentMethodTrace.set(methodTrace);
   }
 

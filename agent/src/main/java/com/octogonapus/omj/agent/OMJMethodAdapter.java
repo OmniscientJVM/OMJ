@@ -94,7 +94,7 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
     for (int i = 0; i < argumentTypes.length; i++) {
       final Type argumentType = argumentTypes[i];
 
-      final String methodName = "methodCall_argument_" + TypeUtil.getClassName(argumentType);
+      final String methodName = "methodCall_argument_" + TypeUtil.getAdaptedClassName(argumentType);
       final String methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V";
       logger.debug("Generated methodName = " + methodName);
       logger.debug("Generated methodDesc = " + methodDesc);

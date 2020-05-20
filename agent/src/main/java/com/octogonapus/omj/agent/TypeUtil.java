@@ -21,20 +21,22 @@ import org.objectweb.asm.Type;
 
 final class TypeUtil {
 
-  static int getAdaptedSort(final Type type) {
-    final int sort = type.getSort();
-    switch (sort) {
-      case 0:
-      case 11:
-      case 12:
-        throw new IllegalStateException("Cannot handle sort: " + sort);
-      case 9:
-        return 10;
-      default:
-        return sort;
-    }
+  enum SimpleType {
+    VOID,
+    BOOLEAN,
+    CHAR,
+    BYTE,
+    SHORT,
+    INT,
+    FLOAT,
+    LONG,
+    DOUBLE,
+    REFERENCE;
+
+    String className;
   }
 
+  /** @return A type descriptor where all references are {@code Ljava/lang/Object;}. */
   static String getAdaptedDescriptor(final Type type) {
     final char shortDesc = Parser.parseFieldDescriptor(type.getDescriptor());
     switch (shortDesc) {
@@ -45,11 +47,80 @@ final class TypeUtil {
     }
   }
 
-  static char getShortenedDescriptor(final Type type) {
+  /** @return A single-byte type descriptor. */
+  static byte getDescriptorByte(final Type type) {
+    return (byte) Parser.parseFieldDescriptor(type.getDescriptor());
+  }
+
+  /** @return A type descriptor character. */
+  static char getDescriptorChar(final Type type) {
     return Parser.parseFieldDescriptor(type.getDescriptor());
   }
 
-  static String getClassName(final Type type) {
+  /** @return A type descriptor character. */
+  static char getDescriptorChar(final SimpleType type) {
+    switch (type) {
+      case VOID:
+        return 'V';
+      case BOOLEAN:
+        return 'Z';
+      case BYTE:
+        return 'B';
+      case CHAR:
+        return 'C';
+      case SHORT:
+        return 'S';
+      case INT:
+        return 'I';
+      case FLOAT:
+        return 'F';
+      case LONG:
+        return 'J';
+      case DOUBLE:
+        return 'D';
+      default:
+        return 'L';
+    }
+  }
+
+  /** @return A single-byte type descriptor. */
+  static byte getDescriptorByte(final SimpleType type) {
+    return (byte) getDescriptorChar(type);
+  }
+
+  /** @return The {@link SimpleType} version of the {@link Type}. */
+  static SimpleType getSimpleType(final Type type) {
+    switch (type.getSort()) {
+      case Type.VOID:
+        return SimpleType.VOID;
+      case Type.BOOLEAN:
+        return SimpleType.BOOLEAN;
+      case Type.CHAR:
+        return SimpleType.CHAR;
+      case Type.BYTE:
+        return SimpleType.BYTE;
+      case Type.SHORT:
+        return SimpleType.SHORT;
+      case Type.INT:
+        return SimpleType.INT;
+      case Type.FLOAT:
+        return SimpleType.FLOAT;
+      case Type.LONG:
+        return SimpleType.LONG;
+      case Type.DOUBLE:
+        return SimpleType.DOUBLE;
+      default:
+        final SimpleType reference = SimpleType.REFERENCE;
+        reference.className = type.getClassName();
+        return reference;
+    }
+  }
+
+  /**
+   * @return The class name of the {@link Type} where all references (objects and arrays) are {@code
+   *     Object}.
+   */
+  static String getAdaptedClassName(final Type type) {
     switch (type.getSort()) {
       case Type.VOID:
         return "void";
@@ -71,6 +142,58 @@ final class TypeUtil {
         return "double";
       default:
         return "Object";
+    }
+  }
+
+  /**
+   * @return The class name of the {@link SimpleType} where all references (objects and arrays) are
+   *     {@code Object}.
+   */
+  static String getAdaptedClassName(final SimpleType type) {
+    switch (type) {
+      case VOID:
+        return "void";
+      case BOOLEAN:
+        return "boolean";
+      case CHAR:
+        return "char";
+      case BYTE:
+        return "byte";
+      case SHORT:
+        return "short";
+      case INT:
+        return "int";
+      case FLOAT:
+        return "float";
+      case LONG:
+        return "long";
+      case DOUBLE:
+        return "double";
+      default:
+        return "Object";
+    }
+  }
+
+  /** @return The number of bytes required to store the type in a trace. */
+  static int getLengthOfTypeForTrace(final SimpleType type) {
+    switch (type) {
+      case VOID:
+        return 0;
+      case BOOLEAN:
+      case BYTE:
+        return 1;
+      case CHAR:
+      case SHORT:
+        return 2;
+      case INT:
+      case FLOAT:
+        return 4;
+      case LONG:
+      case DOUBLE:
+        return 8;
+      default:
+        // Length of the null-terminated string of the class name plus an int
+        return type.className.getBytes().length + 1 + 4;
     }
   }
 }
