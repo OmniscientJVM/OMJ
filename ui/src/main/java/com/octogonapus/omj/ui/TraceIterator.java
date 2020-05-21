@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 
 public class TraceIterator implements Iterator<Trace>, AutoCloseable {
@@ -69,36 +68,26 @@ public class TraceIterator implements Iterator<Trace>, AutoCloseable {
             | Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16) << 48
             | Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16) << 56;
 
-    final int remainingLength =
-        Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16)
-            | Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16) << 8
-            | Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16) << 16
-            | Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16) << 24;
-    logger.debug("remainingLength={}", remainingLength);
-
     final byte type = (byte) Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16);
     if (type == 0x2) {
-      // Minus 1 because we read the type
-      return parseMethodTrace(index, remainingLength - 1);
+      return parseMethodTrace(index);
     } else {
       throw new UnsupportedOperationException("Unknown trace type: " + type);
     }
   }
 
-  private Trace parseMethodTrace(final long index, final int remainingLength) throws IOException {
-    int totalBytesRead = 0;
-
+  private Trace parseMethodTrace(final long index) throws IOException {
     // Parse location
-    final var parsedLocation = parseString(totalBytesRead, remainingLength);
-    totalBytesRead += parsedLocation.bytesRead;
-    final var location = parsedLocation.string;
+    final var location = parseString();
+
+    // Parse number of arguments
+    final byte numArguments = (byte) Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16);
 
     // Parse arguments
     final var arguments = new ArrayList<MethodArgument>();
-    while (totalBytesRead < remainingLength) {
+    for (int i = 0; i < numArguments; i++) {
       final byte typeByte = (byte) traceStream.read();
       final SimpleTypeUtil.SimpleType type = SimpleTypeUtil.getSimpleTypeFromDescriptorByte(typeByte);
-      totalBytesRead++;
 
       logger.debug("Parsed type {} from {}", type, Integer.toHexString(typeByte));
 
@@ -106,21 +95,17 @@ public class TraceIterator implements Iterator<Trace>, AutoCloseable {
         // Need to treat references specially here because SimpleTypeUtil.getLengthOfTypeForTrace
         // tries to compute the length based on the class name, which is not present until we parse
         // it right here.
-        final var parsedClassType = parseString(totalBytesRead, remainingLength);
-        totalBytesRead += parsedClassType.bytesRead;
-        final String classType = parsedClassType.string;
+        final String classType = parseString();
 
         final String hashCode =
             Integer.toHexString(traceStream.read()) + Integer.toHexString(traceStream.read()) +
             Integer.toHexString(traceStream.read()) + Integer.toHexString(traceStream.read());
-        totalBytesRead += 4;
 
         arguments.add(new MethodArgument(classType, hashCode));
       } else {
         // Can use SimpleTypeUtil.getLengthOfTypeForTrace for the rest
         final int length = SimpleTypeUtil.getLengthOfTypeForTrace(type);
         final var valueBytes = traceStream.readNBytes(length);
-        totalBytesRead += length;
 
         arguments.add(new MethodArgument(SimpleTypeUtil.getAdaptedClassName(type),
                                          parsePrimitiveBytesToString(type, valueBytes)));
@@ -130,18 +115,11 @@ public class TraceIterator implements Iterator<Trace>, AutoCloseable {
     return new MethodTrace(index, location, arguments);
   }
 
-  private ParsedString parseString(final int initialTotalBytesRead,
-                                   final int remainingLength) throws IOException {
-    int newTotalBytesRead = initialTotalBytesRead;
+  private String parseString() throws IOException {
     final var builder = new StringBuilder();
 
     while (true) {
-      if (newTotalBytesRead >= remainingLength) {
-        throw new IllegalStateException("Unexpected end of stream.");
-      }
-
       final int read = traceStream.read();
-      newTotalBytesRead++;
 
       // Look for null terminating character
       if (read == 0) {
@@ -151,7 +129,7 @@ public class TraceIterator implements Iterator<Trace>, AutoCloseable {
       builder.append((char) read);
     }
 
-    return new ParsedString(builder.toString(), newTotalBytesRead - initialTotalBytesRead);
+    return builder.toString();
   }
 
   private String parsePrimitiveBytesToString(final SimpleTypeUtil.SimpleType type,
@@ -161,22 +139,22 @@ public class TraceIterator implements Iterator<Trace>, AutoCloseable {
         return bytes[0] == 0x1 ? "true" : "false";
       }
       case CHAR -> {
-        final char c = (char) ((char) bytes[0] |
-                               ((char) (bytes[1] << 8)));
+        final char c = (char) (Byte.parseByte(Integer.toHexString(bytes[0]), 16) |
+                               Byte.parseByte(Integer.toHexString(bytes[1]), 16) << 8);
         return "" + c;
       }
       case BYTE -> {
         return "" + Integer.parseInt(Integer.toHexString(bytes[0]), 16);
       }
       case SHORT -> {
-        return "" + (Short.parseShort(Integer.toHexString(bytes[0])) |
-                     Short.parseShort(Integer.toHexString(bytes[1])) << 8);
+        return "" + (Short.parseShort(Integer.toHexString(bytes[0]), 16) |
+                     Short.parseShort(Integer.toHexString(bytes[1]), 16) << 8);
       }
       case INT -> {
-        return "" + (Integer.parseInt(Integer.toHexString(bytes[0])) |
-                     Integer.parseInt(Integer.toHexString(bytes[1])) << 8 |
-                     Integer.parseInt(Integer.toHexString(bytes[2])) << 16 |
-                     Integer.parseInt(Integer.toHexString(bytes[3])) << 24);
+        return "" + (Integer.parseInt(Integer.toHexString(bytes[0]), 16) |
+                     Integer.parseInt(Integer.toHexString(bytes[1]), 16) << 8 |
+                     Integer.parseInt(Integer.toHexString(bytes[2]), 16) << 16 |
+                     Integer.parseInt(Integer.toHexString(bytes[3]), 16) << 24);
       }
       case FLOAT -> {
         return "";
@@ -201,15 +179,5 @@ public class TraceIterator implements Iterator<Trace>, AutoCloseable {
   @Override
   public void close() throws Exception {
     traceStream.close();
-  }
-
-  private static class ParsedString {
-    String string;
-    int bytesRead;
-
-    public ParsedString(final String string, final int bytesRead) {
-      this.string = string;
-      this.bytesRead = bytesRead;
-    }
   }
 }

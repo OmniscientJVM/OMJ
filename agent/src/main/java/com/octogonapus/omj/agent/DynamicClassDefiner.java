@@ -24,8 +24,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -163,7 +163,7 @@ final class DynamicClassDefiner {
     final String className = generateClassName(argumentTypes);
 
     // Sum the number of times each argument type appears in the method
-    final Map<Integer, Integer> typeClassNameCounts = new HashMap<>();
+    final Map<Integer, Integer> typeClassNameCounts = new LinkedHashMap<>();
     for (final Type type : argumentTypes) {
       typeClassNameCounts.merge(type.getSort(), 1, Integer::sum);
     }
@@ -300,23 +300,19 @@ final class DynamicClassDefiner {
                        SimpleTypeUtil.getLengthOfTypeForTrace(SimpleTypeUtil.SimpleType.LONG),
                        builder);
 
-    // Calculate the remaining length of the trace. 1 byte for the trace type, a variable length for
-    // the method location, and a variable length for each generated field.
-    builder.append("final byte[] methodLocationBytes = methodLocation.getBytes();\n");
-    builder
-        .append("final int remainingLength = methodLocationBytes.length + 2 + ")
-        .append(snippets.stream().mapToInt(DynamicClassDefiner::getLengthOfArgumentFields).sum())
-        .append(";\n");
-    appendValueAsBytes("remainingLength",
-                       SimpleTypeUtil.getLengthOfTypeForTrace(SimpleTypeUtil.SimpleType.INT),
-                       builder);
-
     // Method trace identifier
     builder.append("outputStream.write(0x2);\n");
 
     // Location
-    builder.append("outputStream.write(methodLocationBytes);\n");
+    builder.append("outputStream.write(methodLocation.getBytes());\n");
     builder.append("outputStream.write(0);\n");
+
+    // Number of arguments
+    final int numberOfArguments = snippets.stream().mapToInt(snippet -> snippet.argumentFields.size()).sum();
+    if (numberOfArguments > 0xFF) {
+      throw new IllegalStateException("Too many arguments to pack into one byte: " + numberOfArguments);
+    }
+    builder.append("outputStream.write(").append(numberOfArguments).append(");\n");
 
     // Type and value for each method argument
     for (final var snippet : snippets) {
@@ -342,16 +338,6 @@ final class DynamicClassDefiner {
         .append(SimpleTypeUtil.getDescriptorChar(field.type))
         .append("');\n");
     appendFieldValue(field, builder);
-  }
-
-  /**
-   * Calculates the length (in bytes) of all the argument fields in the snippet.
-   */
-  private static int getLengthOfArgumentFields(final GeneratedSnippet snippet) {
-    return snippet.argumentFields.stream()
-        // 1 byte for the type plus the bytes for the value
-        .mapToInt(field -> 1 + SimpleTypeUtil.getLengthOfTypeForTrace(field.type))
-        .sum();
   }
 
   /**
