@@ -351,8 +351,16 @@ final class DynamicClassDefiner {
       case VOID -> throw new IllegalStateException("Somehow got a field with type void.");
       case BOOLEAN ->
           builder.append("outputStream.write(").append(field.name).append(" ? 1 : 0);\n");
-      case CHAR, DOUBLE, LONG, FLOAT, INT, SHORT, BYTE ->
+      case CHAR, LONG, INT, SHORT, BYTE ->
           appendValueAsBytes(field.name, SimpleTypeUtil.getLengthOfTypeForTrace(field.type), builder);
+      case DOUBLE -> {
+        builder.append("final long ").append(field.name).append("_l = Double.doubleToRawLongBits(").append(field.name).append(");\n");
+        appendValueAsBytes(field.name + "_l", 8, builder);
+      }
+      case FLOAT -> {
+        builder.append("final int ").append(field.name).append("_l = Float.floatToRawIntBits(").append(field.name).append(");\n");
+        appendValueAsBytes(field.name + "_l", 4, builder);
+      }
       case REFERENCE -> {
         builder.append("outputStream.write(")
             .append(field.name)
@@ -382,11 +390,11 @@ final class DynamicClassDefiner {
   private static void appendValueAsBytes(final String varName, final int bytes, final StringBuilder builder) {
     for (int i = 0; i < bytes; i++) {
       builder
-          .append("outputStream.write((byte) (")
+          .append("outputStream.write((byte) ((")
           .append(varName)
           .append(" >> ")
           .append(i * 8)
-          .append("));\n");
+          .append(") & 0xFF));\n");
     }
   }
 

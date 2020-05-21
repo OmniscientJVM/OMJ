@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -157,20 +159,42 @@ public class TraceIterator implements Iterator<Trace>, AutoCloseable {
                      Integer.parseInt(Integer.toHexString(bytes[3]), 16) << 24);
       }
       case FLOAT -> {
-        return "";
+        return "" + ByteBuffer.allocate(4)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .put(bytes[0])
+            .put(bytes[1])
+            .put(bytes[2])
+            .put(bytes[3])
+            .rewind()
+            .getFloat();
       }
       case LONG -> {
-        return "" + (Long.parseUnsignedLong(Long.toHexString(bytes[0]), 16)
-                     | Long.parseUnsignedLong(Long.toHexString(bytes[1]), 16) << 8
-                     | Long.parseUnsignedLong(Long.toHexString(bytes[2]), 16) << 16
-                     | Long.parseUnsignedLong(Long.toHexString(bytes[3]), 16) << 24
-                     | Long.parseUnsignedLong(Long.toHexString(bytes[4]), 16) << 32
-                     | Long.parseUnsignedLong(Long.toHexString(bytes[5]), 16) << 40
-                     | Long.parseUnsignedLong(Long.toHexString(bytes[6]), 16) << 48
-                     | Long.parseUnsignedLong(Long.toHexString(bytes[7]), 16) << 56);
+        return "" + ByteBuffer.allocate(8)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .put(bytes[0])
+            .put(bytes[1])
+            .put(bytes[2])
+            .put(bytes[3])
+            .put(bytes[4])
+            .put(bytes[5])
+            .put(bytes[6])
+            .put(bytes[7])
+            .rewind()
+            .getLong();
       }
       case DOUBLE -> {
-        return "";
+        return "" + ByteBuffer.allocate(8)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .put(bytes[0])
+            .put(bytes[1])
+            .put(bytes[2])
+            .put(bytes[3])
+            .put(bytes[4])
+            .put(bytes[5])
+            .put(bytes[6])
+            .put(bytes[7])
+            .rewind()
+            .getDouble();
       }
       default -> throw new IllegalArgumentException("Can't parse " + type + " into a primitive.");
     }
