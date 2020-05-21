@@ -28,10 +28,7 @@ dependencies {
     // Other projects
     implementation(project(":agent-lib"))
     implementation(project(":util"))
-
-    // Logging
-    implementation group: "org.slf4j", name: "slf4j-log4j12", version: property("slf4j-log4j12.version")
-    runtimeOnly group: "log4j", name: "apache-log4j-extras", version: property("apache-log4j-extras.version")
+    implementation(project(":logging"))
 
     // JUnit
     testImplementation group: "org.junit.jupiter", name: "junit-jupiter-api", version: property("junit.version")
@@ -70,17 +67,17 @@ jar {
     }
 }
 
-def agentLibName = "agent-lib-all"
-def agentLibAllResource = buildDir.toPath().resolve(agentLibName)
+def agentLibJarName = "agent-lib-all"
+def agentLibAllJarResource = buildDir.toPath().resolve(agentLibJarName)
 
 def copyAgentLibShadowJarTask = task("copyAgentLibShadowJar", type: Copy) {
     dependsOn(":agent-lib:shadowJar")
     from({ project(":agent-lib").tasks.named("shadowJar") })
     into(buildDir)
-    rename { agentLibName }
+    rename { agentLibJarName }
 }
 
 shadowJar {
     dependsOn(copyAgentLibShadowJarTask)
-    from({ agentLibAllResource })
+    from({ agentLibAllJarResource })
 }

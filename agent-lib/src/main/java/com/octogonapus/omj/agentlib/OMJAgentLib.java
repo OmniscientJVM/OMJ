@@ -19,6 +19,7 @@ package com.octogonapus.omj.agentlib;
 import com.octogonapus.omj.util.Util;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
@@ -75,7 +76,7 @@ public final class OMJAgentLib {
     traceProcessorThread.start();
   }
 
-  private static void loopWriteTraces(final BufferedOutputStream os) {
+  private static void loopWriteTraces(final OutputStream os) {
     while (!Thread.currentThread().isInterrupted()) {
       final var methodTrace = methodTraceQueue.poll();
       if (methodTrace != null) {
@@ -93,6 +94,15 @@ public final class OMJAgentLib {
         Thread.currentThread().interrupt();
       }
     }
+
+    methodTraceQueue.forEach(
+        methodTrace -> {
+          try {
+            methodTrace.serialize(os);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        });
   }
 
   public static void methodCall_start(final MethodTrace methodTrace) {

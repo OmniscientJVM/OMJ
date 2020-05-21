@@ -81,6 +81,7 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
           currentClassName,
           currentClassSource,
           descriptor,
+          name,
           isStatic);
     } else {
       return visitor;

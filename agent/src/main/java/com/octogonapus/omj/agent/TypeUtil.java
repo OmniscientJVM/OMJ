@@ -17,24 +17,10 @@
 package com.octogonapus.omj.agent;
 
 import com.octogonapus.omj.agent.parser.Parser;
+import com.octogonapus.omj.util.SimpleTypeUtil;
 import org.objectweb.asm.Type;
 
 final class TypeUtil {
-
-  enum SimpleType {
-    VOID,
-    BOOLEAN,
-    CHAR,
-    BYTE,
-    SHORT,
-    INT,
-    FLOAT,
-    LONG,
-    DOUBLE,
-    REFERENCE;
-
-    String className;
-  }
 
   /** @return A type descriptor where all references are {@code Ljava/lang/Object;}. */
   static String getAdaptedDescriptor(final Type type) {
@@ -57,60 +43,32 @@ final class TypeUtil {
     return Parser.parseFieldDescriptor(type.getDescriptor());
   }
 
-  /** @return A type descriptor character. */
-  static char getDescriptorChar(final SimpleType type) {
-    switch (type) {
-      case VOID:
-        return 'V';
-      case BOOLEAN:
-        return 'Z';
-      case BYTE:
-        return 'B';
-      case CHAR:
-        return 'C';
-      case SHORT:
-        return 'S';
-      case INT:
-        return 'I';
-      case FLOAT:
-        return 'F';
-      case LONG:
-        return 'J';
-      case DOUBLE:
-        return 'D';
-      default:
-        return 'L';
-    }
-  }
-
-  /** @return A single-byte type descriptor. */
-  static byte getDescriptorByte(final SimpleType type) {
-    return (byte) getDescriptorChar(type);
-  }
-
-  /** @return The {@link SimpleType} version of the {@link Type}. */
-  static SimpleType getSimpleType(final Type type) {
+  /**
+   * @return The {@link com.octogonapus.omj.util.SimpleTypeUtil.SimpleType} version of the {@link
+   *     Type}.
+   */
+  static SimpleTypeUtil.SimpleType getSimpleType(final Type type) {
     switch (type.getSort()) {
       case Type.VOID:
-        return SimpleType.VOID;
+        return SimpleTypeUtil.SimpleType.VOID;
       case Type.BOOLEAN:
-        return SimpleType.BOOLEAN;
+        return SimpleTypeUtil.SimpleType.BOOLEAN;
       case Type.CHAR:
-        return SimpleType.CHAR;
+        return SimpleTypeUtil.SimpleType.CHAR;
       case Type.BYTE:
-        return SimpleType.BYTE;
+        return SimpleTypeUtil.SimpleType.BYTE;
       case Type.SHORT:
-        return SimpleType.SHORT;
+        return SimpleTypeUtil.SimpleType.SHORT;
       case Type.INT:
-        return SimpleType.INT;
+        return SimpleTypeUtil.SimpleType.INT;
       case Type.FLOAT:
-        return SimpleType.FLOAT;
+        return SimpleTypeUtil.SimpleType.FLOAT;
       case Type.LONG:
-        return SimpleType.LONG;
+        return SimpleTypeUtil.SimpleType.LONG;
       case Type.DOUBLE:
-        return SimpleType.DOUBLE;
+        return SimpleTypeUtil.SimpleType.DOUBLE;
       default:
-        final SimpleType reference = SimpleType.REFERENCE;
+        final SimpleTypeUtil.SimpleType reference = SimpleTypeUtil.SimpleType.REFERENCE;
         reference.className = type.getClassName();
         return reference;
     }
@@ -142,58 +100,6 @@ final class TypeUtil {
         return "double";
       default:
         return "Object";
-    }
-  }
-
-  /**
-   * @return The class name of the {@link SimpleType} where all references (objects and arrays) are
-   *     {@code Object}.
-   */
-  static String getAdaptedClassName(final SimpleType type) {
-    switch (type) {
-      case VOID:
-        return "void";
-      case BOOLEAN:
-        return "boolean";
-      case CHAR:
-        return "char";
-      case BYTE:
-        return "byte";
-      case SHORT:
-        return "short";
-      case INT:
-        return "int";
-      case FLOAT:
-        return "float";
-      case LONG:
-        return "long";
-      case DOUBLE:
-        return "double";
-      default:
-        return "Object";
-    }
-  }
-
-  /** @return The number of bytes required to store the type in a trace. */
-  static int getLengthOfTypeForTrace(final SimpleType type) {
-    switch (type) {
-      case VOID:
-        return 0;
-      case BOOLEAN:
-      case BYTE:
-        return 1;
-      case CHAR:
-      case SHORT:
-        return 2;
-      case INT:
-      case FLOAT:
-        return 4;
-      case LONG:
-      case DOUBLE:
-        return 8;
-      default:
-        // Length of the null-terminated string of the class name plus an int
-        return type.className.getBytes().length + 1 + 4;
     }
   }
 }

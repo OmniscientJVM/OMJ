@@ -17,7 +17,6 @@
 package com.octogonapus.omj.agent;
 
 import java.util.Arrays;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -30,7 +29,7 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
   private final DynamicClassDefiner dynamicClassDefiner;
   private final String currentClassSource;
   private final String methodDescriptor;
-  private int currentLineNumber;
+  private final String methodName;
   private final String packagePrefix;
   private final boolean isStatic;
 
@@ -41,6 +40,7 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
       final String currentClassName,
       final String currentClassSource,
       final String methodDescriptor,
+      final String methodName,
       final boolean isStatic) {
     super(api, methodVisitor);
     this.dynamicClassDefiner = dynamicClassDefiner;
@@ -48,6 +48,7 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
     this.methodDescriptor = methodDescriptor;
     packagePrefix =
         currentClassName.substring(0, currentClassName.lastIndexOf('/') + 1).replace('/', '.');
+    this.methodName = methodName;
     this.isStatic = isStatic;
   }
 
@@ -55,8 +56,9 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
   public void visitCode() {
     super.visitCode();
 
-    final String dynamicClassName = dynamicClassDefiner.defineClassForMethod(methodDescriptor);
-    final String methodLocation = packagePrefix + currentClassSource + ":" + currentLineNumber;
+    final String dynamicClassName =
+        dynamicClassDefiner.defineClassForMethod(methodDescriptor, isStatic);
+    final String methodLocation = packagePrefix + currentClassSource + ':' + methodName;
 
     // Make a new instance of the dynamic class we just generated. Pass the method location to it so
     // that this method can be identified later on. Then start pass the initialized instance to the
@@ -106,12 +108,6 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
 
     super.visitMethodInsn(
         INVOKESTATIC, "com/octogonapus/omj/agentlib/OMJAgentLib", "methodCall_end", "()V", false);
-  }
-
-  @Override
-  public void visitLineNumber(final int line, final Label start) {
-    super.visitLineNumber(line, start);
-    currentLineNumber = line;
   }
 
   @Override

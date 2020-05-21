@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.objectweb.asm.Type
 
 internal class DynamicClassDefinerTest {
 
@@ -45,16 +46,19 @@ internal class DynamicClassDefinerTest {
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
             $methodLocationBytes
-            final int remainingLength = 1 + methodLocationBytes.length + 2;
+            final int remainingLength = methodLocationBytes.length + 2 + 2;
             $appendRemainingLength
             outputStream.write(0x2);
             outputStream.write(methodLocationBytes);
+            outputStream.write(0);
             outputStream.write('Z');
             outputStream.write(boolean_0 ? 1 : 0);
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod("(Z)V").body)
+        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod(listOf(
+                Type.getType(Boolean::class.java))
+        ).body)
     }
 
     @Test
@@ -89,10 +93,11 @@ internal class DynamicClassDefinerTest {
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
             $methodLocationBytes
-            final int remainingLength = 1 + methodLocationBytes.length + 23;
+            final int remainingLength = methodLocationBytes.length + 2 + 23;
             $appendRemainingLength
             outputStream.write(0x2);
             outputStream.write(methodLocationBytes);
+            outputStream.write(0);
             outputStream.write('I');
             outputStream.write((byte) (int_0 >> 0));
             outputStream.write((byte) (int_0 >> 8));
@@ -119,7 +124,11 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod("(IDD)V").body)
+        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod(listOf(
+                Type.getType(Int::class.java),
+                Type.getType(Double::class.java),
+                Type.getType(Double::class.java)
+        )).body)
     }
 
     @Test
@@ -143,10 +152,11 @@ internal class DynamicClassDefinerTest {
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
             $methodLocationBytes
-            final int remainingLength = 1 + methodLocationBytes.length + 22;
+            final int remainingLength = methodLocationBytes.length + 2 + 22;
             $appendRemainingLength
             outputStream.write(0x2);
             outputStream.write(methodLocationBytes);
+            outputStream.write(0);
             outputStream.write('L');
             outputStream.write(Object_0.getClass().getName().getBytes());
             outputStream.write(0);
@@ -159,7 +169,9 @@ internal class DynamicClassDefinerTest {
             }
             """.trimIndent()
         assertEquals(
-                body, DynamicClassDefiner.generateClassCodeForMethod("(Ljava/lang/String;)V").body)
+                body, DynamicClassDefiner.generateClassCodeForMethod(listOf(
+                Type.getType(java.lang.String::class.java))
+        ).body)
     }
 
     @Test
@@ -174,24 +186,29 @@ internal class DynamicClassDefinerTest {
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
             $methodLocationBytes
-            final int remainingLength = 1 + methodLocationBytes.length + 0;
+            final int remainingLength = methodLocationBytes.length + 2 + 0;
             $appendRemainingLength
             outputStream.write(0x2);
             outputStream.write(methodLocationBytes);
+            outputStream.write(0);
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod("()V)").body)
+        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod(listOf()).body)
     }
 
     @Test
     fun generateAndCompileBooleanContainer(@TempDir tempDir: File) {
-        val file = DynamicClassDefiner(null, tempDir.toPath())
-                .writeToJarFile(DynamicClassDefiner.generateClassCodeForMethod("(B)V"))
-        assertTrue(tempDir.toPath().resolve("OMJ_Generated_B.java").toFile().exists())
-        assertTrue(tempDir.toPath().resolve("OMJ_Generated_B.class").toFile().exists())
-        assertTrue(tempDir.toPath().resolve("OMJ_Generated_B.jar").toFile().exists())
-        assertEquals("OMJ_Generated_B.jar", file.name)
+        val file = DynamicClassDefiner(null, tempDir.toPath()).writeToJarFile(
+                DynamicClassDefiner.generateClassCodeForMethod(listOf(
+                        Type.getType(Boolean::class.java))
+                )
+        )
+
+        assertTrue(tempDir.toPath().resolve("OMJ_Generated_Z.java").toFile().exists())
+        assertTrue(tempDir.toPath().resolve("OMJ_Generated_Z.class").toFile().exists())
+        assertTrue(tempDir.toPath().resolve("OMJ_Generated_Z.jar").toFile().exists())
+        assertEquals("OMJ_Generated_Z.jar", file.name)
     }
 
     companion object {
