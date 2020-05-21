@@ -14,28 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.ui;
+package com.octogonapus.omj.ui.model;
 
-public class MethodArgument {
-
-  private final String type;
-  private final String value;
-
-  public MethodArgument(final String type, final String value) {
-    this.type = type;
-    this.value = value;
-  }
-
-  public String getType() {
-    return type;
-  }
-
-  public String getValue() {
-    return value;
-  }
-
-  @Override
-  public String toString() {
-    return "MethodArgument{" + "type='" + type + '\'' + ", value='" + value + '\'' + '}';
-  }
-}
+public interface Trace {}

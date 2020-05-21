@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.ui;
+package com.octogonapus.omj.ui.model;
 
 import com.octogonapus.omj.util.SimpleTypeUtil;
 import java.io.IOException;
@@ -28,12 +28,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Iterates over a trace file to parse each trace in it. */
-final class TraceIterator implements Iterator<Trace>, AutoCloseable {
+public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
 
   private final Logger logger = LoggerFactory.getLogger(TraceIterator.class);
   private final InputStream traceStream;
 
-  TraceIterator(final InputStream traceStream) {
+  public TraceIterator(final InputStream traceStream) {
     this.traceStream = traceStream;
     // TODO: Validate the trace header once it is added in Issue #13
   }

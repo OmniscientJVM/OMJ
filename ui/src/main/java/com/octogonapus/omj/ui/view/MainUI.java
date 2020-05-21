@@ -14,8 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.ui;
+package com.octogonapus.omj.ui.view;
 
+import com.octogonapus.omj.ui.view.TraceDisplay;
 import com.octogonapus.omj.util.Util;
 import java.io.File;
 import javafx.application.Application;

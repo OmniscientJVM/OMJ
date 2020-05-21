@@ -20,7 +20,7 @@ javafx {
 }
 
 application {
-    mainClassName = "com.octogonapus.omj.ui.MainUI"
+    mainClassName = "com.octogonapus.omj.ui.view.MainUI"
 }
 
 def agentJarName = "agent-all"

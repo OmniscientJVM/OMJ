@@ -14,11 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.ui;
+package com.octogonapus.omj.ui.view;
 
+import com.octogonapus.omj.ui.model.MethodArgument;
+import com.octogonapus.omj.ui.model.MethodTrace;
+import com.octogonapus.omj.ui.model.Trace;
 import javafx.scene.control.ListCell;
 
-final class TraceCell extends ListCell<Trace> {
+public final class TraceCell extends ListCell<Trace> {
 
   @Override
   protected void updateItem(final Trace item, final boolean empty) {

@@ -14,11 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.ui;
+package com.octogonapus.omj.ui.view;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+
+import com.octogonapus.omj.ui.model.Trace;
+import com.octogonapus.omj.ui.model.TraceIterator;
 import javafx.scene.control.ListView;
 
 final class TraceDisplay extends ListView<Trace> {
