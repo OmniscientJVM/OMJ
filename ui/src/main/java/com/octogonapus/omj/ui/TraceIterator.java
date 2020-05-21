@@ -23,9 +23,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** Iterates over a trace file to parse each trace in it. */
 final class TraceIterator implements Iterator<Trace>, AutoCloseable {
 
   private final Logger logger = LoggerFactory.getLogger(TraceIterator.class);
@@ -50,6 +52,10 @@ final class TraceIterator implements Iterator<Trace>, AutoCloseable {
 
   @Override
   public Trace next() {
+    if (!hasNext()) {
+      throw new NoSuchElementException("The trace stream is empty.");
+    }
+
     try {
       return unsafeNext();
     } catch (IOException e) {
@@ -58,6 +64,13 @@ final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     }
   }
 
+  /**
+   * The real implementation of {@link Iterator#next()}, put here to simplify exception handling
+   * logic.
+   *
+   * @return The next Trace in the stream.
+   * @throws IOException From reading from the trace stream.
+   */
   private Trace unsafeNext() throws IOException {
     final long index =
         Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16)
@@ -122,6 +135,13 @@ final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     return new MethodTrace(index, location, arguments);
   }
 
+  /**
+   * Parses a string by reading from the {@link #traceStream} until a NULL byte is found. The NULL
+   * byte is not appended to the returned string.
+   *
+   * @return The parsed string.
+   * @throws IOException From reading from the {@link #traceStream}.
+   */
   private String parseString() throws IOException {
     final var builder = new StringBuilder();
 
@@ -139,6 +159,14 @@ final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     return builder.toString();
   }
 
+  /**
+   * Parses the given bytes into a primitive of the given type. The bytes are expected to be in
+   * little endian format.
+   *
+   * @param type The type to parse into.
+   * @param bytes The bytes to parse.
+   * @return A string containing the value of the primitive.
+   */
   private String parsePrimitiveBytesToString(
       final SimpleTypeUtil.SimpleType type, final byte[] bytes) {
     // TODO: Waiting on a new google-java-format release to use enhanced switch statements
