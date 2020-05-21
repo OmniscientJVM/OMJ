@@ -30,10 +30,6 @@ public class MethodArgument {
     return type;
   }
 
-  //  public String getHumanReadableType() {
-  //    if (type)
-  //  }
-
   public String getValue() {
     return value;
   }
