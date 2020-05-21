@@ -35,6 +35,7 @@ final class TraceIterator implements Iterator<Trace>, AutoCloseable {
 
   TraceIterator(final InputStream traceStream) {
     this.traceStream = traceStream;
+    // TODO: Validate the trace header once it is added in Issue #13
   }
 
   @Override
@@ -73,14 +74,18 @@ final class TraceIterator implements Iterator<Trace>, AutoCloseable {
    */
   private Trace unsafeNext() throws IOException {
     final long index =
-        Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16)
-            | Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16) << 8
-            | Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16) << 16
-            | Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16) << 24
-            | Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16) << 32
-            | Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16) << 40
-            | Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16) << 48
-            | Long.parseUnsignedLong(Long.toHexString(traceStream.read()), 16) << 56;
+        ByteBuffer.allocate(8)
+            .order(ByteOrder.LITTLE_ENDIAN)
+            .put((byte) traceStream.read())
+            .put((byte) traceStream.read())
+            .put((byte) traceStream.read())
+            .put((byte) traceStream.read())
+            .put((byte) traceStream.read())
+            .put((byte) traceStream.read())
+            .put((byte) traceStream.read())
+            .put((byte) traceStream.read())
+            .rewind()
+            .getLong();
 
     final byte type = (byte) Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16);
     if (type == 0x2) {
