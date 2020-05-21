@@ -18,12 +18,24 @@ package com.octogonapus.omj.ui;
 
 public class MethodArgument {
 
-  public String type;
-  public String value;
+  private final String type;
+  private final String value;
 
   public MethodArgument(final String type, final String value) {
     this.type = type;
     this.value = value;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  //  public String getHumanReadableType() {
+  //    if (type)
+  //  }
+
+  public String getValue() {
+    return value;
   }
 
   @Override

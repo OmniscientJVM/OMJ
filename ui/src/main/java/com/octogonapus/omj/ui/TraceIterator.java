@@ -27,12 +27,12 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class TraceIterator implements Iterator<Trace>, AutoCloseable {
+final class TraceIterator implements Iterator<Trace>, AutoCloseable {
 
   private final Logger logger = LoggerFactory.getLogger(TraceIterator.class);
   private final InputStream traceStream;
 
-  public TraceIterator(final InputStream traceStream) {
+  TraceIterator(final InputStream traceStream) {
     this.traceStream = traceStream;
   }
 

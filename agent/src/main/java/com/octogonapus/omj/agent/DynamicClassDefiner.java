@@ -179,8 +179,7 @@ final class DynamicClassDefiner {
                   .findFirst()
                   .orElseThrow();
 
-              return generateSetArgumentOverride(TypeUtil.getSimpleType(argumentTypeFromSort),
-                                                 entry.getValue());
+              return generateSetArgumentOverride(argumentTypeFromSort, entry.getValue());
             })
             .collect(Collectors.toList());
 
@@ -237,9 +236,9 @@ final class DynamicClassDefiner {
    * @return A {@link GeneratedSnippet} that handles all arguments of the provided type.
    */
   private static GeneratedSnippet generateSetArgumentOverride(
-      final SimpleTypeUtil.SimpleType argumentType, final Integer count) {
+      final Type argumentType, final Integer count) {
     final GeneratedSnippet snippet = new GeneratedSnippet();
-    final String typeClassName = SimpleTypeUtil.getAdaptedClassName(argumentType);
+    final String typeClassName = TypeUtil.getAdaptedClassName(argumentType);
 
     // Counter that keeps track of the number of times the set_argument_xxx method has been called
     final var counterField = new Field();
@@ -335,7 +334,7 @@ final class DynamicClassDefiner {
    */
   private static void appendField(final Field field, final StringBuilder builder) {
     builder.append("outputStream.write('")
-        .append(SimpleTypeUtil.getDescriptorChar(field.type))
+        .append(TypeUtil.getDescriptorChar(field.type))
         .append("');\n");
     appendFieldValue(field, builder);
   }
@@ -347,12 +346,13 @@ final class DynamicClassDefiner {
    * @param builder The builder to append to.
    */
   private static void appendFieldValue(final Field field, final StringBuilder builder) {
-    switch (field.type) {
+    final SimpleTypeUtil.SimpleType type = TypeUtil.getSimpleType(field.type);
+    switch (type) {
       case VOID -> throw new IllegalStateException("Somehow got a field with type void.");
       case BOOLEAN ->
           builder.append("outputStream.write(").append(field.name).append(" ? 1 : 0);\n");
       case CHAR, LONG, INT, SHORT, BYTE ->
-          appendValueAsBytes(field.name, SimpleTypeUtil.getLengthOfTypeForTrace(field.type), builder);
+          appendValueAsBytes(field.name, SimpleTypeUtil.getLengthOfTypeForTrace(type), builder);
       case DOUBLE -> {
         builder.append("final long ").append(field.name).append("_l = Double.doubleToRawLongBits(").append(field.name).append(");\n");
         appendValueAsBytes(field.name + "_l", 8, builder);
@@ -432,7 +432,7 @@ final class DynamicClassDefiner {
   }
 
   private static class Field {
-    SimpleTypeUtil.SimpleType type;
+    Type type;
     String name;
     String contents;
   }

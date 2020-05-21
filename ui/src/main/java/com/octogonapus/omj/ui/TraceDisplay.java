@@ -19,11 +19,17 @@ package com.octogonapus.omj.ui;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Iterator;
+
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.AnchorPane;
+import javafx.util.Callback;
 
-public class TraceDisplay extends AnchorPane {
+final class TraceDisplay extends ListView<Trace> {
 
-  public TraceDisplay(final File traceFile) {
+  TraceDisplay(final File traceFile) {
+    setCellFactory(param -> new TraceCell());
     new Thread(() -> loadTrace(traceFile)).start();
   }
 
@@ -32,7 +38,7 @@ public class TraceDisplay extends AnchorPane {
         new TraceIterator(new BufferedInputStream(new FileInputStream(traceFile)))) {
       while (iter.hasNext()) {
         final Trace trace = iter.next();
-        System.out.println("trace = " + trace);
+        getItems().add(trace);
       }
     } catch (Exception e) {
       e.printStackTrace();
