@@ -30,13 +30,14 @@ final class TraceCell extends ListCell<Trace> {
       if (item instanceof MethodTrace) {
         final MethodTrace methodTrace = (MethodTrace) item;
 
-        final StringBuilder builder = new StringBuilder()
-            .append(methodTrace.index)
-            .append(' ')
-            .append(methodTrace.location)
-            .append('(');
+        final StringBuilder builder =
+            new StringBuilder()
+                .append(methodTrace.index)
+                .append(' ')
+                .append(methodTrace.location)
+                .append('(');
 
-        for (final var iter = methodTrace.arguments.iterator(); iter.hasNext();) {
+        for (final var iter = methodTrace.arguments.iterator(); iter.hasNext(); ) {
           final MethodArgument arg = iter.next();
           builder.append(arg.getType()).append(": ").append(arg.getValue());
           if (iter.hasNext()) {

@@ -16,6 +16,7 @@
  */
 package com.octogonapus.omj.agent;
 
+import com.octogonapus.omj.util.SimpleTypeUtil;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,8 +33,6 @@ import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.octogonapus.omj.util.SimpleTypeUtil;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +50,8 @@ final class DynamicClassDefiner {
     this.cacheDir = cacheDir;
   }
 
-  private List<Type> getMethodSignatureTypes(final String methodDescriptor, final boolean isStatic) {
+  private List<Type> getMethodSignatureTypes(
+      final String methodDescriptor, final boolean isStatic) {
     final var out = new ArrayList<Type>();
     if (!isStatic) {
       out.add(Type.getType(Object.class));
@@ -106,7 +106,11 @@ final class DynamicClassDefiner {
     jarFile.deleteOnExit();
     jarFile.delete();
 
-    logger.debug("Writing dynamic class {} to Jar file {}:\n{}", dynamicClass.name, jarFile.getAbsolutePath(), dynamicClass.toString());
+    logger.debug(
+        "Writing dynamic class {} to Jar file {}:\n{}",
+        dynamicClass.name,
+        jarFile.getAbsolutePath(),
+        dynamicClass.toString());
 
     final var sourceFile = cacheDir.resolve(dynamicClass.name + ".java").toFile();
     sourceFile.deleteOnExit();
@@ -155,7 +159,7 @@ final class DynamicClassDefiner {
    * Generates the code to define a container class for a method.
    *
    * @param argumentTypes The types of the arguments this class needs to keep track of, including
-   *                      the receiver if applicable.
+   *     the receiver if applicable.
    * @return The {@link DynamicClass} matching the method.
    */
   static DynamicClass generateClassCodeForMethod(final List<Type> argumentTypes) {
@@ -171,16 +175,18 @@ final class DynamicClassDefiner {
     // Generate a snippet for each argument type
     final var snippets =
         typeClassNameCounts.entrySet().stream()
-            .map(entry -> {
-              final Integer sort = entry.getKey();
+            .map(
+                entry -> {
+                  final Integer sort = entry.getKey();
 
-              final Type argumentTypeFromSort = argumentTypes.stream()
-                  .filter(type -> type.getSort() == sort)
-                  .findFirst()
-                  .orElseThrow();
+                  final Type argumentTypeFromSort =
+                      argumentTypes.stream()
+                          .filter(type -> type.getSort() == sort)
+                          .findFirst()
+                          .orElseThrow();
 
-              return generateSetArgumentOverride(argumentTypeFromSort, entry.getValue());
-            })
+                  return generateSetArgumentOverride(argumentTypeFromSort, entry.getValue());
+                })
             .collect(Collectors.toList());
 
     // Import the class we will extend
@@ -295,9 +301,8 @@ final class DynamicClassDefiner {
         .append("public void serialize(final OutputStream outputStream) throws IOException {\n");
 
     // The index is given in the serialize method's parameters
-    appendValueAsBytes("index",
-                       SimpleTypeUtil.getLengthOfTypeForTrace(SimpleTypeUtil.SimpleType.LONG),
-                       builder);
+    appendValueAsBytes(
+        "index", SimpleTypeUtil.getLengthOfTypeForTrace(SimpleTypeUtil.SimpleType.LONG), builder);
 
     // Method trace identifier
     builder.append("outputStream.write(0x2);\n");
@@ -307,9 +312,11 @@ final class DynamicClassDefiner {
     builder.append("outputStream.write(0);\n");
 
     // Number of arguments
-    final int numberOfArguments = snippets.stream().mapToInt(snippet -> snippet.argumentFields.size()).sum();
+    final int numberOfArguments =
+        snippets.stream().mapToInt(snippet -> snippet.argumentFields.size()).sum();
     if (numberOfArguments > 0xFF) {
-      throw new IllegalStateException("Too many arguments to pack into one byte: " + numberOfArguments);
+      throw new IllegalStateException(
+          "Too many arguments to pack into one byte: " + numberOfArguments);
     }
     builder.append("outputStream.write(").append(numberOfArguments).append(");\n");
 
@@ -333,7 +340,8 @@ final class DynamicClassDefiner {
    * @param builder The builder to append to.
    */
   private static void appendField(final Field field, final StringBuilder builder) {
-    builder.append("outputStream.write('")
+    builder
+        .append("outputStream.write('")
         .append(TypeUtil.getDescriptorChar(field.type))
         .append("');\n");
     appendFieldValue(field, builder);
@@ -347,22 +355,42 @@ final class DynamicClassDefiner {
    */
   private static void appendFieldValue(final Field field, final StringBuilder builder) {
     final SimpleTypeUtil.SimpleType type = TypeUtil.getSimpleType(field.type);
+    // TODO: Waiting on a new google-java-format release to use enhanced switch statements
+    //noinspection EnhancedSwitchMigration
     switch (type) {
-      case VOID -> throw new IllegalStateException("Somehow got a field with type void.");
-      case BOOLEAN ->
-          builder.append("outputStream.write(").append(field.name).append(" ? 1 : 0);\n");
-      case CHAR, LONG, INT, SHORT, BYTE ->
-          appendValueAsBytes(field.name, SimpleTypeUtil.getLengthOfTypeForTrace(type), builder);
-      case DOUBLE -> {
-        builder.append("final long ").append(field.name).append("_l = Double.doubleToRawLongBits(").append(field.name).append(");\n");
+      case VOID:
+        throw new IllegalStateException("Somehow got a field with type void.");
+      case BOOLEAN:
+        builder.append("outputStream.write(").append(field.name).append(" ? 1 : 0);\n");
+        break;
+      case CHAR:
+      case LONG:
+      case INT:
+      case SHORT:
+      case BYTE:
+        appendValueAsBytes(field.name, SimpleTypeUtil.getLengthOfTypeForTrace(type), builder);
+        break;
+      case DOUBLE:
+        builder
+            .append("final long ")
+            .append(field.name)
+            .append("_l = Double.doubleToRawLongBits(")
+            .append(field.name)
+            .append(");\n");
         appendValueAsBytes(field.name + "_l", 8, builder);
-      }
-      case FLOAT -> {
-        builder.append("final int ").append(field.name).append("_l = Float.floatToRawIntBits(").append(field.name).append(");\n");
+        break;
+      case FLOAT:
+        builder
+            .append("final int ")
+            .append(field.name)
+            .append("_l = Float.floatToRawIntBits(")
+            .append(field.name)
+            .append(");\n");
         appendValueAsBytes(field.name + "_l", 4, builder);
-      }
-      case REFERENCE -> {
-        builder.append("outputStream.write(")
+        break;
+      case REFERENCE:
+        builder
+            .append("outputStream.write(")
             .append(field.name)
             .append(".getClass().getName().getBytes());\n");
         builder.append("outputStream.write(0);\n");
@@ -372,10 +400,11 @@ final class DynamicClassDefiner {
             .append("_hashCode = System.identityHashCode(")
             .append(field.name)
             .append(");\n");
-        appendValueAsBytes(field.name + "_hashCode",
-                           SimpleTypeUtil.getLengthOfTypeForTrace(SimpleTypeUtil.SimpleType.INT),
-                           builder);
-      }
+        appendValueAsBytes(
+            field.name + "_hashCode",
+            SimpleTypeUtil.getLengthOfTypeForTrace(SimpleTypeUtil.SimpleType.INT),
+            builder);
+        break;
     }
   }
 
@@ -387,7 +416,8 @@ final class DynamicClassDefiner {
    * @param bytes The number of bytes to write.
    * @param builder The builder to append to.
    */
-  private static void appendValueAsBytes(final String varName, final int bytes, final StringBuilder builder) {
+  private static void appendValueAsBytes(
+      final String varName, final int bytes, final StringBuilder builder) {
     for (int i = 0; i < bytes; i++) {
       builder
           .append("outputStream.write((byte) ((")

@@ -17,15 +17,14 @@
 package com.octogonapus.omj.ui;
 
 import com.octogonapus.omj.util.SimpleTypeUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Iterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class TraceIterator implements Iterator<Trace>, AutoCloseable {
 
@@ -83,13 +82,15 @@ final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     final var location = parseString();
 
     // Parse number of arguments
-    final byte numArguments = (byte) Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16);
+    final byte numArguments =
+        (byte) Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16);
 
     // Parse arguments
     final var arguments = new ArrayList<MethodArgument>();
     for (int i = 0; i < numArguments; i++) {
       final byte typeByte = (byte) traceStream.read();
-      final SimpleTypeUtil.SimpleType type = SimpleTypeUtil.getSimpleTypeFromDescriptorByte(typeByte);
+      final SimpleTypeUtil.SimpleType type =
+          SimpleTypeUtil.getSimpleTypeFromDescriptorByte(typeByte);
 
       logger.debug("Parsed type {} from {}", type, Integer.toHexString(typeByte));
 
@@ -100,8 +101,10 @@ final class TraceIterator implements Iterator<Trace>, AutoCloseable {
         final String classType = parseString();
 
         final String hashCode =
-            Integer.toHexString(traceStream.read()) + Integer.toHexString(traceStream.read()) +
-            Integer.toHexString(traceStream.read()) + Integer.toHexString(traceStream.read());
+            Integer.toHexString(traceStream.read())
+                + Integer.toHexString(traceStream.read())
+                + Integer.toHexString(traceStream.read())
+                + Integer.toHexString(traceStream.read());
 
         arguments.add(new MethodArgument(classType, hashCode));
       } else {
@@ -109,8 +112,10 @@ final class TraceIterator implements Iterator<Trace>, AutoCloseable {
         final int length = SimpleTypeUtil.getLengthOfTypeForTrace(type);
         final var valueBytes = traceStream.readNBytes(length);
 
-        arguments.add(new MethodArgument(SimpleTypeUtil.getAdaptedClassName(type),
-                                         parsePrimitiveBytesToString(type, valueBytes)));
+        arguments.add(
+            new MethodArgument(
+                SimpleTypeUtil.getAdaptedClassName(type),
+                parsePrimitiveBytesToString(type, valueBytes)));
       }
     }
 
@@ -134,69 +139,70 @@ final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     return builder.toString();
   }
 
-  private String parsePrimitiveBytesToString(final SimpleTypeUtil.SimpleType type,
-                                             final byte[] bytes) {
+  private String parsePrimitiveBytesToString(
+      final SimpleTypeUtil.SimpleType type, final byte[] bytes) {
+    // TODO: Waiting on a new google-java-format release to use enhanced switch statements
     switch (type) {
-      case BOOLEAN -> {
+      case BOOLEAN:
         return bytes[0] == 0x1 ? "true" : "false";
-      }
-      case CHAR -> {
-        final char c = (char) (Byte.parseByte(Integer.toHexString(bytes[0]), 16) |
-                               Byte.parseByte(Integer.toHexString(bytes[1]), 16) << 8);
+      case CHAR:
+        final char c =
+            (char)
+                (Byte.parseByte(Integer.toHexString(bytes[0]), 16)
+                    | Byte.parseByte(Integer.toHexString(bytes[1]), 16) << 8);
         return "" + c;
-      }
-      case BYTE -> {
+      case BYTE:
         return "" + Integer.parseInt(Integer.toHexString(bytes[0]), 16);
-      }
-      case SHORT -> {
-        return "" + (Short.parseShort(Integer.toHexString(bytes[0]), 16) |
-                     Short.parseShort(Integer.toHexString(bytes[1]), 16) << 8);
-      }
-      case INT -> {
-        return "" + (Integer.parseInt(Integer.toHexString(bytes[0]), 16) |
-                     Integer.parseInt(Integer.toHexString(bytes[1]), 16) << 8 |
-                     Integer.parseInt(Integer.toHexString(bytes[2]), 16) << 16 |
-                     Integer.parseInt(Integer.toHexString(bytes[3]), 16) << 24);
-      }
-      case FLOAT -> {
-        return "" + ByteBuffer.allocate(4)
-            .order(ByteOrder.LITTLE_ENDIAN)
-            .put(bytes[0])
-            .put(bytes[1])
-            .put(bytes[2])
-            .put(bytes[3])
-            .rewind()
-            .getFloat();
-      }
-      case LONG -> {
-        return "" + ByteBuffer.allocate(8)
-            .order(ByteOrder.LITTLE_ENDIAN)
-            .put(bytes[0])
-            .put(bytes[1])
-            .put(bytes[2])
-            .put(bytes[3])
-            .put(bytes[4])
-            .put(bytes[5])
-            .put(bytes[6])
-            .put(bytes[7])
-            .rewind()
-            .getLong();
-      }
-      case DOUBLE -> {
-        return "" + ByteBuffer.allocate(8)
-            .order(ByteOrder.LITTLE_ENDIAN)
-            .put(bytes[0])
-            .put(bytes[1])
-            .put(bytes[2])
-            .put(bytes[3])
-            .put(bytes[4])
-            .put(bytes[5])
-            .put(bytes[6])
-            .put(bytes[7])
-            .rewind()
-            .getDouble();
-      }
-      default -> throw new IllegalArgumentException("Can't parse " + type + " into a primitive.");
+      case SHORT:
+        return ""
+            + (Short.parseShort(Integer.toHexString(bytes[0]), 16)
+                | Short.parseShort(Integer.toHexString(bytes[1]), 16) << 8);
+      case INT:
+        return ""
+            + (Integer.parseInt(Integer.toHexString(bytes[0]), 16)
+                | Integer.parseInt(Integer.toHexString(bytes[1]), 16) << 8
+                | Integer.parseInt(Integer.toHexString(bytes[2]), 16) << 16
+                | Integer.parseInt(Integer.toHexString(bytes[3]), 16) << 24);
+      case FLOAT:
+        return ""
+            + ByteBuffer.allocate(4)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .put(bytes[0])
+                .put(bytes[1])
+                .put(bytes[2])
+                .put(bytes[3])
+                .rewind()
+                .getFloat();
+      case LONG:
+        return ""
+            + ByteBuffer.allocate(8)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .put(bytes[0])
+                .put(bytes[1])
+                .put(bytes[2])
+                .put(bytes[3])
+                .put(bytes[4])
+                .put(bytes[5])
+                .put(bytes[6])
+                .put(bytes[7])
+                .rewind()
+                .getLong();
+      case DOUBLE:
+        return ""
+            + ByteBuffer.allocate(8)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .put(bytes[0])
+                .put(bytes[1])
+                .put(bytes[2])
+                .put(bytes[3])
+                .put(bytes[4])
+                .put(bytes[5])
+                .put(bytes[6])
+                .put(bytes[7])
+                .rewind()
+                .getDouble();
+      default:
+        throw new IllegalArgumentException("Can't parse " + type + " into a primitive.");
     }
   }
 

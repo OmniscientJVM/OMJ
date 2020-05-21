@@ -19,12 +19,7 @@ package com.octogonapus.omj.ui;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.Iterator;
-
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.layout.AnchorPane;
-import javafx.util.Callback;
 
 final class TraceDisplay extends ListView<Trace> {
 

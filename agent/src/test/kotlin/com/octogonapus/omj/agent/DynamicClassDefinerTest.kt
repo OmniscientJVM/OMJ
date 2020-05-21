@@ -45,14 +45,10 @@ internal class DynamicClassDefinerTest {
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
-            $methodLocationBytes
-            final int remainingLength = methodLocationBytes.length + 2 + 2;
-            $appendRemainingLength
-            outputStream.write(0x2);
-            outputStream.write(methodLocationBytes);
-            outputStream.write(0);
-            outputStream.write('Z');
-            outputStream.write(boolean_0 ? 1 : 0);
+            ${writeMethodIdentifier()}
+            $methodLocation
+            ${writeNumberOfArguments(1)}
+            ${writeBoolean("boolean_0")}
             }
             }
             """.trimIndent()
@@ -92,35 +88,12 @@ internal class DynamicClassDefinerTest {
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
-            $methodLocationBytes
-            final int remainingLength = methodLocationBytes.length + 2 + 23;
-            $appendRemainingLength
-            outputStream.write(0x2);
-            outputStream.write(methodLocationBytes);
-            outputStream.write(0);
-            outputStream.write('I');
-            outputStream.write((byte) (int_0 >> 0));
-            outputStream.write((byte) (int_0 >> 8));
-            outputStream.write((byte) (int_0 >> 16));
-            outputStream.write((byte) (int_0 >> 24));
-            outputStream.write('D');
-            outputStream.write((byte) (double_0 >> 0));
-            outputStream.write((byte) (double_0 >> 8));
-            outputStream.write((byte) (double_0 >> 16));
-            outputStream.write((byte) (double_0 >> 24));
-            outputStream.write((byte) (double_0 >> 32));
-            outputStream.write((byte) (double_0 >> 40));
-            outputStream.write((byte) (double_0 >> 48));
-            outputStream.write((byte) (double_0 >> 56));
-            outputStream.write('D');
-            outputStream.write((byte) (double_1 >> 0));
-            outputStream.write((byte) (double_1 >> 8));
-            outputStream.write((byte) (double_1 >> 16));
-            outputStream.write((byte) (double_1 >> 24));
-            outputStream.write((byte) (double_1 >> 32));
-            outputStream.write((byte) (double_1 >> 40));
-            outputStream.write((byte) (double_1 >> 48));
-            outputStream.write((byte) (double_1 >> 56));
+            ${writeMethodIdentifier()}
+            $methodLocation
+            ${writeNumberOfArguments(3)}
+            ${writeInt("int_0")}
+            ${writeDouble("double_0")}
+            ${writeDouble("double_1")}
             }
             }
             """.trimIndent()
@@ -151,20 +124,11 @@ internal class DynamicClassDefinerTest {
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
-            $methodLocationBytes
-            final int remainingLength = methodLocationBytes.length + 2 + 22;
-            $appendRemainingLength
-            outputStream.write(0x2);
-            outputStream.write(methodLocationBytes);
-            outputStream.write(0);
-            outputStream.write('L');
-            outputStream.write(Object_0.getClass().getName().getBytes());
-            outputStream.write(0);
-            final int Object_0_hashCode = System.identityHashCode(Object_0);
-            outputStream.write((byte) (Object_0_hashCode >> 0));
-            outputStream.write((byte) (Object_0_hashCode >> 8));
-            outputStream.write((byte) (Object_0_hashCode >> 16));
-            outputStream.write((byte) (Object_0_hashCode >> 24));
+            ${writeMethodIdentifier()}
+            $methodLocation
+            ${writeNumberOfArguments(1)}
+            ${writeObjectName("Object_0")}
+            ${writeHashCode("Object_0")}
             }
             }
             """.trimIndent()
@@ -185,12 +149,9 @@ internal class DynamicClassDefinerTest {
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
-            $methodLocationBytes
-            final int remainingLength = methodLocationBytes.length + 2 + 0;
-            $appendRemainingLength
-            outputStream.write(0x2);
-            outputStream.write(methodLocationBytes);
-            outputStream.write(0);
+            ${writeMethodIdentifier()}
+            $methodLocation
+            ${writeNumberOfArguments(0)}
             }
             }
             """.trimIndent()
@@ -211,26 +172,62 @@ internal class DynamicClassDefinerTest {
         assertEquals("OMJ_Generated_Z.jar", file.name)
     }
 
+    @Suppress("SameParameterValue")
     companion object {
         const val imports = """import com.octogonapus.omj.agentlib.MethodTrace;
             import java.io.IOException;
             import java.io.OutputStream;"""
 
-        const val appendIndex = """outputStream.write((byte) (index >> 0));
-            outputStream.write((byte) (index >> 8));
-            outputStream.write((byte) (index >> 16));
-            outputStream.write((byte) (index >> 24));
-            outputStream.write((byte) (index >> 32));
-            outputStream.write((byte) (index >> 40));
-            outputStream.write((byte) (index >> 48));
-            outputStream.write((byte) (index >> 56));"""
+        const val appendIndex = """outputStream.write((byte) ((index >> 0) & 0xFF));
+            outputStream.write((byte) ((index >> 8) & 0xFF));
+            outputStream.write((byte) ((index >> 16) & 0xFF));
+            outputStream.write((byte) ((index >> 24) & 0xFF));
+            outputStream.write((byte) ((index >> 32) & 0xFF));
+            outputStream.write((byte) ((index >> 40) & 0xFF));
+            outputStream.write((byte) ((index >> 48) & 0xFF));
+            outputStream.write((byte) ((index >> 56) & 0xFF));"""
 
-        const val appendRemainingLength = """outputStream.write((byte) (remainingLength >> 0));
-            outputStream.write((byte) (remainingLength >> 8));
-            outputStream.write((byte) (remainingLength >> 16));
-            outputStream.write((byte) (remainingLength >> 24));"""
+        const val methodLocation = """outputStream.write(methodLocation.getBytes());
+            outputStream.write(0);"""
 
-        const val methodLocationBytes =
-                """final byte[] methodLocationBytes = methodLocation.getBytes();"""
+        private fun writeObjectName(name: String): String =
+                """outputStream.write('L');
+            outputStream.write($name.getClass().getName().getBytes());
+            outputStream.write(0);"""
+
+        private fun writeHashCode(name: String): String =
+                """final int ${name}_hashCode = System.identityHashCode($name);
+            outputStream.write((byte) ((${name}_hashCode >> 0) & 0xFF));
+            outputStream.write((byte) ((${name}_hashCode >> 8) & 0xFF));
+            outputStream.write((byte) ((${name}_hashCode >> 16) & 0xFF));
+            outputStream.write((byte) ((${name}_hashCode >> 24) & 0xFF));"""
+
+        private fun writeNumberOfArguments(numberOfArguments: Int): String =
+                """outputStream.write($numberOfArguments);"""
+
+        private fun writeInt(name: String): String =
+                """outputStream.write('I');
+            outputStream.write((byte) (($name >> 0) & 0xFF));
+            outputStream.write((byte) (($name >> 8) & 0xFF));
+            outputStream.write((byte) (($name >> 16) & 0xFF));
+            outputStream.write((byte) (($name >> 24) & 0xFF));"""
+
+        private fun writeDouble(name: String): String =
+                """outputStream.write('D');
+            final long ${name}_l = Double.doubleToRawLongBits($name);
+            outputStream.write((byte) ((${name}_l >> 0) & 0xFF));
+            outputStream.write((byte) ((${name}_l >> 8) & 0xFF));
+            outputStream.write((byte) ((${name}_l >> 16) & 0xFF));
+            outputStream.write((byte) ((${name}_l >> 24) & 0xFF));
+            outputStream.write((byte) ((${name}_l >> 32) & 0xFF));
+            outputStream.write((byte) ((${name}_l >> 40) & 0xFF));
+            outputStream.write((byte) ((${name}_l >> 48) & 0xFF));
+            outputStream.write((byte) ((${name}_l >> 56) & 0xFF));"""
+
+        private fun writeMethodIdentifier(): String = """outputStream.write(0x2);"""
+
+        private fun writeBoolean(name: String): String =
+                """outputStream.write('Z');
+            outputStream.write($name ? 1 : 0);"""
     }
 }
