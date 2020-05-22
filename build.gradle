@@ -1,12 +1,16 @@
 import com.adarshr.gradle.testlogger.theme.ThemeType
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id 'java-library'
     id "com.diffplug.gradle.spotless" version "3.29.0"
     id 'com.adarshr.test-logger' version '2.0.0'
     id 'jacoco'
+    id "org.jetbrains.kotlin.jvm" version "1.3.72"
+    id "org.jlleitschuh.gradle.ktlint" version "9.2.1"
+    id "io.gitlab.arturbosch.detekt" version "1.9.0"
 }
 
 group 'com.octogonapus'
@@ -26,7 +30,7 @@ allprojects {
         }
     }
 
-    test {
+    tasks.withType(Test.class) {
         testLogging {
             showStandardStreams = true
             exceptionFormat = TestExceptionFormat.FULL
@@ -43,14 +47,20 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'jacoco'
 
+    dependencies {
+        // JUnit
+        testImplementation group: "org.junit.jupiter", name: "junit-jupiter-api", version: property("junit.version")
+        testImplementation group: "org.junit.jupiter", name: "junit-jupiter-engine", version: property("junit.version")
+    }
+
     java {
         sourceCompatibility = JavaVersion.VERSION_14
         targetCompatibility = JavaVersion.VERSION_14
     }
 
-    compileJava {
-        options.encoding = "UTF-8"
-        options.incremental = true
+    tasks.withType(JavaCompile.class) {
+        it.options.encoding = "UTF-8"
+        it.options.incremental = true
     }
 
     test {
@@ -107,6 +117,46 @@ subprojects {
             endWithNewline()
             licenseHeaderFile(rootProject.rootDir.toPath().resolve("config").resolve("spotless").resolve("omj.license"))
         }
+    }
+}
+
+// Kotlin projects
+configure([project(":agent"), project(":ui")]) {
+    apply plugin: "org.jetbrains.kotlin.jvm"
+    apply plugin: "org.jlleitschuh.gradle.ktlint"
+    apply plugin: "io.gitlab.arturbosch.detekt"
+
+    repositories {
+        jcenter {
+            content {
+                includeGroup "org.jetbrains.kotlinx"
+            }
+        }
+    }
+
+    dependencies {
+        implementation group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: property("kotlin.version")
+        implementation group: "org.jetbrains.kotlin", name: "kotlin-reflect", version: property("kotlin.version")
+
+        testImplementation group: "io.kotest", name: "kotest-assertions-core-jvm", version: property("kotest.version")
+    }
+
+    tasks.withType(KotlinCompile.class) {
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
+    }
+
+    spotless {
+        kotlin {
+            ktlint(property("ktlint.version") as String)
+            licenseHeaderFile(rootProject.rootDir.toPath().resolve("config").resolve("spotless").resolve("omj.license"))
+        }
+    }
+
+    detekt {
+        parallel = true
+        config = files(rootProject.rootDir.toPath().resolve("config").resolve("detekt").resolve("config.yml"))
     }
 }
 

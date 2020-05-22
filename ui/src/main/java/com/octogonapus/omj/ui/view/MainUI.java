@@ -16,7 +16,6 @@
  */
 package com.octogonapus.omj.ui.view;
 
-import com.octogonapus.omj.ui.view.TraceDisplay;
 import com.octogonapus.omj.util.Util;
 import java.io.File;
 import javafx.application.Application;

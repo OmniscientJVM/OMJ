@@ -16,12 +16,11 @@
  */
 package com.octogonapus.omj.ui.view;
 
+import com.octogonapus.omj.ui.model.Trace;
+import com.octogonapus.omj.ui.model.TraceIterator;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-
-import com.octogonapus.omj.ui.model.Trace;
-import com.octogonapus.omj.ui.model.TraceIterator;
 import javafx.scene.control.ListView;
 
 final class TraceDisplay extends ListView<Trace> {
