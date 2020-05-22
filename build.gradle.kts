@@ -146,7 +146,7 @@ subprojects {
 // Kotlin projects
 configure(listOf(project(":agent"), project(":ui"))) {
     apply {
-        plugin("org.jetbrains.kotlin.jvm")
+        plugin("kotlin")
         plugin("org.jlleitschuh.gradle.ktlint")
         plugin("io.gitlab.arturbosch.detekt")
     }
@@ -165,6 +165,7 @@ configure(listOf(project(":agent"), project(":ui"))) {
 
         testImplementation(group = "io.kotest", name = "kotest-assertions-core-jvm", version = property("kotest.version") as String)
         testImplementation(group = "io.kotest", name = "kotest-assertions-jvm", version = property("kotest.version") as String)
+        testImplementation(group = "io.kotest", name = "kotest-property-jvm", version = property("kotest.version") as String)
     }
 
     tasks.withType<KotlinCompile> {

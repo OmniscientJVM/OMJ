@@ -16,6 +16,7 @@
  */
 package com.octogonapus.omj.ui.model
 
+import io.kotest.matchers.collections.shouldHaveSingleElement
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.BufferedInputStream
@@ -28,22 +29,27 @@ internal class TraceIteratorTest {
     @Test
     fun parseNoArgMethodCall() {
         val traces = loadTraces("noarg_method_call.trace")
-        traces[0].shouldBeInstanceOf<MethodTrace> {
-            it.index.shouldBe(0)
+
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 1 &&
+                    it.arguments[0].type.contains("com.octogonapus.PrintHello")
         }
     }
 
     companion object {
 
-        private fun loadTraces(name: String): List<Trace> {
-            val out: MutableList<Trace> = ArrayList()
-            getIter(name).use { iter ->
-                if (iter.hasNext()) {
-                    out.add(iter.next())
+        private fun traceIndexShouldMatchListIndex(traces: List<Trace>) {
+            traces.forEachIndexed { index, trace ->
+                trace.shouldBeInstanceOf<MethodTrace> {
+                    it.index.shouldBe(index)
                 }
             }
-            return out
         }
+
+        private fun loadTraces(name: String): List<Trace> = getIter(name).asSequence().toList()
 
         private fun getIter(name: String) =
                 TraceIterator(BufferedInputStream(FileInputStream(
