@@ -123,11 +123,23 @@ internal class TraceIteratorTest {
         traceIndexShouldMatchListIndex(traces)
 
         traces.shouldHaveSingleElement {
-            // TODO: Check for the actual string value once it is traced
             it is MethodTrace &&
                     it.arguments.size == 2 &&
                     it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgumentType(1, "java.lang.String")
+                    it.hasArgument(1, "java.lang.String", "Hello")
+        }
+    }
+
+    @Test
+    fun `parse method call with args string hello with null byte`() {
+        val traces = loadTraces("method_call_args_string_helloWithNullByte.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgument(1, "java.lang.String", "Hello\u0000 1")
         }
     }
 

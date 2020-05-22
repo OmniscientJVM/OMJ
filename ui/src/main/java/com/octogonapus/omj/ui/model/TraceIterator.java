@@ -118,13 +118,25 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
         // it right here.
         final String classType = parseString();
 
-        final String hashCode =
-            Integer.toHexString(traceStream.read())
-                + Integer.toHexString(traceStream.read())
-                + Integer.toHexString(traceStream.read())
-                + Integer.toHexString(traceStream.read());
+        if (classType.equals("java.lang.String")) {
+          // For strings, the value is the length of the string and the bytes
+          final int stringLength =
+              Integer.parseInt(Integer.toHexString(traceStream.read()), 16)
+                  | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 8
+                  | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 16
+                  | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 24;
+          final String stringValue = parseString(stringLength);
+          arguments.add(new MethodArgument(classType, stringValue));
+        } else {
+          // For objects, the value is the hashcode
+          final String hashCode =
+              Integer.toHexString(traceStream.read())
+                  + Integer.toHexString(traceStream.read())
+                  + Integer.toHexString(traceStream.read())
+                  + Integer.toHexString(traceStream.read());
 
-        arguments.add(new MethodArgument(classType, hashCode));
+          arguments.add(new MethodArgument(classType, hashCode));
+        }
       } else {
         // Can use SimpleTypeUtil.getLengthOfTypeForTrace for the rest
         final int length = SimpleTypeUtil.getLengthOfTypeForTrace(type);
@@ -159,6 +171,23 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
       }
 
       builder.append((char) read);
+    }
+
+    return builder.toString();
+  }
+
+  /**
+   * Parses a string by reading from the {@link #traceStream} for a number of bytes.
+   *
+   * @param length The number of bytes in the string.
+   * @return The parsed string.
+   * @throws IOException From reading from the {@link #traceStream}.
+   */
+  private String parseString(final int length) throws IOException {
+    final var builder = new StringBuilder();
+
+    for (int i = 0; i < length; i++) {
+      builder.append((char) traceStream.read());
     }
 
     return builder.toString();

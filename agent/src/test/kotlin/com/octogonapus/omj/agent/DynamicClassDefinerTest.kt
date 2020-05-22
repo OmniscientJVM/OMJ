@@ -52,7 +52,7 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod(listOf(
+        assertEquals(body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(
                 Type.getType(Boolean::class.java))
         ).body)
     }
@@ -97,7 +97,7 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod(listOf(
+        assertEquals(body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(
                 Type.getType(Int::class.java),
                 Type.getType(Double::class.java),
                 Type.getType(Double::class.java)
@@ -105,7 +105,7 @@ internal class DynamicClassDefinerTest {
     }
 
     @Test
-    fun generateStringContainer() {
+    fun generateObjectContainer() {
         val body = """
             $imports
             final public class OMJ_Generated_L extends MethodTrace {
@@ -133,7 +133,41 @@ internal class DynamicClassDefinerTest {
             }
             """.trimIndent()
         assertEquals(
-                body, DynamicClassDefiner.generateClassCodeForMethod(listOf(
+                body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(
+                Type.getType(java.lang.Object::class.java))
+        ).body)
+    }
+
+    @Test
+    fun generateStringContainer() {
+        val body = """
+            $imports
+            final public class OMJ_Generated_L extends MethodTrace {
+            private int Object_counter = 0;
+            private Object Object_0;
+            public OMJ_Generated_L(final String methodLocation) {
+            super(methodLocation);
+            }
+            @Override
+            public void set_argument_Object(final Object value) {
+            switch (Object_counter) {
+            case 0: Object_0 = value;
+            }
+            Object_counter++;
+            }
+            @Override
+            public void serialize(final OutputStream outputStream) throws IOException {
+            $appendIndex
+            ${writeMethodIdentifier()}
+            $methodLocation
+            ${writeNumberOfArguments(1)}
+            ${writeObjectName("Object_0")}
+            ${writeStringBytes("Object_0")}
+            }
+            }
+            """.trimIndent()
+        assertEquals(
+                body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(
                 Type.getType(java.lang.String::class.java))
         ).body)
     }
@@ -155,13 +189,14 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner.generateClassCodeForMethod(listOf()).body)
+        assertEquals(body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf()).body)
     }
 
     @Test
     fun generateAndCompileBooleanContainer(@TempDir tempDir: File) {
-        val file = DynamicClassDefiner(null, tempDir.toPath()).writeToJarFile(
-                DynamicClassDefiner.generateClassCodeForMethod(listOf(
+        val dynamicClassDefiner = DynamicClassDefiner(null, tempDir.toPath())
+        val file = dynamicClassDefiner.writeToJarFile(
+                dynamicClassDefiner.generateClassCodeForMethod(listOf(
                         Type.getType(Boolean::class.java))
                 )
         )
@@ -201,6 +236,14 @@ internal class DynamicClassDefinerTest {
             outputStream.write((byte) ((${name}_hashCode >> 8) & 0xFF));
             outputStream.write((byte) ((${name}_hashCode >> 16) & 0xFF));
             outputStream.write((byte) ((${name}_hashCode >> 24) & 0xFF));"""
+
+        private fun writeStringBytes(name: String): String =
+                """final byte[] ${name}_string_bytes = ((String) $name).getBytes();
+            outputStream.write((byte) ((${name}_string_bytes.length >> 0) & 0xFF));
+            outputStream.write((byte) ((${name}_string_bytes.length >> 8) & 0xFF));
+            outputStream.write((byte) ((${name}_string_bytes.length >> 16) & 0xFF));
+            outputStream.write((byte) ((${name}_string_bytes.length >> 24) & 0xFF));
+            outputStream.write(${name}_string_bytes);"""
 
         private fun writeNumberOfArguments(numberOfArguments: Int): String =
                 """outputStream.write($numberOfArguments);"""
