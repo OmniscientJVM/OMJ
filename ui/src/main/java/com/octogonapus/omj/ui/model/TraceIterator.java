@@ -100,11 +100,7 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     final var className = parseString();
 
     // Parse line number
-    final int lineNumber =
-        Integer.parseInt(Integer.toHexString(traceStream.read()), 16)
-            | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 8
-            | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 16
-            | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 24;
+    final int lineNumber = parseInt();
 
     // Parse number of arguments
     final byte numArguments =
@@ -127,11 +123,7 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
 
         if (classType.equals("java.lang.String")) {
           // For strings, the value is the length of the string and the bytes
-          final int stringLength =
-              Integer.parseInt(Integer.toHexString(traceStream.read()), 16)
-                  | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 8
-                  | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 16
-                  | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 24;
+          final int stringLength = parseInt();
           final String stringValue = parseString(stringLength);
           arguments.add(new MethodArgument(classType, stringValue));
         } else {
@@ -157,6 +149,19 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     }
 
     return new MethodTrace(index, className + ':' + lineNumber, arguments);
+  }
+
+  /**
+   * Parses an int by reading four bytes in little-endian format.
+   *
+   * @return The parsed int.
+   * @throws IOException From reading from the {@link #traceStream}.
+   */
+  private int parseInt() throws IOException {
+    return Integer.parseInt(Integer.toHexString(traceStream.read()), 16)
+        | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 8
+        | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 16
+        | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 24;
   }
 
   /**
