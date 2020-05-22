@@ -16,6 +16,7 @@
  */
 package com.octogonapus.omj.ui.model
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSingleElement
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -27,15 +28,173 @@ import org.junit.jupiter.api.Test
 internal class TraceIteratorTest {
 
     @Test
-    fun parseNoArgMethodCall() {
-        val traces = loadTraces("noarg_method_call.trace")
-
+    fun `parse method call with no args`() {
+        val traces = loadTraces("method_call_no_args.trace")
         traceIndexShouldMatchListIndex(traces)
 
         traces.shouldHaveSingleElement {
             it is MethodTrace &&
                     it.arguments.size == 1 &&
-                    it.arguments[0].type.contains("com.octogonapus.PrintHello")
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello")
+        }
+    }
+
+    @Test
+    fun `parse method call with args byte 60`() {
+        val traces = loadTraces("method_call_args_byte_3C.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgument(1, "byte", "60")
+        }
+    }
+
+    @Test
+    fun `parse method call with args char Q`() {
+        val traces = loadTraces("method_call_args_char_Q.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgument(1, "char", "Q")
+        }
+    }
+
+    @Test
+    fun `parse method call with args double 1p2`() {
+        val traces = loadTraces("method_call_args_double_1p2.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgument(1, "double", "1.2")
+        }
+    }
+
+    @Test
+    fun `parse method call with args float 4p3`() {
+        val traces = loadTraces("method_call_args_float_4p3.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgument(1, "float", "4.3")
+        }
+    }
+
+    @Test
+    fun `parse method call with args int 42`() {
+        val traces = loadTraces("method_call_args_int_42.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgument(1, "int", "42")
+        }
+    }
+
+    @Test
+    fun `parse method call with args long 123456789123456789`() {
+        val traces = loadTraces("method_call_args_long_123456789123456789.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgument(1, "long", "123456789123456789")
+        }
+    }
+
+    @Test
+    fun `parse method call with args string hello`() {
+        val traces = loadTraces("method_call_args_string_hello.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            // TODO: Check for the actual string value once it is traced
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgumentType(1, "java.lang.String")
+        }
+    }
+
+    @Test
+    fun `parse method call with args object`() {
+        val traces = loadTraces("method_call_args_object.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            // TODO: Parse the descriptor and turn it into a more human-readable notation like
+            //  java.lang.String[]
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgumentType(1, "[Ljava.lang.String;")
+        }
+    }
+
+    @Test
+    fun `parse method call with args short 12345`() {
+        val traces = loadTraces("method_call_args_short_12345.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgument(1, "short", "12345")
+        }
+    }
+
+    @Test
+    fun `parse method call with args boolean true`() {
+        val traces = loadTraces("method_call_args_boolean_true.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgument(1, "boolean", "true")
+        }
+    }
+
+    @Test
+    fun `parse method call with args object MyDataClass`() {
+        val traces = loadTraces("method_call_args_object_MyDataClass.trace")
+        traceIndexShouldMatchListIndex(traces)
+
+        traces.shouldHaveSingleElement {
+            it is MethodTrace &&
+                    it.arguments.size == 2 &&
+                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
+                    it.hasArgumentType(1, "com.octogonapus.MyDataClass")
+        }
+    }
+
+    @Test
+    fun `read past end of trace`() {
+        getIter("method_call_no_args.trace").use {
+            // Go to the end
+            while (it.hasNext()) {
+                it.next()
+            }
+
+            // Past the end
+            shouldThrow<NoSuchElementException> { it.next() }
         }
     }
 
@@ -48,6 +207,12 @@ internal class TraceIteratorTest {
                 }
             }
         }
+
+        private fun MethodTrace.hasArgumentType(index: Int, type: String) =
+                arguments[index].type == type
+
+        private fun MethodTrace.hasArgument(index: Int, type: String, value: String) =
+                arguments[index].type == type && arguments[index].value == value
 
         private fun loadTraces(name: String): List<Trace> = getIter(name).asSequence().toList()
 
