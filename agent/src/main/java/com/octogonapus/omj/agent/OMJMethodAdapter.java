@@ -17,6 +17,7 @@
 package com.octogonapus.omj.agent;
 
 import java.util.Arrays;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -27,29 +28,30 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
 
   private final Logger logger = LoggerFactory.getLogger(OMJMethodAdapter.class);
   private final DynamicClassDefiner dynamicClassDefiner;
-  private final String currentClassSource;
   private final String methodDescriptor;
   private final String methodName;
-  private final String packagePrefix;
+  private final String fullyQualifiedClassName;
   private final boolean isStatic;
+  private int currentLineNumber;
 
   public OMJMethodAdapter(
       final int api,
       final MethodVisitor methodVisitor,
       final DynamicClassDefiner dynamicClassDefiner,
       final String currentClassName,
-      final String currentClassSource,
       final String methodDescriptor,
       final String methodName,
       final boolean isStatic) {
     super(api, methodVisitor);
     this.dynamicClassDefiner = dynamicClassDefiner;
-    this.currentClassSource = currentClassSource;
     this.methodDescriptor = methodDescriptor;
-    packagePrefix =
-        currentClassName.substring(0, currentClassName.lastIndexOf('/') + 1).replace('/', '.');
     this.methodName = methodName;
     this.isStatic = isStatic;
+
+    final int indexOfLastSeparator = currentClassName.lastIndexOf('/') + 1;
+    final String packagePrefix = currentClassName.substring(0, indexOfLastSeparator);
+    final String className = currentClassName.substring(indexOfLastSeparator);
+    fullyQualifiedClassName = packagePrefix.replace('/', '.') + className;
   }
 
   @Override
@@ -58,14 +60,13 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
 
     final String dynamicClassName =
         dynamicClassDefiner.defineClassForMethod(methodDescriptor, isStatic);
-    final String methodLocation = packagePrefix + currentClassSource + ':' + methodName;
 
     // Make a new instance of the dynamic class we just generated. Pass the method location to it so
     // that this method can be identified later on. Then start pass the initialized instance to the
     // agent lib.
     super.visitTypeInsn(NEW, dynamicClassName);
     super.visitInsn(DUP);
-    super.visitLdcInsn(methodLocation);
+    super.visitLdcInsn(fullyQualifiedClassName);
     super.visitMethodInsn(
         INVOKESPECIAL, dynamicClassName, "<init>", "(Ljava/lang/String;)V", false);
     super.visitMethodInsn(
@@ -111,7 +112,26 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
   }
 
   @Override
-  public void visitVarInsn(final int opcode, final int var) {
-    super.visitVarInsn(opcode, var);
+  public void visitMethodInsn(
+      final int opcode,
+      final String owner,
+      final String name,
+      final String descriptor,
+      final boolean isInterface) {
+    // Record the line number before the method call so that the trace container will get the
+    // correct line number
+    if (opcode == INVOKEVIRTUAL || opcode == INVOKESTATIC) {
+      super.visitLdcInsn(currentLineNumber);
+      super.visitMethodInsn(
+          INVOKESTATIC, "com/octogonapus/omj/agentlib/OMJAgentLib", "lineNumber", "(I)V", false);
+    }
+
+    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+  }
+
+  @Override
+  public void visitLineNumber(final int line, final Label start) {
+    super.visitLineNumber(line, start);
+    currentLineNumber = line;
   }
 }

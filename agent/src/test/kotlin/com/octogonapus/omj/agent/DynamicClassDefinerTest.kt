@@ -47,6 +47,7 @@ internal class DynamicClassDefinerTest {
             $appendIndex
             ${writeMethodIdentifier()}
             $methodLocation
+            $lineNumber
             ${writeNumberOfArguments(1)}
             ${writeBoolean("boolean_0")}
             }
@@ -90,6 +91,7 @@ internal class DynamicClassDefinerTest {
             $appendIndex
             ${writeMethodIdentifier()}
             $methodLocation
+            $lineNumber
             ${writeNumberOfArguments(3)}
             ${writeInt("int_0")}
             ${writeDouble("double_0")}
@@ -126,6 +128,7 @@ internal class DynamicClassDefinerTest {
             $appendIndex
             ${writeMethodIdentifier()}
             $methodLocation
+            $lineNumber
             ${writeNumberOfArguments(1)}
             ${writeObjectName("Object_0")}
             ${writeHashCode("Object_0")}
@@ -142,10 +145,10 @@ internal class DynamicClassDefinerTest {
     fun generateStringContainer() {
         val body = """
             $imports
-            final public class OMJ_Generated_L extends MethodTrace {
+            final public class OMJ_Generated_String extends MethodTrace {
             private int Object_counter = 0;
             private Object Object_0;
-            public OMJ_Generated_L(final String methodLocation) {
+            public OMJ_Generated_String(final String methodLocation) {
             super(methodLocation);
             }
             @Override
@@ -160,6 +163,7 @@ internal class DynamicClassDefinerTest {
             $appendIndex
             ${writeMethodIdentifier()}
             $methodLocation
+            $lineNumber
             ${writeNumberOfArguments(1)}
             ${writeObjectName("Object_0")}
             ${writeStringBytes("Object_0")}
@@ -185,6 +189,7 @@ internal class DynamicClassDefinerTest {
             $appendIndex
             ${writeMethodIdentifier()}
             $methodLocation
+            $lineNumber
             ${writeNumberOfArguments(0)}
             }
             }
@@ -224,6 +229,11 @@ internal class DynamicClassDefinerTest {
 
         const val methodLocation = """outputStream.write(methodLocation.getBytes());
             outputStream.write(0);"""
+
+        const val lineNumber = """outputStream.write((byte) ((lineNumber >> 0) & 0xFF));
+            outputStream.write((byte) ((lineNumber >> 8) & 0xFF));
+            outputStream.write((byte) ((lineNumber >> 16) & 0xFF));
+            outputStream.write((byte) ((lineNumber >> 24) & 0xFF));"""
 
         private fun writeObjectName(name: String): String =
                 """outputStream.write('L');

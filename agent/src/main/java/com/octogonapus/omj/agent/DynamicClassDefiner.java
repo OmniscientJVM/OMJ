@@ -312,9 +312,15 @@ final class DynamicClassDefiner {
     // Method trace identifier
     builder.append("outputStream.write(0x2);\n");
 
-    // Location
+    // Class name
     builder.append("outputStream.write(methodLocation.getBytes());\n");
     builder.append("outputStream.write(0);\n");
+
+    // Line number
+    appendValueAsBytes(
+        "lineNumber",
+        SimpleTypeUtil.getLengthOfTypeForTrace(SimpleTypeUtil.SimpleType.INT),
+        builder);
 
     // Number of arguments
     final int numberOfArguments =
@@ -361,7 +367,6 @@ final class DynamicClassDefiner {
   private void appendFieldValue(final Field field, final StringBuilder builder) {
     final SimpleTypeUtil.SimpleType type = TypeUtil.getSimpleType(field.type);
     // TODO: Waiting on a new google-java-format release to use enhanced switch statements
-    //noinspection EnhancedSwitchMigration
     switch (type) {
       case VOID:
         throw new IllegalStateException("Somehow got a field with type void.");
@@ -459,8 +464,14 @@ final class DynamicClassDefiner {
 
     classNameBuilder.append("OMJ_Generated_");
 
-    for (final Type c : argumentTypes) {
-      classNameBuilder.append(TypeUtil.getDescriptorChar(c));
+    for (final Type type : argumentTypes) {
+      // String gets special treatment because we load its value into the trace directly, so we
+      // can't treat it like an Object because the serialization code is different.
+      if (type.getClassName().equals("java.lang.String")) {
+        classNameBuilder.append("String");
+      } else {
+        classNameBuilder.append(TypeUtil.getDescriptorChar(type));
+      }
     }
 
     return classNameBuilder.toString();

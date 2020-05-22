@@ -96,8 +96,15 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
   }
 
   private Trace parseMethodTrace(final long index) throws IOException {
-    // Parse location
-    final var location = parseString();
+    // Parse class name
+    final var className = parseString();
+
+    // Parse line number
+    final int lineNumber =
+        Integer.parseInt(Integer.toHexString(traceStream.read()), 16)
+            | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 8
+            | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 16
+            | Integer.parseInt(Integer.toHexString(traceStream.read()), 16) << 24;
 
     // Parse number of arguments
     final byte numArguments =
@@ -149,7 +156,7 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
       }
     }
 
-    return new MethodTrace(index, location, arguments);
+    return new MethodTrace(index, className + ':' + lineNumber, arguments);
   }
 
   /**

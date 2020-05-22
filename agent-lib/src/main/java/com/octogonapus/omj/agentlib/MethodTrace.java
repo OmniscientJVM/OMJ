@@ -23,6 +23,7 @@ import java.io.OutputStream;
 public abstract class MethodTrace {
 
   protected long index;
+  protected int lineNumber;
   protected final String methodLocation;
 
   public MethodTrace(final String methodLocation) {
@@ -31,6 +32,10 @@ public abstract class MethodTrace {
 
   public void setIndex(final long index) {
     this.index = index;
+  }
+
+  public void setLineNumber(final int lineNumber) {
+    this.lineNumber = lineNumber;
   }
 
   public void set_argument_boolean(final boolean value) {}

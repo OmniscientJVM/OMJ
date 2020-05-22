@@ -30,6 +30,7 @@ public final class OMJAgentLib {
 
   private static final AtomicLong methodCounter = new AtomicLong(0);
   private static final ThreadLocal<MethodTrace> currentMethodTrace = new ThreadLocal<>();
+  private static final ThreadLocal<Integer> currentLineNumber = ThreadLocal.withInitial(() -> 0);
   private static final ConcurrentLinkedQueue<MethodTrace> methodTraceQueue =
       new ConcurrentLinkedQueue<>();
 
@@ -105,8 +106,13 @@ public final class OMJAgentLib {
         });
   }
 
+  public static void lineNumber(final int lineNumber) {
+    currentLineNumber.set(lineNumber);
+  }
+
   public static void methodCall_start(final MethodTrace methodTrace) {
     methodTrace.setIndex(methodCounter.getAndIncrement());
+    methodTrace.setLineNumber(currentLineNumber.get());
     currentMethodTrace.set(methodTrace);
   }
 

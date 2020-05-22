@@ -28,7 +28,6 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
   private final Logger logger = LoggerFactory.getLogger(OMJClassAdapter.class);
   private final DynamicClassDefiner dynamicClassDefiner;
   private String currentClassName;
-  private String currentClassSource;
 
   public OMJClassAdapter(
       final int api,
@@ -75,22 +74,9 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
       final var isStatic = (access & ACC_STATIC) == ACC_STATIC;
 
       return new OMJMethodAdapter(
-          api,
-          visitor,
-          dynamicClassDefiner,
-          currentClassName,
-          currentClassSource,
-          descriptor,
-          name,
-          isStatic);
+          api, visitor, dynamicClassDefiner, currentClassName, descriptor, name, isStatic);
     } else {
       return visitor;
     }
-  }
-
-  @Override
-  public void visitSource(final String source, final String debug) {
-    super.visitSource(source, debug);
-    currentClassSource = source;
   }
 }
