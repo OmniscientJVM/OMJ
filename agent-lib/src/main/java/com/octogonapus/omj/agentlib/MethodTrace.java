@@ -23,15 +23,17 @@ import java.io.OutputStream;
 public abstract class MethodTrace {
 
   protected long index;
+  protected String className;
   protected int lineNumber;
-  protected final String methodLocation;
 
-  public MethodTrace(final String methodLocation) {
-    this.methodLocation = methodLocation;
-  }
+  public MethodTrace() {}
 
   public void setIndex(final long index) {
     this.index = index;
+  }
+
+  public void setClassName(final String className) {
+    this.className = className;
   }
 
   public void setLineNumber(final int lineNumber) {

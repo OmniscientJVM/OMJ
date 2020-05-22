@@ -218,8 +218,8 @@ final class DynamicClassDefiner {
     classCodeBuilder
         .append("public ")
         .append(className)
-        .append("(final String methodLocation) {\n")
-        .append("super(methodLocation);\n")
+        .append("() {\n")
+        .append("super();\n")
         .append("}\n");
 
     // Append all the methods
@@ -313,7 +313,7 @@ final class DynamicClassDefiner {
     builder.append("outputStream.write(0x2);\n");
 
     // Class name
-    builder.append("outputStream.write(methodLocation.getBytes());\n");
+    builder.append("outputStream.write(className.getBytes());\n");
     builder.append("outputStream.write(0);\n");
 
     // Line number

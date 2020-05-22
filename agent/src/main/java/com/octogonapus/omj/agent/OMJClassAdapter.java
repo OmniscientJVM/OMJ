@@ -74,7 +74,7 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
       final var isStatic = (access & ACC_STATIC) == ACC_STATIC;
 
       return new OMJMethodAdapter(
-          api, visitor, dynamicClassDefiner, currentClassName, descriptor, name, isStatic);
+          api, visitor, dynamicClassDefiner, descriptor, isStatic, currentClassName);
     } else {
       return visitor;
     }

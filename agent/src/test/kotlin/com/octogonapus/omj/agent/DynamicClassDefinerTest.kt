@@ -32,8 +32,8 @@ internal class DynamicClassDefinerTest {
             final public class OMJ_Generated_Z extends MethodTrace {
             private int boolean_counter = 0;
             private boolean boolean_0;
-            public OMJ_Generated_Z(final String methodLocation) {
-            super(methodLocation);
+            public OMJ_Generated_Z() {
+            super();
             }
             @Override
             public void set_argument_boolean(final boolean value) {
@@ -46,7 +46,7 @@ internal class DynamicClassDefinerTest {
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
             ${writeMethodIdentifier()}
-            $methodLocation
+            $className
             $lineNumber
             ${writeNumberOfArguments(1)}
             ${writeBoolean("boolean_0")}
@@ -68,8 +68,8 @@ internal class DynamicClassDefinerTest {
             private int double_counter = 0;
             private double double_0;
             private double double_1;
-            public OMJ_Generated_IDD(final String methodLocation) {
-            super(methodLocation);
+            public OMJ_Generated_IDD() {
+            super();
             }
             @Override
             public void set_argument_int(final int value) {
@@ -90,7 +90,7 @@ internal class DynamicClassDefinerTest {
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
             ${writeMethodIdentifier()}
-            $methodLocation
+            $className
             $lineNumber
             ${writeNumberOfArguments(3)}
             ${writeInt("int_0")}
@@ -113,8 +113,8 @@ internal class DynamicClassDefinerTest {
             final public class OMJ_Generated_L extends MethodTrace {
             private int Object_counter = 0;
             private Object Object_0;
-            public OMJ_Generated_L(final String methodLocation) {
-            super(methodLocation);
+            public OMJ_Generated_L() {
+            super();
             }
             @Override
             public void set_argument_Object(final Object value) {
@@ -127,7 +127,7 @@ internal class DynamicClassDefinerTest {
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
             ${writeMethodIdentifier()}
-            $methodLocation
+            $className
             $lineNumber
             ${writeNumberOfArguments(1)}
             ${writeObjectName("Object_0")}
@@ -148,8 +148,8 @@ internal class DynamicClassDefinerTest {
             final public class OMJ_Generated_String extends MethodTrace {
             private int Object_counter = 0;
             private Object Object_0;
-            public OMJ_Generated_String(final String methodLocation) {
-            super(methodLocation);
+            public OMJ_Generated_String() {
+            super();
             }
             @Override
             public void set_argument_Object(final Object value) {
@@ -162,7 +162,7 @@ internal class DynamicClassDefinerTest {
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
             ${writeMethodIdentifier()}
-            $methodLocation
+            $className
             $lineNumber
             ${writeNumberOfArguments(1)}
             ${writeObjectName("Object_0")}
@@ -181,14 +181,14 @@ internal class DynamicClassDefinerTest {
         val body = """
             $imports
             final public class OMJ_Generated_ extends MethodTrace {
-            public OMJ_Generated_(final String methodLocation) {
-            super(methodLocation);
+            public OMJ_Generated_() {
+            super();
             }
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
             ${writeMethodIdentifier()}
-            $methodLocation
+            $className
             $lineNumber
             ${writeNumberOfArguments(0)}
             }
@@ -227,7 +227,7 @@ internal class DynamicClassDefinerTest {
             outputStream.write((byte) ((index >> 48) & 0xFF));
             outputStream.write((byte) ((index >> 56) & 0xFF));"""
 
-        const val methodLocation = """outputStream.write(methodLocation.getBytes());
+        const val className = """outputStream.write(className.getBytes());
             outputStream.write(0);"""
 
         const val lineNumber = """outputStream.write((byte) ((lineNumber >> 0) & 0xFF));

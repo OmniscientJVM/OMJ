@@ -29,29 +29,26 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
   private final Logger logger = LoggerFactory.getLogger(OMJMethodAdapter.class);
   private final DynamicClassDefiner dynamicClassDefiner;
   private final String methodDescriptor;
-  private final String methodName;
-  private final String fullyQualifiedClassName;
   private final boolean isStatic;
+  private final String fullyQualifiedClassName;
   private int currentLineNumber;
 
   public OMJMethodAdapter(
       final int api,
       final MethodVisitor methodVisitor,
       final DynamicClassDefiner dynamicClassDefiner,
-      final String currentClassName,
       final String methodDescriptor,
-      final String methodName,
-      final boolean isStatic) {
+      final boolean isStatic,
+      final String currentClassName) {
     super(api, methodVisitor);
     this.dynamicClassDefiner = dynamicClassDefiner;
     this.methodDescriptor = methodDescriptor;
-    this.methodName = methodName;
     this.isStatic = isStatic;
 
     final int indexOfLastSeparator = currentClassName.lastIndexOf('/') + 1;
     final String packagePrefix = currentClassName.substring(0, indexOfLastSeparator);
     final String className = currentClassName.substring(indexOfLastSeparator);
-    fullyQualifiedClassName = packagePrefix.replace('/', '.') + className;
+    this.fullyQualifiedClassName = packagePrefix.replace('/', '.') + className;
   }
 
   @Override
@@ -66,9 +63,7 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
     // agent lib.
     super.visitTypeInsn(NEW, dynamicClassName);
     super.visitInsn(DUP);
-    super.visitLdcInsn(fullyQualifiedClassName);
-    super.visitMethodInsn(
-        INVOKESPECIAL, dynamicClassName, "<init>", "(Ljava/lang/String;)V", false);
+    super.visitMethodInsn(INVOKESPECIAL, dynamicClassName, "<init>", "()V", false);
     super.visitMethodInsn(
         INVOKESTATIC,
         "com/octogonapus/omj/agentlib/OMJAgentLib",
@@ -121,6 +116,13 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
     // Record the line number before the method call so that the trace container will get the
     // correct line number
     if (opcode == INVOKEVIRTUAL || opcode == INVOKESTATIC) {
+      super.visitLdcInsn(fullyQualifiedClassName);
+      super.visitMethodInsn(
+          INVOKESTATIC,
+          "com/octogonapus/omj/agentlib/OMJAgentLib",
+          "className",
+          "(Ljava/lang/String;)V",
+          false);
       super.visitLdcInsn(currentLineNumber);
       super.visitMethodInsn(
           INVOKESTATIC, "com/octogonapus/omj/agentlib/OMJAgentLib", "lineNumber", "(I)V", false);
