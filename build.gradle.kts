@@ -5,12 +5,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     `java-library`
-    id("com.diffplug.gradle.spotless") version "3.29.0"
-    id("com.adarshr.test-logger") version "2.0.0"
+    id("com.diffplug.gradle.spotless") version Versions.spotlessPlugin
+    id("com.adarshr.test-logger") version Versions.testLoggerPlugin
     jacoco
-    kotlin("jvm") version "1.3.72"
-    id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
-    id("io.gitlab.arturbosch.detekt") version "1.9.0"
+    kotlin("jvm") version Versions.kotlin
+    id("org.jlleitschuh.gradle.ktlint") version Versions.ktlintPlugin
+    id("io.gitlab.arturbosch.detekt") version Versions.detektPlugin
 }
 
 allprojects {
@@ -20,7 +20,7 @@ allprojects {
     }
 
     group = "com.octogonapus"
-    version = "0.1.0"
+    version = Versions.omj
 
     repositories {
         mavenCentral()
@@ -30,7 +30,7 @@ allprojects {
     pluginManager.withPlugin("jacoco") {
         // If this project has the plugin applied, configure the tool version.
         jacoco {
-            toolVersion = property("jacoco-tool.version") as String
+            toolVersion = Versions.jacocoTool
         }
     }
 
@@ -48,7 +48,7 @@ allprojects {
 
     spotless {
         kotlinGradle {
-            ktlint(property("ktlint.version") as String)
+            ktlint(Versions.ktlint)
             trimTrailingWhitespace()
         }
         freshmark {
@@ -73,8 +73,8 @@ subprojects {
 
     dependencies {
         // JUnit
-        testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-api", version = property("junit.version") as String)
-        testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = property("junit.version") as String)
+        testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-api", version = Versions.junit)
+        testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = Versions.junit)
     }
 
     java {
@@ -160,12 +160,12 @@ configure(listOf(project(":agent"), project(":ui"))) {
     }
 
     dependencies {
-        implementation(group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version = property("kotlin.version") as String)
-        implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = property("kotlin.version") as String)
+        implementation(group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version = Versions.kotlin)
+        implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = Versions.kotlin)
 
-        testImplementation(group = "io.kotest", name = "kotest-assertions-core-jvm", version = property("kotest.version") as String)
-        testImplementation(group = "io.kotest", name = "kotest-assertions-jvm", version = property("kotest.version") as String)
-        testImplementation(group = "io.kotest", name = "kotest-property-jvm", version = property("kotest.version") as String)
+        testImplementation(group = "io.kotest", name = "kotest-assertions-core-jvm", version = Versions.kotest)
+        testImplementation(group = "io.kotest", name = "kotest-assertions-jvm", version = Versions.kotest)
+        testImplementation(group = "io.kotest", name = "kotest-property-jvm", version = Versions.kotest)
     }
 
     tasks.withType<KotlinCompile> {
@@ -176,7 +176,7 @@ configure(listOf(project(":agent"), project(":ui"))) {
 
     spotless {
         kotlin {
-            ktlint(property("ktlint.version") as String)
+            ktlint(Versions.ktlint)
             licenseHeaderFile(rootProject.rootDir.toPath().resolve("config").resolve("spotless").resolve("omj.license"))
         }
     }

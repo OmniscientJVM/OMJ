@@ -55,7 +55,9 @@ public class MainUI extends Application {
               .getExtensionFilters()
               .add(new FileChooser.ExtensionFilter("Trace Files", "*.trace"));
           final File selectedFile = fileChooser.showOpenDialog(primaryStage);
-          root.setCenter(new TraceDisplay(selectedFile));
+          if (selectedFile != null) {
+            root.setCenter(new TraceDisplay(selectedFile));
+          }
         });
     fileMenu.getItems().add(openTraceMenuItem);
 

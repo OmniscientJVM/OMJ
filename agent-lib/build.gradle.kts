@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id("com.github.johnrengelman.shadow") version Versions.shadowPlugin
 }
 
 description = "The supporting library for the Agent."
