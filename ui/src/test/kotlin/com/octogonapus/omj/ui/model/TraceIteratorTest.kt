@@ -22,7 +22,6 @@ import io.kotest.matchers.collections.shouldHaveSize
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
-import java.nio.file.Paths
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 
@@ -232,10 +231,5 @@ internal class TraceIteratorTest {
 
         private fun MethodTrace.hasArgument(index: Int, type: String, value: String) =
                 arguments[index].type == type && arguments[index].value == value
-
-        private fun getIter(name: String) =
-                TraceIterator(BufferedInputStream(FileInputStream(
-                        Paths.get(TraceIteratorTest::class.java.getResource(name).toURI()).toFile()
-                )))
     }
 }
