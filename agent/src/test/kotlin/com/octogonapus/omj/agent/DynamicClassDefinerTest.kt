@@ -32,9 +32,7 @@ internal class DynamicClassDefinerTest {
             final public class OMJ_Generated_Z extends MethodTrace {
             private int boolean_counter = 0;
             private boolean boolean_0;
-            public OMJ_Generated_Z() {
-            super();
-            }
+            ${writeConstructor("OMJ_Generated_Z")}
             @Override
             public void set_argument_boolean(final boolean value) {
             switch (boolean_counter) {
@@ -48,6 +46,8 @@ internal class DynamicClassDefinerTest {
             ${writeMethodIdentifier()}
             $className
             $lineNumber
+            $methodName
+            $isStatic
             ${writeNumberOfArguments(1)}
             ${writeBoolean("boolean_0")}
             }
@@ -68,9 +68,7 @@ internal class DynamicClassDefinerTest {
             private int double_counter = 0;
             private double double_0;
             private double double_1;
-            public OMJ_Generated_IDD() {
-            super();
-            }
+            ${writeConstructor("OMJ_Generated_IDD")}
             @Override
             public void set_argument_int(final int value) {
             switch (int_counter) {
@@ -92,6 +90,8 @@ internal class DynamicClassDefinerTest {
             ${writeMethodIdentifier()}
             $className
             $lineNumber
+            $methodName
+            $isStatic
             ${writeNumberOfArguments(3)}
             ${writeInt("int_0")}
             ${writeDouble("double_0")}
@@ -113,9 +113,7 @@ internal class DynamicClassDefinerTest {
             final public class OMJ_Generated_L extends MethodTrace {
             private int Object_counter = 0;
             private Object Object_0;
-            public OMJ_Generated_L() {
-            super();
-            }
+            ${writeConstructor("OMJ_Generated_L")}
             @Override
             public void set_argument_Object(final Object value) {
             switch (Object_counter) {
@@ -129,6 +127,8 @@ internal class DynamicClassDefinerTest {
             ${writeMethodIdentifier()}
             $className
             $lineNumber
+            $methodName
+            $isStatic
             ${writeNumberOfArguments(1)}
             ${writeObjectName("Object_0")}
             ${writeHashCode("Object_0")}
@@ -148,9 +148,7 @@ internal class DynamicClassDefinerTest {
             final public class OMJ_Generated_String extends MethodTrace {
             private int Object_counter = 0;
             private Object Object_0;
-            public OMJ_Generated_String() {
-            super();
-            }
+            ${writeConstructor("OMJ_Generated_String")}
             @Override
             public void set_argument_Object(final Object value) {
             switch (Object_counter) {
@@ -164,6 +162,8 @@ internal class DynamicClassDefinerTest {
             ${writeMethodIdentifier()}
             $className
             $lineNumber
+            $methodName
+            $isStatic
             ${writeNumberOfArguments(1)}
             ${writeObjectName("Object_0")}
             ${writeStringBytes("Object_0")}
@@ -181,15 +181,15 @@ internal class DynamicClassDefinerTest {
         val body = """
             $imports
             final public class OMJ_Generated_ extends MethodTrace {
-            public OMJ_Generated_() {
-            super();
-            }
+            ${writeConstructor("OMJ_Generated_")}
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
             ${writeMethodIdentifier()}
             $className
             $lineNumber
+            $methodName
+            $isStatic
             ${writeNumberOfArguments(0)}
             }
             }
@@ -234,6 +234,11 @@ internal class DynamicClassDefinerTest {
             outputStream.write((byte) ((lineNumber >> 8) & 0xFF));
             outputStream.write((byte) ((lineNumber >> 16) & 0xFF));
             outputStream.write((byte) ((lineNumber >> 24) & 0xFF));"""
+
+        const val methodName = """outputStream.write(methodName.getBytes());
+            outputStream.write(0);"""
+
+        const val isStatic = """outputStream.write(isStatic ? 1 : 0);"""
 
         private fun writeObjectName(name: String): String =
                 """outputStream.write('L');
@@ -282,5 +287,10 @@ internal class DynamicClassDefinerTest {
         private fun writeBoolean(name: String): String =
                 """outputStream.write('Z');
             outputStream.write($name ? 1 : 0);"""
+
+        private fun writeConstructor(className: String) =
+                """public $className(final boolean isStatic) {
+            super(isStatic);
+            }"""
     }
 }

@@ -30,26 +30,15 @@ class TraceCell : ListCell<Trace?>() {
             graphic = null
         } else {
             if (item is MethodTrace) {
-                val (index, location, arguments) = item
+                val (index, callerClass, callerLine, methodName, isStatic, arguments) = item
 
-                val builder = StringBuilder()
-                        .append(index)
-                        .append(' ')
-                        .append(location)
-                        .append('(')
-
-                val iter = arguments.iterator()
-                while (iter.hasNext()) {
-                    val (type, value) = iter.next()
-                    builder.append(type).append(": ").append(value)
-                    if (iter.hasNext()) {
-                        builder.append(", ")
-                    }
+                val argumentString = arguments.joinToString(separator = ", ") {
+                    "${it.type}: ${it.value}"
                 }
 
-                builder.append(')')
+                val staticString = if (isStatic) " <static> " else " "
 
-                text = builder.toString()
+                text = "$index $callerClass:$callerLine$staticString$methodName($argumentString)"
             }
         }
     }

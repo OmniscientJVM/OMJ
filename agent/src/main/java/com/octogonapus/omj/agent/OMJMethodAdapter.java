@@ -63,7 +63,12 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
     // agent lib.
     super.visitTypeInsn(NEW, dynamicClassName);
     super.visitInsn(DUP);
-    super.visitMethodInsn(INVOKESPECIAL, dynamicClassName, "<init>", "()V", false);
+    if (isStatic) {
+      super.visitInsn(ICONST_1);
+    } else {
+      super.visitInsn(ICONST_0);
+    }
+    super.visitMethodInsn(INVOKESPECIAL, dynamicClassName, "<init>", "(Z)V", false);
     super.visitMethodInsn(
         INVOKESTATIC,
         "com/octogonapus/omj/agentlib/OMJAgentLib",
@@ -126,6 +131,13 @@ public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
       super.visitLdcInsn(currentLineNumber);
       super.visitMethodInsn(
           INVOKESTATIC, "com/octogonapus/omj/agentlib/OMJAgentLib", "lineNumber", "(I)V", false);
+      super.visitLdcInsn(name);
+      super.visitMethodInsn(
+          INVOKESTATIC,
+          "com/octogonapus/omj/agentlib/OMJAgentLib",
+          "methodName",
+          "(Ljava/lang/String;)V",
+          false);
     }
 
     super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);

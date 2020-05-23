@@ -32,6 +32,7 @@ public final class OMJAgentLib {
   private static final ThreadLocal<MethodTrace> currentMethodTrace = new ThreadLocal<>();
   private static final ThreadLocal<String> currentClassName = ThreadLocal.withInitial(() -> "");
   private static final ThreadLocal<Integer> currentLineNumber = ThreadLocal.withInitial(() -> 0);
+  private static final ThreadLocal<String> currentMethodName = ThreadLocal.withInitial(() -> "");
   private static final ConcurrentLinkedQueue<MethodTrace> methodTraceQueue =
       new ConcurrentLinkedQueue<>();
 
@@ -45,7 +46,7 @@ public final class OMJAgentLib {
 
               // TODO: This should probably use a memory-mapped file
               final var traceFile =
-                  Util.cacheDir.resolve("trace_" + System.currentTimeMillis() + ".trace");
+                  Util.getTraceDir().resolve("trace_" + System.currentTimeMillis() + ".trace");
               try (final var os = new BufferedOutputStream(Files.newOutputStream(traceFile))) {
                 loopWriteTraces(os);
                 os.flush();
@@ -115,10 +116,15 @@ public final class OMJAgentLib {
     currentLineNumber.set(lineNumber);
   }
 
+  public static void methodName(final String methodName) {
+    currentMethodName.set(methodName);
+  }
+
   public static void methodCall_start(final MethodTrace methodTrace) {
     methodTrace.setIndex(methodCounter.getAndIncrement());
     methodTrace.setClassName(currentClassName.get());
     methodTrace.setLineNumber(currentLineNumber.get());
+    methodTrace.setMethodName(currentMethodName.get());
     currentMethodTrace.set(methodTrace);
   }
 

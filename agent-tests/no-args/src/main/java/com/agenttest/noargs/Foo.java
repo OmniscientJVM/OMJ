@@ -14,18 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.util;
+package com.agenttest.noargs;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-public final class Util {
-
-  /** The directory OMJ keeps all its data in. */
-  public static final Path cacheDir = Paths.get(System.getProperty("user.home"), ".OMJ");
-
-  /** The directory OMJ keeps trace files in. */
-  public static Path getTraceDir() {
-    return Paths.get(System.getProperty("agent-lib.trace-dir", cacheDir.toString()));
-  }
+public class Foo {
+  public void noArgs() {}
 }

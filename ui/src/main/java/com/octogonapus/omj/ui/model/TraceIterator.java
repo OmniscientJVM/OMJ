@@ -87,7 +87,7 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
             .rewind()
             .getLong();
 
-    final byte type = (byte) Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16);
+    final byte type = parseByte();
     if (type == 0x2) {
       return parseMethodTrace(index);
     } else {
@@ -95,16 +95,29 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     }
   }
 
+  private byte parseByte() throws IOException {
+    return (byte) Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16);
+  }
+
+  private boolean parseBoolean() throws IOException {
+    return parseByte() != 0;
+  }
+
   private Trace parseMethodTrace(final long index) throws IOException {
     // Parse class name
-    final var className = parseString();
+    final String className = parseString();
 
     // Parse line number
     final int lineNumber = parseInt();
 
+    // Parse method name
+    final String methodName = parseString();
+
+    // Parse is static
+    final boolean isStatic = parseBoolean();
+
     // Parse number of arguments
-    final byte numArguments =
-        (byte) Integer.parseUnsignedInt(Integer.toHexString(traceStream.read()), 16);
+    final byte numArguments = parseByte();
 
     // Parse arguments
     final var arguments = new ArrayList<MethodArgument>();
@@ -148,7 +161,7 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
       }
     }
 
-    return new MethodTrace(index, className + ':' + lineNumber, arguments);
+    return new MethodTrace(index, className, lineNumber, methodName, isStatic, arguments);
   }
 
   /**

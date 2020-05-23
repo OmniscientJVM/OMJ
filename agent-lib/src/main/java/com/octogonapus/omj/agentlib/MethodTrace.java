@@ -22,11 +22,15 @@ import java.io.OutputStream;
 @SuppressWarnings("unused")
 public abstract class MethodTrace {
 
+  protected final boolean isStatic;
   protected long index;
   protected String className;
   protected int lineNumber;
+  protected String methodName;
 
-  public MethodTrace() {}
+  public MethodTrace(final boolean isStatic) {
+    this.isStatic = isStatic;
+  }
 
   public void setIndex(final long index) {
     this.index = index;
@@ -38,6 +42,10 @@ public abstract class MethodTrace {
 
   public void setLineNumber(final int lineNumber) {
     this.lineNumber = lineNumber;
+  }
+
+  public void setMethodName(final String methodName) {
+    this.methodName = methodName;
   }
 
   public void set_argument_boolean(final boolean value) {}

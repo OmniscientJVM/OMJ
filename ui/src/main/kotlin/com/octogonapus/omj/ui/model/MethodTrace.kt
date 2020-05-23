@@ -18,6 +18,9 @@ package com.octogonapus.omj.ui.model
 
 data class MethodTrace(
     val index: Long,
-    val location: String,
-    val arguments: List<MethodArgument>
+    val callerClass: String,
+    val callerLine: Int,
+    val methodName: String,
+    val isStatic: Boolean,
+    val arguments: MutableList<MethodArgument>
 ) : Trace

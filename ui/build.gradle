@@ -10,17 +10,7 @@ dependencies {
     // Other projects
     implementation(project(":util"))
     implementation(project(":logging"))
-    // Need to dynamically load the agent jar
     runtimeOnly(project(path: ":agent", configuration: "shadow"))
-}
-
-javafx {
-    version = '14'
-    modules = ['javafx.base', 'javafx.controls']
-}
-
-application {
-    mainClassName = "com.octogonapus.omj.ui.view.MainUI"
 }
 
 def agentJarName = "agent-all"
@@ -36,4 +26,20 @@ def copyAgentShadowJarTask = task("copyAgentShadowJar", type: Copy) {
 shadowJar {
     dependsOn(copyAgentShadowJarTask)
     from({ agentJarAllResource })
+}
+
+test {
+    dependsOn(copyAgentShadowJarTask, ":agent-tests:no-args:copyJar")
+
+    def agentAllJarPath = buildDir.toPath().resolve("agent-all").toAbsolutePath().toString()
+    jvmArgs += "-Dagent.jar=" + agentAllJarPath
+}
+
+javafx {
+    version = '14'
+    modules = ['javafx.base', 'javafx.controls']
+}
+
+application {
+    mainClassName = "com.octogonapus.omj.ui.view.MainUI"
 }

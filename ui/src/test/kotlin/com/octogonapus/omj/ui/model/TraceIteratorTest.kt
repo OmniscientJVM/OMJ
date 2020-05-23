@@ -18,24 +18,35 @@ package com.octogonapus.omj.ui.model
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSingleElement
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.BufferedInputStream
+import java.io.File
 import java.io.FileInputStream
 import java.nio.file.Paths
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 
 internal class TraceIteratorTest {
 
     @Test
-    fun `parse method call with no args`() {
-        val traces = loadTraces("method_call_no_args.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with no args`(@TempDir tempDir: File) {
+        runAgent(
+                TraceIteratorTest::class.java.getResource("agent-tests/agent-test_noargs.jar"),
+                tempDir.toPath()
+        )
+
+        val traceFiles = tempDir.listFiles()!!.toList()
+        traceFiles.shouldHaveSize(1)
+
+        val traceFile = traceFiles[0]
+        val traces = TraceIterator(BufferedInputStream(FileInputStream(traceFile))).use {
+            it.asSequence().toList()
+        }
 
         traces.shouldHaveSingleElement {
-            it is MethodTrace &&
-                    it.arguments.size == 1 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello")
+            it is MethodTrace && it.virtualMethodCall("com.agenttest.noargs.Foo")
         }
     }
 
@@ -220,13 +231,22 @@ internal class TraceIteratorTest {
             }
         }
 
+        private fun MethodTrace.virtualMethodCall(
+                receiverType: String,
+                vararg args: Pair<String, String>
+        ) = hasArgumentType(0, receiverType) &&
+                args.iterator().asSequence().foldIndexed(true) { index, acc, (type, value) ->
+                    acc && hasArgument(index, type, value)
+                }
+
         private fun MethodTrace.hasArgumentType(index: Int, type: String) =
                 arguments[index].type == type
 
         private fun MethodTrace.hasArgument(index: Int, type: String, value: String) =
                 arguments[index].type == type && arguments[index].value == value
 
-        private fun loadTraces(name: String): List<Trace> = getIter(name).asSequence().toList()
+        private fun loadTraces(name: String): List<Trace> =
+                getIter(name).use { it.asSequence().toList() }
 
         private fun getIter(name: String) =
                 TraceIterator(BufferedInputStream(FileInputStream(
