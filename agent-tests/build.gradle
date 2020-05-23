@@ -1,1 +1,7 @@
+import com.octogonapus.omj.plugin.CopyAgentTestJarPlugin
+
 description = "The parent project for all agent test classes."
+
+subprojects {
+    apply plugin: CopyAgentTestJarPlugin
+}

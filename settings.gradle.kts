@@ -7,4 +7,5 @@ include(":ui")
 include(":util")
 
 include(":agent-tests")
-include(":agent-tests:no-args")
+include(":agent-tests:byte3c")
+include(":agent-tests:noargs")

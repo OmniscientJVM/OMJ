@@ -29,9 +29,11 @@ shadowJar {
 }
 
 test {
-    dependsOn(copyAgentShadowJarTask, ":agent-tests:no-args:copyJar")
+    dependsOn(copyAgentShadowJarTask)
+    dependsOn(project(":agent-tests").getTasksByName("copyAgentTestJar", true))
 
     def agentAllJarPath = buildDir.toPath().resolve("agent-all").toAbsolutePath().toString()
+    jvmArgs += "-Dagent-test.jar-dir=" + rootProject.buildDir.toPath().resolve("agent-test-jars")
     jvmArgs += "-Dagent.jar=" + agentAllJarPath
 }
 

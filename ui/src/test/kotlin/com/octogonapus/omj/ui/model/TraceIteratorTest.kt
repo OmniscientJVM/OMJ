@@ -32,18 +32,7 @@ internal class TraceIteratorTest {
 
     @Test
     fun `parse method call with no args`(@TempDir tempDir: File) {
-        runAgent(
-                TraceIteratorTest::class.java.getResource("agent-tests/agent-test_noargs.jar"),
-                tempDir.toPath()
-        )
-
-        val traceFiles = tempDir.listFiles()!!.toList()
-        traceFiles.shouldHaveSize(1)
-
-        val traceFile = traceFiles[0]
-        val traces = TraceIterator(BufferedInputStream(FileInputStream(traceFile))).use {
-            it.asSequence().toList()
-        }
+        val traces = generateTraces(tempDir, "agent-test_noargs.jar")
 
         traces.shouldHaveSingleElement {
             it is MethodTrace && it.virtualMethodCall("com.agenttest.noargs.Foo")
@@ -51,15 +40,11 @@ internal class TraceIteratorTest {
     }
 
     @Test
-    fun `parse method call with args byte 60`() {
-        val traces = loadTraces("method_call_args_byte_3C.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args byte 3C`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_byte3c.jar")
 
         traces.shouldHaveSingleElement {
-            it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgument(1, "byte", "60")
+            it is MethodTrace && it.virtualMethodCall("com.agenttest.byte3c.Foo", "byte" to "60")
         }
     }
 
@@ -223,6 +208,26 @@ internal class TraceIteratorTest {
 
     companion object {
 
+        /**
+         * Generate traces by running the Jar under the agent. Asserts that there is only one trace
+         * file.
+         *
+         * @param tempDir The dir to save the trace file into.
+         * @param jarFilename The filename of the Jar to load from
+         * `rootProject/build/agent-test-jars`.
+         * @return The traces.
+         */
+        private fun generateTraces(tempDir: File, jarFilename: String): List<Trace> {
+            runAgent(jarFilename, tempDir.toPath())
+
+            val traceFiles = tempDir.listFiles()!!.toList()
+            traceFiles.shouldHaveSize(1)
+
+            return TraceIterator(BufferedInputStream(FileInputStream(traceFiles[0]))).use {
+                it.asSequence().toList()
+            }
+        }
+
         private fun traceIndexShouldMatchListIndex(traces: List<Trace>) {
             traces.forEachIndexed { index, trace ->
                 trace.shouldBeInstanceOf<MethodTrace> {
@@ -231,12 +236,20 @@ internal class TraceIteratorTest {
             }
         }
 
+        /**
+         * Assumes there is a virtual method call and asserts about its receiver type and arguments.
+         *
+         * @param receiverType The expected receiver type.
+         * @param args The expected (type, value) pairs for each argument in order.
+         */
         private fun MethodTrace.virtualMethodCall(
-                receiverType: String,
-                vararg args: Pair<String, String>
+            receiverType: String,
+            vararg args: Pair<String, String>
         ) = hasArgumentType(0, receiverType) &&
                 args.iterator().asSequence().foldIndexed(true) { index, acc, (type, value) ->
-                    acc && hasArgument(index, type, value)
+                    // Skip index zero because that is the receiver index, which we already checked
+                    if (index == 0) true
+                    else acc && hasArgument(index, type, value)
                 }
 
         private fun MethodTrace.hasArgumentType(index: Int, type: String) =

@@ -56,6 +56,8 @@ public final class OMJClassFileTransformer implements ClassFileTransformer {
     // contract.
     final String includeFilterString = System.getProperty("agent.include-package");
     final String excludeFilterString = System.getProperty("agent.exclude-package");
+    logger.debug("includeFilterString = {}", includeFilterString);
+    logger.debug("excludeFilterString = {}", excludeFilterString);
 
     if (includeFilterString == null) {
       throw new IllegalStateException(
@@ -69,6 +71,8 @@ public final class OMJClassFileTransformer implements ClassFileTransformer {
     final Pattern excludeFilter = Pattern.compile(excludeFilterString);
     final boolean shouldAdapt =
         includeFilter.matcher(className).matches() && !excludeFilter.matcher(className).matches();
+
+    logger.debug("shouldAdapt = {}", shouldAdapt);
 
     if (shouldAdapt) {
       try {

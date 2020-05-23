@@ -16,30 +16,31 @@
  */
 package com.octogonapus.omj.ui.model
 
-import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
  * Runs the agent on a [jarUnderTest] and saves traces into the [traceDir].
  *
- * @param jarUnderTest The resource URL to the Jar to run under the agent.
+ * @param jarUnderTest The filename of the Jar to run under the agent.
  * @param traceDir The dir to save trace files into.
  */
-fun runAgent(jarUnderTest: URL, traceDir: Path) {
-    val jarFile = Paths.get(jarUnderTest.toURI()).toFile()
-    val java = ProcessBuilder(
+fun runAgent(jarUnderTest: String, traceDir: Path) {
+    val jarFile = Paths.get(System.getProperty("agent-test.jar-dir"))
+            .resolve(jarUnderTest)
+            .toFile()
+
+    ProcessBuilder(
             Paths.get(System.getProperty("java.home"))
                     .resolve("bin")
                     .resolve("java")
                     .toAbsolutePath()
                     .toString(),
             "-Dagent-lib.trace-dir=${traceDir.toAbsolutePath()}",
-            "-Dagent.include-package=com/agenttest/noargs/[a-zA-Z.]*",
+            "-Dagent.include-package=com/agenttest/[a-zA-Z0-9/]*",
             "-Dagent.exclude-package=",
             "-javaagent:${System.getProperty("agent.jar")}",
             "-jar",
             jarFile.absolutePath
-    ).also { println(it.command().joinToString(" ")) }.inheritIO().start()
-    java.waitFor()
+    ).inheritIO().start().waitFor()
 }
