@@ -36,6 +36,7 @@ fun runAgent(jarUnderTest: String, traceDir: Path) {
                     .resolve("java")
                     .toAbsolutePath()
                     .toString(),
+            "-Dagent-lib.jar-path=${traceDir.resolve("agent-lib-all.jar").toAbsolutePath()}",
             "-Dagent-lib.trace-dir=${traceDir.toAbsolutePath()}",
             "-Dagent.include-package=com/agenttest/[a-zA-Z0-9/]*",
             "-Dagent.exclude-package=",

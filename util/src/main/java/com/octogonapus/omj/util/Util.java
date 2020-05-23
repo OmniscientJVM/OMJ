@@ -28,4 +28,10 @@ public final class Util {
   public static Path getTraceDir() {
     return Paths.get(System.getProperty("agent-lib.trace-dir", cacheDir.toString()));
   }
+
+  /** The file path to extract the agent lib Jar to. */
+  public static Path getAgentLibJar() {
+    return Paths.get(
+        System.getProperty("agent-lib.jar-path", cacheDir.resolve("agent-lib-all.jar").toString()));
+  }
 }

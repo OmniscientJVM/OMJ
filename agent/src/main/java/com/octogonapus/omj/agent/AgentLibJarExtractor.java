@@ -36,7 +36,7 @@ public final class AgentLibJarExtractor {
         throw new IOException("Could not locate agent-lib-all resource.");
       }
 
-      final var file = Util.cacheDir.resolve("agent-lib-all.jar").toFile();
+      final var file = Util.getAgentLibJar().toFile();
 
       // The lib contents can change all the time so we should re-extract it each time
       file.deleteOnExit();
