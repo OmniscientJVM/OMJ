@@ -17,5 +17,5 @@
 package com.agenttest.noargs;
 
 public class Foo {
-  public void noArgs() {}
+  public void with() {}
 }

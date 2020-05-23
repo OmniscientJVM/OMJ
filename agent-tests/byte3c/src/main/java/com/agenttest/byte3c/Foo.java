@@ -17,5 +17,5 @@
 package com.agenttest.byte3c;
 
 public class Foo {
-  public void withByte(byte b) {}
+  public void with(byte b) {}
 }

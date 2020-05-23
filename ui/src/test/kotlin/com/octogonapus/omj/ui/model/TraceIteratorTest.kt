@@ -19,8 +19,6 @@ package com.octogonapus.omj.ui.model
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSingleElement
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -49,153 +47,131 @@ internal class TraceIteratorTest {
     }
 
     @Test
-    fun `parse method call with args char Q`() {
-        val traces = loadTraces("method_call_args_char_Q.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args char Q`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_charQ.jar")
 
         traces.shouldHaveSingleElement {
-            it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgument(1, "char", "Q")
+            it is MethodTrace && it.virtualMethodCall("com.agenttest.charQ.Foo", "char" to "Q")
         }
     }
 
     @Test
-    fun `parse method call with args double 1p2`() {
-        val traces = loadTraces("method_call_args_double_1p2.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args double 1p2`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_double1p2.jar")
 
         traces.shouldHaveSingleElement {
             it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgument(1, "double", "1.2")
+                    it.virtualMethodCall("com.agenttest.double1p2.Foo", "double" to "1.2")
         }
     }
 
     @Test
-    fun `parse method call with args float 4p3`() {
-        val traces = loadTraces("method_call_args_float_4p3.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args float 4p3`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_float4p3.jar")
 
         traces.shouldHaveSingleElement {
             it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgument(1, "float", "4.3")
+                    it.virtualMethodCall("com.agenttest.float4p3.Foo", "float" to "4.3")
         }
     }
 
     @Test
-    fun `parse method call with args int 42`() {
-        val traces = loadTraces("method_call_args_int_42.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args int 42`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_int42.jar")
 
         traces.shouldHaveSingleElement {
-            it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgument(1, "int", "42")
+            it is MethodTrace && it.virtualMethodCall("com.agenttest.int42.Foo", "int" to "42")
         }
     }
 
     @Test
-    fun `parse method call with args long 123456789123456789`() {
-        val traces = loadTraces("method_call_args_long_123456789123456789.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args long 123456789123456789`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_long123456789123456789.jar")
 
         traces.shouldHaveSingleElement {
-            it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgument(1, "long", "123456789123456789")
+            it is MethodTrace && it.virtualMethodCall(
+                    "com.agenttest.long123456789123456789.Foo",
+                    "long" to "123456789123456789"
+            )
         }
     }
 
     @Test
-    fun `parse method call with args string hello`() {
-        val traces = loadTraces("method_call_args_string_hello.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args string hello`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_stringHello.jar")
 
         traces.shouldHaveSingleElement {
-            it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgument(1, "java.lang.String", "Hello")
+            it is MethodTrace && it.virtualMethodCall(
+                    "com.agenttest.stringHello.Foo",
+                    "java.lang.String" to "Hello"
+            )
         }
     }
 
     @Test
-    fun `parse method call with args string hello with null byte`() {
-        val traces = loadTraces("method_call_args_string_helloWithNullByte.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args string hello with null byte`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_stringHelloNull1.jar")
 
         traces.shouldHaveSingleElement {
-            it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgument(1, "java.lang.String", "Hello\u0000 1")
+            it is MethodTrace && it.virtualMethodCall(
+                    "com.agenttest.stringHelloNull1.Foo",
+                    "java.lang.String" to "Hello\u0000 1"
+            )
         }
     }
 
     @Test
-    fun `parse method call with args object`() {
-        val traces = loadTraces("method_call_args_object.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args object`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_objectStringArray.jar")
 
         traces.shouldHaveSingleElement {
-            // TODO: Parse the descriptor and turn it into a more human-readable notation like
-            //  java.lang.String[]
-            it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgumentType(1, "[Ljava.lang.String;")
+            it is MethodTrace && it.virtualMethodCall(
+                    "com.agenttest.objectStringArray.Foo",
+                    "[Ljava/lang/String;" to null
+            )
         }
     }
 
     @Test
-    fun `parse method call with args short 12345`() {
-        val traces = loadTraces("method_call_args_short_12345.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args short 12345`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_short12345.jar")
 
         traces.shouldHaveSingleElement {
             it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgument(1, "short", "12345")
+                    it.virtualMethodCall("com.agenttest.short12345.Foo", "short" to "12345")
         }
     }
 
     @Test
-    fun `parse method call with args boolean true`() {
-        val traces = loadTraces("method_call_args_boolean_true.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args boolean true`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_booleanTrue.jar")
 
         traces.shouldHaveSingleElement {
             it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgument(1, "boolean", "true")
+                    it.virtualMethodCall("com.agenttest.booleanTrue.Foo", "boolean" to "true")
         }
     }
 
     @Test
-    fun `parse method call with args object MyDataClass`() {
-        val traces = loadTraces("method_call_args_object_MyDataClass.trace")
-        traceIndexShouldMatchListIndex(traces)
+    fun `parse method call with args object MyDataClass`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_objectTestDataClass.jar")
 
         traces.shouldHaveSingleElement {
-            it is MethodTrace &&
-                    it.arguments.size == 2 &&
-                    it.hasArgumentType(0, "com.octogonapus.PrintHello") &&
-                    it.hasArgumentType(1, "com.octogonapus.MyDataClass")
+            it is MethodTrace && it.virtualMethodCall(
+                    "com.agenttest.objectTestDataClass.Foo",
+                    "com.agenttest.objectTestDataClass.TestDataClass" to null
+            )
         }
     }
 
     @Test
-    fun `read past end of trace`() {
-        getIter("method_call_no_args.trace").use {
+    fun `read past end of trace`(@TempDir tempDir: File) {
+        runAgent("agent-test_noargs.jar", tempDir.toPath())
+
+        val traceFiles = tempDir.listFiles()!!.toList()
+        traceFiles.shouldHaveSize(1)
+
+        TraceIterator(BufferedInputStream(FileInputStream(traceFiles[0]))).use {
             // Go to the end
             while (it.hasNext()) {
                 it.next()
@@ -228,14 +204,6 @@ internal class TraceIteratorTest {
             }
         }
 
-        private fun traceIndexShouldMatchListIndex(traces: List<Trace>) {
-            traces.forEachIndexed { index, trace ->
-                trace.shouldBeInstanceOf<MethodTrace> {
-                    it.index.shouldBe(index)
-                }
-            }
-        }
-
         /**
          * Assumes there is a virtual method call and asserts about its receiver type and arguments.
          *
@@ -244,12 +212,19 @@ internal class TraceIteratorTest {
          */
         private fun MethodTrace.virtualMethodCall(
             receiverType: String,
-            vararg args: Pair<String, String>
+            vararg args: Pair<String, String?>
         ) = hasArgumentType(0, receiverType) &&
                 args.iterator().asSequence().foldIndexed(true) { index, acc, (type, value) ->
                     // Skip index zero because that is the receiver index, which we already checked
                     if (index == 0) true
-                    else acc && hasArgument(index, type, value)
+                    else {
+                        if (value == null) {
+                            // Null means we don't care about the value
+                            acc && hasArgumentType(index, type)
+                        } else {
+                            acc && hasArgument(index, type, value)
+                        }
+                    }
                 }
 
         private fun MethodTrace.hasArgumentType(index: Int, type: String) =
@@ -257,9 +232,6 @@ internal class TraceIteratorTest {
 
         private fun MethodTrace.hasArgument(index: Int, type: String, value: String) =
                 arguments[index].type == type && arguments[index].value == value
-
-        private fun loadTraces(name: String): List<Trace> =
-                getIter(name).use { it.asSequence().toList() }
 
         private fun getIter(name: String) =
                 TraceIterator(BufferedInputStream(FileInputStream(

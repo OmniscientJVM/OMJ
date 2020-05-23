@@ -14,11 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.agenttest.byte3c;
+package com.agenttest.objectTestDataClass;
 
-public class Main {
+public class TestDataClass {
 
-  public static void main(String[] args) {
-    new Foo().with((byte) 0x3C);
+  private final int int_1;
+  private final String string_1;
+
+  public TestDataClass(int int_1, String string_1) {
+    this.int_1 = int_1;
+    this.string_1 = string_1;
+  }
+
+  @Override
+  public String toString() {
+    return "TestDataClass{" + "int_1=" + int_1 + ", string_1='" + string_1 + '\'' + '}';
   }
 }

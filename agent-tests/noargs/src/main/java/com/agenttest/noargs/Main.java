@@ -19,6 +19,6 @@ package com.agenttest.noargs;
 public class Main {
 
   public static void main(String[] args) {
-    new Foo().noArgs();
+    new Foo().with();
   }
 }

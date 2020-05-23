@@ -14,11 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.agenttest.byte3c;
+package com.agenttest.short12345;
 
-public class Main {
-
-  public static void main(String[] args) {
-    new Foo().with((byte) 0x3C);
-  }
+public class Foo {
+  public void with(short s) {}
 }
