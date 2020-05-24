@@ -44,8 +44,6 @@ public final class AgentLibJarExtractor {
       try {
         Files.delete(file.toPath());
       } catch (NoSuchFileException ignored) {
-      } catch (IOException ex) {
-        throw new IOException("Failed to delete file " + file.getPath(), ex);
       }
 
       copyStreamToFile(file, agentLib);
