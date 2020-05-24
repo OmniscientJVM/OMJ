@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 
 public final class AgentLibJarExtractor {
 
@@ -40,10 +41,11 @@ public final class AgentLibJarExtractor {
 
       // The lib contents can change all the time so we should re-extract it each time
       file.deleteOnExit();
-      if (file.exists() && !file.delete()) {
-        throw new IOException("Failed to delete file " + file.getPath());
-      } else if (!file.getParentFile().mkdirs() && !file.getParentFile().exists()) {
-        throw new IOException("Failed to make parent dirs for file " + file.getPath());
+      try {
+        Files.delete(file.toPath());
+      } catch (NoSuchFileException ignored) {
+      } catch (IOException ex) {
+        throw new IOException("Failed to delete file " + file.getPath(), ex);
       }
 
       copyStreamToFile(file, agentLib);
