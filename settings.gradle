@@ -1,4 +1,0 @@
-rootProject.name = "OMJ"
-
-include("agent")
-include("agent-lib")

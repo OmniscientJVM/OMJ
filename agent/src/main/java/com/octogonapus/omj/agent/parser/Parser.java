@@ -1,8 +1,53 @@
+/*
+ * This file is part of OMJ.
+ *
+ * OMJ is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OMJ is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package com.octogonapus.omj.agent.parser;
 
 import java.util.ArrayList;
 
-class Parser {
+public final class Parser {
+
+  /**
+   * Parses a field descriptor to get its type.
+   *
+   * @param descriptor The descriptor string to parse, like "I" or "Ljava/lang/String;". See Section
+   *     4.3.2 for the definition.
+   * @return The type of the field.
+   */
+  public static char parseFieldDescriptor(final String descriptor) {
+    if (descriptor.isEmpty()) {
+      throw new IllegalStateException("Descriptor is empty.");
+    }
+
+    final var chars = descriptor.toCharArray();
+    int i = 0;
+
+    final var type = scanNextFieldType(chars, i);
+
+    if (type.nextStartingIndex != chars.length) {
+      throw new IllegalStateException(
+          "Descriptor continues past first type: "
+              + descriptor
+              + " (index "
+              + type.nextStartingIndex
+              + ")");
+    }
+
+    return type.fieldType;
+  }
 
   /**
    * Parses a method descriptor to extract its parameter list and return type.
@@ -11,7 +56,7 @@ class Parser {
    *     Section 4.3.3 for the definition.
    * @return The {@link ParsedMethodDescriptor}.
    */
-  static ParsedMethodDescriptor parseMethodDescriptor(final String descriptor) {
+  public static ParsedMethodDescriptor parseMethodDescriptor(final String descriptor) {
     if (descriptor.isEmpty()) {
       throw new IllegalStateException("Descriptor is empty.");
     }

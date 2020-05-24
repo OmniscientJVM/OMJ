@@ -1,24 +1,114 @@
+/*
+ * This file is part of OMJ.
+ *
+ * OMJ is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OMJ is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package com.octogonapus.omj.agent;
 
 import java.util.Arrays;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class OMJMethodAdapter extends MethodVisitor implements Opcodes {
+public final class OMJMethodAdapter extends MethodVisitor implements Opcodes {
 
-  private final String currentClassName;
-  private final String currentClassSource;
+  private final Logger logger = LoggerFactory.getLogger(OMJMethodAdapter.class);
+  private final DynamicClassDefiner dynamicClassDefiner;
+  private final String methodDescriptor;
+  private final boolean isStatic;
+  private final String fullyQualifiedClassName;
   private int currentLineNumber;
 
   public OMJMethodAdapter(
       final int api,
       final MethodVisitor methodVisitor,
-      final String currentClassName,
-      final String currentClassSource) {
+      final DynamicClassDefiner dynamicClassDefiner,
+      final String methodDescriptor,
+      final boolean isStatic,
+      final String currentClassName) {
     super(api, methodVisitor);
-    this.currentClassName = currentClassName;
-    this.currentClassSource = currentClassSource;
+    this.dynamicClassDefiner = dynamicClassDefiner;
+    this.methodDescriptor = methodDescriptor;
+    this.isStatic = isStatic;
+
+    final int indexOfLastSeparator = currentClassName.lastIndexOf('/') + 1;
+    final String packagePrefix = currentClassName.substring(0, indexOfLastSeparator);
+    final String className = currentClassName.substring(indexOfLastSeparator);
+    this.fullyQualifiedClassName = packagePrefix.replace('/', '.') + className;
+  }
+
+  @Override
+  public void visitCode() {
+    super.visitCode();
+
+    final String dynamicClassName =
+        dynamicClassDefiner.defineClassForMethod(methodDescriptor, isStatic);
+
+    // Make a new instance of the dynamic class we just generated. Pass the method location to it so
+    // that this method can be identified later on. Then start pass the initialized instance to the
+    // agent lib.
+    super.visitTypeInsn(NEW, dynamicClassName);
+    super.visitInsn(DUP);
+    if (isStatic) {
+      super.visitInsn(ICONST_1);
+    } else {
+      super.visitInsn(ICONST_0);
+    }
+    super.visitMethodInsn(INVOKESPECIAL, dynamicClassName, "<init>", "(Z)V", false);
+    super.visitMethodInsn(
+        INVOKESTATIC,
+        "com/octogonapus/omj/agentlib/OMJAgentLib",
+        "methodCall_start",
+        "(Lcom/octogonapus/omj/agentlib/MethodTrace;)V",
+        false);
+
+    final Type[] argumentTypes = Type.getArgumentTypes(methodDescriptor);
+    logger.debug("argumentTypes = " + Arrays.toString(argumentTypes));
+
+    final int virtualOffset;
+
+    if (!isStatic) {
+      super.visitVarInsn(ALOAD, 0);
+      super.visitMethodInsn(
+          INVOKESTATIC,
+          "com/octogonapus/omj/agentlib/OMJAgentLib",
+          "methodCall_argument_Object",
+          "(Ljava/lang/Object;)V",
+          false);
+      virtualOffset = 1;
+    } else {
+      virtualOffset = 0;
+    }
+
+    for (int i = 0; i < argumentTypes.length; i++) {
+      final Type argumentType = argumentTypes[i];
+
+      final String methodName = "methodCall_argument_" + TypeUtil.getAdaptedClassName(argumentType);
+      final String methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V";
+      logger.debug("Generated methodName = " + methodName);
+      logger.debug("Generated methodDesc = " + methodDesc);
+
+      super.visitVarInsn(argumentType.getOpcode(ILOAD), i + virtualOffset);
+      super.visitMethodInsn(
+          INVOKESTATIC, "com/octogonapus/omj/agentlib/OMJAgentLib", methodName, methodDesc, false);
+    }
+
+    super.visitMethodInsn(
+        INVOKESTATIC, "com/octogonapus/omj/agentlib/OMJAgentLib", "methodCall_end", "()V", false);
   }
 
   @Override
@@ -28,30 +118,27 @@ public class OMJMethodAdapter extends MethodVisitor implements Opcodes {
       final String name,
       final String descriptor,
       final boolean isInterface) {
-    System.out.println("OMJMethodAdapter.visitMethodInsn");
-    System.out.println(
-        "opcode = "
-            + OpcodeUtil.getNameOfOpcode(opcode)
-            + ", owner = "
-            + owner
-            + ", name = "
-            + name
-            + ", "
-            + "descriptor = "
-            + descriptor
-            + ", isInterface = "
-            + isInterface);
-
-    final var packagePathPrefix =
-        currentClassName.substring(0, currentClassName.lastIndexOf('/') + 1);
-    final var packagePrefix = packagePathPrefix.replace('/', '.');
-    super.visitLdcInsn(packagePrefix + currentClassSource + ":" + currentLineNumber);
-    super.visitMethodInsn(
-        INVOKESTATIC,
-        "com/octogonapus/omj/agentlib/OMJAgentLib",
-        "methodCall",
-        "(Ljava/lang/String;)V",
-        false);
+    // Record the line number before the method call so that the trace container will get the
+    // correct line number
+    if (opcode == INVOKEVIRTUAL || opcode == INVOKESTATIC) {
+      super.visitLdcInsn(fullyQualifiedClassName);
+      super.visitMethodInsn(
+          INVOKESTATIC,
+          "com/octogonapus/omj/agentlib/OMJAgentLib",
+          "className",
+          "(Ljava/lang/String;)V",
+          false);
+      super.visitLdcInsn(currentLineNumber);
+      super.visitMethodInsn(
+          INVOKESTATIC, "com/octogonapus/omj/agentlib/OMJAgentLib", "lineNumber", "(I)V", false);
+      super.visitLdcInsn(name);
+      super.visitMethodInsn(
+          INVOKESTATIC,
+          "com/octogonapus/omj/agentlib/OMJAgentLib",
+          "methodName",
+          "(Ljava/lang/String;)V",
+          false);
+    }
 
     super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
   }
@@ -60,86 +147,5 @@ public class OMJMethodAdapter extends MethodVisitor implements Opcodes {
   public void visitLineNumber(final int line, final Label start) {
     super.visitLineNumber(line, start);
     currentLineNumber = line;
-  }
-
-  @Override
-  public void visitInsn(final int opcode) {
-    System.out.println("OMJMethodAdapter.visitInsn");
-    System.out.println("opcode = " + OpcodeUtil.getNameOfOpcode(opcode));
-    super.visitInsn(opcode);
-  }
-
-  @Override
-  public void visitIntInsn(final int opcode, final int operand) {
-    System.out.println("OMJMethodAdapter.visitIntInsn");
-    System.out.println("opcode = " + OpcodeUtil.getNameOfOpcode(opcode) + ", operand = " + operand);
-    super.visitIntInsn(opcode, operand);
-  }
-
-  @Override
-  public void visitVarInsn(final int opcode, final int var) {
-    System.out.println("OMJMethodAdapter.visitVarInsn");
-    System.out.println("opcode = " + OpcodeUtil.getNameOfOpcode(opcode) + ", var = " + var);
-    super.visitVarInsn(opcode, var);
-  }
-
-  @Override
-  public void visitLdcInsn(final Object value) {
-    System.out.println("OMJMethodAdapter.visitLdcInsn");
-    System.out.println("value = " + value);
-    super.visitLdcInsn(value);
-  }
-
-  @Override
-  public void visitFrame(
-      final int type,
-      final int numLocal,
-      final Object[] local,
-      final int numStack,
-      final Object[] stack) {
-    System.out.println("OMJMethodAdapter.visitFrame");
-    System.out.println(
-        "type = "
-            + type
-            + ", numLocal = "
-            + numLocal
-            + ", local = "
-            + Arrays.deepToString(local)
-            + ", numStack = "
-            + numStack
-            + ", stack = "
-            + Arrays.deepToString(stack));
-    super.visitFrame(type, numLocal, local, numStack, stack);
-  }
-
-  @Override
-  public void visitParameter(final String name, final int access) {
-    System.out.println("OMJMethodAdapter.visitParameter");
-    System.out.println("name = " + name + ", access = " + access);
-    super.visitParameter(name, access);
-  }
-
-  @Override
-  public void visitFieldInsn(
-      final int opcode, final String owner, final String name, final String descriptor) {
-    System.out.println("OMJMethodAdapter.visitFieldInsn");
-    System.out.println(
-        "opcode = "
-            + OpcodeUtil.getNameOfOpcode(opcode)
-            + ", owner = "
-            + owner
-            + ", name = "
-            + name
-            + ", "
-            + "descriptor = "
-            + descriptor);
-    super.visitFieldInsn(opcode, owner, name, descriptor);
-  }
-
-  @Override
-  public void visitIincInsn(final int var, final int increment) {
-    System.out.println("OMJMethodAdapter.visitIincInsn");
-    System.out.println("var = " + var + ", increment = " + increment);
-    super.visitIincInsn(var, increment);
   }
 }

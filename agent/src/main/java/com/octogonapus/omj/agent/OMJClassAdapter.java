@@ -1,21 +1,40 @@
+/*
+ * This file is part of OMJ.
+ *
+ * OMJ is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OMJ is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package com.octogonapus.omj.agent;
 
-import java.util.regex.Pattern;
+import java.util.Arrays;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class OMJClassAdapter extends ClassVisitor implements Opcodes {
+public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
 
-  private final Pattern classFilter;
-  private boolean shouldAdapt = false;
+  private final Logger logger = LoggerFactory.getLogger(OMJClassAdapter.class);
+  private final DynamicClassDefiner dynamicClassDefiner;
   private String currentClassName;
-  private String currentClassSource;
 
   public OMJClassAdapter(
-      final int api, final ClassVisitor classVisitor, final Pattern classFilter) {
+      final int api,
+      final ClassVisitor classVisitor,
+      final DynamicClassDefiner dynamicClassDefiner) {
     super(api, classVisitor);
-    this.classFilter = classFilter;
+    this.dynamicClassDefiner = dynamicClassDefiner;
   }
 
   @Override
@@ -26,11 +45,8 @@ public class OMJClassAdapter extends ClassVisitor implements Opcodes {
       final String signature,
       final String superName,
       final String[] interfaces) {
-    // Only adapt in this package
-    shouldAdapt = classFilter.matcher(name).matches();
-    currentClassName = name;
-
     super.visit(version, access, name, signature, superName, interfaces);
+    currentClassName = name;
   }
 
   @Override
@@ -40,19 +56,27 @@ public class OMJClassAdapter extends ClassVisitor implements Opcodes {
       final String descriptor,
       final String signature,
       final String[] exceptions) {
-    final var result = super.visitMethod(access, name, descriptor, signature, exceptions);
-    if (result == null) {
-      return null;
-    } else if (shouldAdapt) {
-      return new OMJMethodAdapter(api, result, currentClassName, currentClassSource);
-    } else {
-      return result;
-    }
-  }
+    logger.debug(
+        "access = {}, name = {}, descriptor = {}, signature = {}, exceptions = {}",
+        access,
+        name,
+        descriptor,
+        signature,
+        Arrays.deepToString(exceptions));
 
-  @Override
-  public void visitSource(final String source, final String debug) {
-    super.visitSource(source, debug);
-    currentClassSource = source;
+    final var visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
+
+    if (!name.equals("<init>") && !name.equals("<clinit>")) {
+      // TODO: Handle init and clinit. Need to grab the this pointer after the superclass
+      //  ctor is called.
+
+      logger.debug("Adapting method.");
+      final var isStatic = (access & ACC_STATIC) == ACC_STATIC;
+
+      return new OMJMethodAdapter(
+          api, visitor, dynamicClassDefiner, descriptor, isStatic, currentClassName);
+    } else {
+      return visitor;
+    }
   }
 }
