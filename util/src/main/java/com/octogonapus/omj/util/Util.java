@@ -29,9 +29,8 @@ public final class Util {
     return Paths.get(System.getProperty("agent-lib.trace-dir", cacheDir.toString()));
   }
 
-  /** The file path to extract the agent lib Jar to. */
-  public static Path getAgentLibJar() {
-    return Paths.get(
-        System.getProperty("agent-lib.jar-path", cacheDir.resolve("agent-lib-all.jar").toString()));
+  /** The dir to extract the agent lib Jar into. */
+  public static Path getAgentLibJarDir() {
+    return Paths.get(System.getProperty("agent-lib.jar-dir", cacheDir.toString()));
   }
 }

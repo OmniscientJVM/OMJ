@@ -21,9 +21,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 
 public final class AgentLibJarExtractor {
+
+  private static File agentLibAllJar = null;
 
   /**
    * Extracts the agent-lib jar from our jar and into a file.
@@ -37,20 +38,17 @@ public final class AgentLibJarExtractor {
         throw new IOException("Could not locate agent-lib-all resource.");
       }
 
-      final var file = Util.getAgentLibJar().toFile();
-
-      // The lib contents can change all the time so we should re-extract it each time
-      file.deleteOnExit();
-      try {
-        Files.delete(file.toPath());
-      } catch (NoSuchFileException ignored) {
-      } catch (IOException ex) {
-        throw new IOException("Failed to delete file " + file.getPath(), ex);
+      // Extract the Jar and save it to agentLibAllJar so that subsequent calls do not try to
+      // extract the Jar again.
+      if (agentLibAllJar == null) {
+        final var file =
+            Files.createTempFile(Util.getAgentLibJarDir(), "agent-lib-all_", ".jar").toFile();
+        file.deleteOnExit();
+        copyStreamToFile(file, agentLib);
+        agentLibAllJar = file;
       }
 
-      copyStreamToFile(file, agentLib);
-
-      return file;
+      return agentLibAllJar;
     }
   }
 

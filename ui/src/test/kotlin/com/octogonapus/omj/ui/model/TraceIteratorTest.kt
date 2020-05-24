@@ -167,7 +167,7 @@ internal class TraceIteratorTest {
     fun `read past end of trace`(@TempDir tempDir: File) {
         runAgent("agent-test_noargs.jar", tempDir.toPath())
 
-        val traceFiles = tempDir.listFiles()!!.toList()
+        val traceFiles = tempDir.listFiles()!!.toList().filter { it.extension == "trace" }
         traceFiles.shouldHaveSize(1)
 
         TraceIterator(BufferedInputStream(FileInputStream(traceFiles[0]))).use {
@@ -195,7 +195,7 @@ internal class TraceIteratorTest {
         private fun generateTraces(tempDir: File, jarFilename: String): List<Trace> {
             runAgent(jarFilename, tempDir.toPath())
 
-            val traceFiles = tempDir.listFiles()!!.toList()
+            val traceFiles = tempDir.listFiles()!!.filter { it.extension == "trace" }
             traceFiles.shouldHaveSize(1)
 
             return TraceIterator(BufferedInputStream(FileInputStream(traceFiles[0]))).use {
