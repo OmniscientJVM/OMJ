@@ -24,12 +24,14 @@ dependencies {
 
 tasks.jar {
     manifest {
-        attributes(mapOf(
+        attributes(
+            mapOf(
                 "Premain-Class" to "com.octogonapus.omj.agent.Agent",
                 "Can-Redefine-Classes" to "true",
                 "Can-Retransform-Classes" to "true",
                 "Can-Set-Native-Method-Prefix" to "true"
-        ))
+            )
+        )
     }
 }
 

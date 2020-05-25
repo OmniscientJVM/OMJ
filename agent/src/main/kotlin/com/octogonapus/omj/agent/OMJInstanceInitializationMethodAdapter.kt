@@ -51,13 +51,13 @@ internal class OMJInstanceInitializationMethodAdapter(
         isInterface: Boolean
     ) {
         logger.debug(
-                "visitMethodInsn opcode = {}, owner = {}, name = {}, descriptor = {}, " +
-                        "isInterface = {}",
-                opcode,
-                owner,
-                name,
-                descriptor,
-                isInterface)
+            "visitMethodInsn opcode = {}, owner = {}, name = {}, descriptor = {}, isInterface = {}",
+            opcode,
+            owner,
+            name,
+            descriptor,
+            isInterface
+        )
 
         superVisitor.visitMethodCallStartPreamble(currentLineNumber, fullyQualifiedClassName, name)
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)

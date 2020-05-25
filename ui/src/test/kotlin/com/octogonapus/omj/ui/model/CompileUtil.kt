@@ -27,21 +27,21 @@ import java.nio.file.Paths
  */
 fun runAgent(jarUnderTest: String, traceDir: Path) {
     val jarFile = Paths.get(System.getProperty("agent-test.jar-dir"))
-            .resolve(jarUnderTest)
-            .toFile()
+        .resolve(jarUnderTest)
+        .toFile()
 
     ProcessBuilder(
-            Paths.get(System.getProperty("java.home"))
-                    .resolve("bin")
-                    .resolve("java")
-                    .toAbsolutePath()
-                    .toString(),
-            "-Dagent-lib.jar-dir=${traceDir.toAbsolutePath()}",
-            "-Dagent-lib.trace-dir=${traceDir.toAbsolutePath()}",
-            "-Dagent.include-package=com/agenttest/[a-zA-Z0-9/]*",
-            "-Dagent.exclude-package=",
-            "-javaagent:${System.getProperty("agent.jar")}",
-            "-jar",
-            jarFile.absolutePath
+        Paths.get(System.getProperty("java.home"))
+            .resolve("bin")
+            .resolve("java")
+            .toAbsolutePath()
+            .toString(),
+        "-Dagent-lib.jar-dir=${traceDir.toAbsolutePath()}",
+        "-Dagent-lib.trace-dir=${traceDir.toAbsolutePath()}",
+        "-Dagent.include-package=com/agenttest/[a-zA-Z0-9/]*",
+        "-Dagent.exclude-package=",
+        "-javaagent:${System.getProperty("agent.jar")}",
+        "-jar",
+        jarFile.absolutePath
     ).inheritIO().start().waitFor()
 }

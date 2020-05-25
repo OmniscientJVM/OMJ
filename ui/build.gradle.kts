@@ -40,8 +40,8 @@ tasks.test {
     // The assertion is necessary according to Gradle
     @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
     jvmArgs = jvmArgs!! + listOf(
-            "-Dagent-test.jar-dir=" + rootProject.buildDir.toPath().resolve("agent-test-jars"),
-            "-Dagent.jar=$agentAllJarPath"
+        "-Dagent-test.jar-dir=" + rootProject.buildDir.toPath().resolve("agent-test-jars"),
+        "-Dagent.jar=$agentAllJarPath"
     )
 }
 

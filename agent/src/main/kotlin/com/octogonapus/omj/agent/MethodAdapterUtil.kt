@@ -41,27 +41,30 @@ internal object MethodAdapterUtil {
     ) {
         visitLdcInsn(fullyQualifiedClassName)
         visitMethodInsn(
-                Opcodes.INVOKESTATIC,
-                "com/octogonapus/omj/agentlib/OMJAgentLib",
-                "className",
-                "(Ljava/lang/String;)V",
-                false)
+            Opcodes.INVOKESTATIC,
+            "com/octogonapus/omj/agentlib/OMJAgentLib",
+            "className",
+            "(Ljava/lang/String;)V",
+            false
+        )
 
         visitLdcInsn(currentLineNumber)
         visitMethodInsn(
-                Opcodes.INVOKESTATIC,
-                "com/octogonapus/omj/agentlib/OMJAgentLib",
-                "lineNumber",
-                "(I)V",
-                false)
+            Opcodes.INVOKESTATIC,
+            "com/octogonapus/omj/agentlib/OMJAgentLib",
+            "lineNumber",
+            "(I)V",
+            false
+        )
 
         visitLdcInsn(name)
         visitMethodInsn(
-                Opcodes.INVOKESTATIC,
-                "com/octogonapus/omj/agentlib/OMJAgentLib",
-                "methodName",
-                "(Ljava/lang/String;)V",
-                false)
+            Opcodes.INVOKESTATIC,
+            "com/octogonapus/omj/agentlib/OMJAgentLib",
+            "methodName",
+            "(Ljava/lang/String;)V",
+            false
+        )
     }
 
     /**
@@ -89,24 +92,26 @@ internal object MethodAdapterUtil {
         visitInsn(Opcodes.DUP)
         visitMethodInsn(Opcodes.INVOKESPECIAL, dynamicClassName, "<init>", "()V", false)
         visitMethodInsn(
-                Opcodes.INVOKESTATIC,
-                "com/octogonapus/omj/agentlib/OMJAgentLib",
-                "methodCall_start",
-                "(Lcom/octogonapus/omj/agentlib/MethodTrace;)V",
-                false)
+            Opcodes.INVOKESTATIC,
+            "com/octogonapus/omj/agentlib/OMJAgentLib",
+            "methodCall_start",
+            "(Lcom/octogonapus/omj/agentlib/MethodTrace;)V",
+            false
+        )
 
         val argumentTypes = Type.getArgumentTypes(methodDescriptor)
         logger.debug("argumentTypes = " + Arrays.toString(argumentTypes))
 
-        val virtualOffset = if (isStatic) 0 else {
+        val virtualOffset = if (isStatic) 0 else 1
+        if (!isStatic) {
             visitVarInsn(Opcodes.ALOAD, 0)
             visitMethodInsn(
-                    Opcodes.INVOKESTATIC,
-                    "com/octogonapus/omj/agentlib/OMJAgentLib",
-                    "methodCall_argument_Object",
-                    "(Ljava/lang/Object;)V",
-                    false)
-            1
+                Opcodes.INVOKESTATIC,
+                "com/octogonapus/omj/agentlib/OMJAgentLib",
+                "methodCall_argument_Object",
+                "(Ljava/lang/Object;)V",
+                false
+            )
         }
 
         for (i in argumentTypes.indices) {
@@ -117,18 +122,20 @@ internal object MethodAdapterUtil {
             logger.debug("Generated methodDesc = $methodDesc")
             visitVarInsn(argumentType.getOpcode(Opcodes.ILOAD), i + virtualOffset)
             visitMethodInsn(
-                    Opcodes.INVOKESTATIC,
-                    "com/octogonapus/omj/agentlib/OMJAgentLib",
-                    methodName,
-                    methodDesc,
-                    false)
+                Opcodes.INVOKESTATIC,
+                "com/octogonapus/omj/agentlib/OMJAgentLib",
+                methodName,
+                methodDesc,
+                false
+            )
         }
 
         visitMethodInsn(
-                Opcodes.INVOKESTATIC,
-                "com/octogonapus/omj/agentlib/OMJAgentLib",
-                "methodCall_end",
-                "()V",
-                false)
+            Opcodes.INVOKESTATIC,
+            "com/octogonapus/omj/agentlib/OMJAgentLib",
+            "methodCall_end",
+            "()V",
+            false
+        )
     }
 }
