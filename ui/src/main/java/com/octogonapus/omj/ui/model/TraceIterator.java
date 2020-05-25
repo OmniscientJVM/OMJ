@@ -106,18 +106,23 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
   private Trace parseMethodTrace(final long index) throws IOException {
     // Parse class name
     final String className = parseString();
+    logger.debug("className = {}", className);
 
     // Parse line number
     final int lineNumber = parseInt();
+    logger.debug("lineNumber = {}", lineNumber);
 
     // Parse method name
     final String methodName = parseString();
+    logger.debug("methodName = {}", methodName);
 
     // Parse is static
     final boolean isStatic = parseBoolean();
+    logger.debug("isStatic = {}", isStatic);
 
     // Parse number of arguments
     final byte numArguments = parseByte();
+    logger.debug("numArguments = {}", numArguments);
 
     // Parse arguments
     final var arguments = new ArrayList<MethodArgument>();
@@ -233,23 +238,33 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
       case BOOLEAN:
         return bytes[0] == 0x1 ? "true" : "false";
       case CHAR:
-        final char c =
-            (char)
-                (Byte.parseByte(Integer.toHexString(bytes[0]), 16)
-                    | Byte.parseByte(Integer.toHexString(bytes[1]), 16) << 8);
-        return "" + c;
+        return ""
+            + ByteBuffer.allocate(2)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .put(bytes[0])
+                .put(bytes[1])
+                .rewind()
+                .getChar();
       case BYTE:
-        return "" + Integer.parseInt(Integer.toHexString(bytes[0]), 16);
+        return "" + Integer.parseInt(Integer.toHexString(bytes[0] & 0xFF), 16);
       case SHORT:
         return ""
-            + (Short.parseShort(Integer.toHexString(bytes[0]), 16)
-                | Short.parseShort(Integer.toHexString(bytes[1]), 16) << 8);
+            + ByteBuffer.allocate(2)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .put(bytes[0])
+                .put(bytes[1])
+                .rewind()
+                .getShort();
       case INT:
         return ""
-            + (Integer.parseInt(Integer.toHexString(bytes[0]), 16)
-                | Integer.parseInt(Integer.toHexString(bytes[1]), 16) << 8
-                | Integer.parseInt(Integer.toHexString(bytes[2]), 16) << 16
-                | Integer.parseInt(Integer.toHexString(bytes[3]), 16) << 24);
+            + ByteBuffer.allocate(4)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .put(bytes[0])
+                .put(bytes[1])
+                .put(bytes[2])
+                .put(bytes[3])
+                .rewind()
+                .getInt();
       case FLOAT:
         return ""
             + ByteBuffer.allocate(4)

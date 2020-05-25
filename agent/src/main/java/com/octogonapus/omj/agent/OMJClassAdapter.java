@@ -20,6 +20,7 @@ import java.util.Arrays;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,9 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
 
   private final Logger logger = LoggerFactory.getLogger(OMJClassAdapter.class);
   private final DynamicClassDefiner dynamicClassDefiner;
-  private String currentClassName;
+  private int classVersion;
+  private String className;
+  private String superName;
 
   public OMJClassAdapter(
       final int api,
@@ -45,8 +48,19 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
       final String signature,
       final String superName,
       final String[] interfaces) {
+    logger.debug(
+        "version = {}, access = {}, name = {}, signature = {}, superName = {}, interfaces = {}",
+        version,
+        access,
+        name,
+        signature,
+        superName,
+        Arrays.deepToString(interfaces));
+
     super.visit(version, access, name, signature, superName, interfaces);
-    currentClassName = name;
+    classVersion = version;
+    className = name;
+    this.superName = superName;
   }
 
   @Override
@@ -66,17 +80,53 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
 
     final var visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
 
-    if (!name.equals("<init>") && !name.equals("<clinit>")) {
-      // TODO: Handle init and clinit. Need to grab the this pointer after the superclass
-      //  ctor is called.
-
-      logger.debug("Adapting method.");
-      final var isStatic = (access & ACC_STATIC) == ACC_STATIC;
-
-      return new OMJMethodAdapter(
-          api, visitor, dynamicClassDefiner, descriptor, isStatic, currentClassName);
-    } else {
+    if (isInstanceInitializationMethod(name, descriptor)) {
+      return new OMJInstanceInitializationMethodAdapter(
+          api, visitor, dynamicClassDefiner, descriptor, className, superName);
+    } else if (isClassInitializationMethod(name, descriptor, access)) {
+      // TODO: Implement me
       return visitor;
+    } else {
+      return new OMJMethodAdapter(
+          api, visitor, dynamicClassDefiner, descriptor, isStatic(access), className);
     }
+  }
+
+  private boolean isStatic(final int access) {
+    return (access & ACC_STATIC) == ACC_STATIC;
+  }
+
+  /**
+   * Determines whether the method is an instance initialization method according to Section 2.9.1.
+   *
+   * @param methodName The method's name.
+   * @param descriptor The method's descriptor.
+   * @return True if the method is an instance initialization method.
+   */
+  private boolean isInstanceInitializationMethod(final String methodName, final String descriptor) {
+    return methodName.equals("<init>") && Type.getReturnType(descriptor).getSort() == Type.VOID;
+  }
+
+  /**
+   * Determines whether the method is an class initialization method according to Section 2.9.2.
+   *
+   * @param methodName The method's name.
+   * @param descriptor The method's descriptor.
+   * @return True if the method is an class initialization method.
+   */
+  private boolean isClassInitializationMethod(
+      final String methodName, final String descriptor, final int access) {
+    final int majorVersion = classVersion & 0xFFFF;
+
+    final boolean versionCheck;
+    if (majorVersion >= 51) {
+      versionCheck = isStatic(access) && Type.getArgumentTypes(descriptor).length == 0;
+    } else {
+      versionCheck = true;
+    }
+
+    return methodName.equals("<clinit>")
+        && Type.getReturnType(descriptor).getSort() == Type.VOID
+        && versionCheck;
   }
 }
