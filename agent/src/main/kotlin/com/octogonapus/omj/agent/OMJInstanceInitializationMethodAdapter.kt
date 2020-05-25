@@ -16,19 +16,21 @@
  */
 package com.octogonapus.omj.agent
 
+import com.octogonapus.omj.agent.MethodAdapterUtil.recordMethodTrace
+import com.octogonapus.omj.agent.MethodAdapterUtil.visitMethodCallStartPreamble
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.slf4j.LoggerFactory
 
-class OMJInstanceInitializationMethodAdapter(
+internal class OMJInstanceInitializationMethodAdapter(
     api: Int,
-    private val methodVisitor: MethodVisitor?,
+    private val superVisitor: MethodVisitor,
     private val dynamicClassDefiner: DynamicClassDefiner,
     private val methodDescriptor: String,
     currentClassName: String,
     private val superName: String
-) : MethodVisitor(api, methodVisitor), Opcodes {
+) : MethodVisitor(api, superVisitor), Opcodes {
 
     private val logger = LoggerFactory.getLogger(OMJInstanceInitializationMethodAdapter::class.java)
     private val fullyQualifiedClassName: String
@@ -56,16 +58,14 @@ class OMJInstanceInitializationMethodAdapter(
                 descriptor,
                 isInterface)
 
-        MethodAdapterUtil.visitMethodCallStartPreamble(
-                methodVisitor, currentLineNumber, fullyQualifiedClassName, name)
+        superVisitor.visitMethodCallStartPreamble(currentLineNumber, fullyQualifiedClassName, name)
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
         if (opcode == Opcodes.INVOKESPECIAL && name == "<init>" && owner == superName) {
             // This is the superclass instance initialization method. We can't access `this` until after
             // the superclass is initialized, so recording this method trace has to go in here right after
             // the superclass is initialized instead of in `visitCode`, which would put it at the start of
             // this method before the superclass is initialized.
-            MethodAdapterUtil.recordMethodTrace(
-                    methodVisitor, methodDescriptor, false, dynamicClassDefiner, logger)
+            superVisitor.recordMethodTrace(methodDescriptor, false, dynamicClassDefiner, logger)
         }
     }
 

@@ -16,12 +16,14 @@
  */
 package com.octogonapus.omj.agent
 
+import com.octogonapus.omj.agent.MethodAdapterUtil.recordMethodTrace
+import com.octogonapus.omj.agent.MethodAdapterUtil.visitMethodCallStartPreamble
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.slf4j.LoggerFactory
 
-class OMJMethodAdapter(
+internal class OMJMethodAdapter(
     api: Int,
     private val superVisitor: MethodVisitor,
     private val dynamicClassDefiner: DynamicClassDefiner,
@@ -43,8 +45,7 @@ class OMJMethodAdapter(
 
     override fun visitCode() {
         super.visitCode()
-        MethodAdapterUtil.recordMethodTrace(
-                superVisitor, methodDescriptor, isStatic, dynamicClassDefiner, logger)
+        superVisitor.recordMethodTrace(methodDescriptor, isStatic, dynamicClassDefiner, logger)
     }
 
     override fun visitMethodInsn(
@@ -54,8 +55,7 @@ class OMJMethodAdapter(
         descriptor: String,
         isInterface: Boolean
     ) {
-        MethodAdapterUtil.visitMethodCallStartPreamble(
-                superVisitor, currentLineNumber, fullyQualifiedClassName, name)
+        superVisitor.visitMethodCallStartPreamble(currentLineNumber, fullyQualifiedClassName, name)
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
     }
 
