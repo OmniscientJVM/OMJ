@@ -92,7 +92,12 @@ internal class TraceIteratorTest {
 
         traces.shouldHaveInOrder(
                 { it.constructorCall("com.agenttest.long123456789123456789.Foo") },
-                { it.virtualMethodCall("com.agenttest.long123456789123456789.Foo", "long" to "123456789123456789") }
+                {
+                    it.virtualMethodCall(
+                            "com.agenttest.long123456789123456789.Foo",
+                            "long" to "123456789123456789"
+                    )
+                }
         )
     }
 
@@ -102,7 +107,12 @@ internal class TraceIteratorTest {
 
         traces.shouldHaveInOrder(
                 { it.constructorCall("com.agenttest.stringHello.Foo") },
-                { it.virtualMethodCall("com.agenttest.stringHello.Foo", "java.lang.String" to "Hello") }
+                {
+                    it.virtualMethodCall(
+                            "com.agenttest.stringHello.Foo",
+                            "java.lang.String" to "Hello"
+                    )
+                }
         )
     }
 
@@ -125,7 +135,10 @@ internal class TraceIteratorTest {
 
         traces.shouldHaveInOrder(
                 { it.constructorCall("com.agenttest.objectStringArray.Foo") },
-                { it.virtualMethodCall("com.agenttest.objectStringArray.Foo", "[Ljava/lang/String;" to null) }
+                { it.virtualMethodCall(
+                        "com.agenttest.objectStringArray.Foo",
+                        "[Ljava/lang/String;" to null
+                ) }
         )
     }
 
@@ -223,20 +236,14 @@ internal class TraceIteratorTest {
         private fun Trace.virtualMethodCall(
             receiverType: String,
             vararg args: Pair<String, String?>
-        ) = this is MethodTrace &&
-                !isStatic &&
-                hasArgumentType(0, receiverType) &&
-                methodName != "<init>" && // Instance initializers are handled differently
-                hasArguments(args)
+        ) = this is MethodTrace && !isStatic && hasArgumentType(0, receiverType) &&
+                methodName != "<init>" && hasArguments(args)
 
         private fun Trace.constructorCall(
             receiverType: String,
             vararg args: Pair<String, String?>
-        ) = this is MethodTrace &&
-                !isStatic &&
-                hasArgumentType(0, receiverType) &&
-                methodName == "<init>" &&
-                hasArguments(args)
+        ) = this is MethodTrace && !isStatic && hasArgumentType(0, receiverType) &&
+                methodName == "<init>" && hasArguments(args)
 
         private fun MethodTrace.hasArguments(args: Array<out Pair<String, String?>>): Boolean {
             return args.iterator().asSequence().foldIndexed(true) { index, acc, (type, value) ->

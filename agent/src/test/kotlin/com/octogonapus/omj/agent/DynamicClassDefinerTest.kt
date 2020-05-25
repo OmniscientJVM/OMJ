@@ -230,7 +230,10 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(), false).body)
+        assertEquals(
+                body,
+                DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(), false).body
+        )
     }
 
     @Test

@@ -23,32 +23,53 @@ import io.kotest.matchers.neverNullMatcher
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldNot
 
-fun <T> Array<T>.shouldHaveInOrder(vararg ps: (T) -> Boolean) = asList().shouldHaveInOrder(ps.toList())
-fun <T> List<T>.shouldHaveInOrder(vararg ps: (T) -> Boolean) = this.shouldHaveInOrder(ps.toList())
-infix fun <T> Array<T>.shouldHaveInOrder(expected: List<(T) -> Boolean>) = asList().shouldHaveInOrder(expected)
-infix fun <T> List<T>.shouldHaveInOrder(expected: List<(T) -> Boolean>) = this should hasInOrder(expected)
-infix fun <T> Array<T>.shouldNotHaveInOrder(expected: Array<(T) -> Boolean>) = asList().shouldNotHaveInOrder(expected.asList())
-infix fun <T> Array<T>.shouldNotHaveInOrder(expected: List<(T) -> Boolean>) = asList().shouldNotHaveInOrder(expected)
-infix fun <T> List<T>.shouldNotHaveInOrder(expected: List<(T) -> Boolean>) = this shouldNot hasInOrder(expected)
+fun <T> Array<T>.shouldHaveInOrder(vararg ps: (T) -> Boolean) =
+        asList().shouldHaveInOrder(ps.toList())
+
+fun <T> List<T>.shouldHaveInOrder(vararg ps: (T) -> Boolean) =
+        this.shouldHaveInOrder(ps.toList())
+
+infix fun <T> Array<T>.shouldHaveInOrder(expected: List<(T) -> Boolean>) =
+        asList().shouldHaveInOrder(expected)
+
+infix fun <T> List<T>.shouldHaveInOrder(expected: List<(T) -> Boolean>) =
+        this should hasInOrder(expected)
+
+infix fun <T> Array<T>.shouldNotHaveInOrder(expected: Array<(T) -> Boolean>) =
+        asList().shouldNotHaveInOrder(expected.asList())
+
+infix fun <T> Array<T>.shouldNotHaveInOrder(expected: List<(T) -> Boolean>) =
+        asList().shouldNotHaveInOrder(expected)
+
+infix fun <T> List<T>.shouldNotHaveInOrder(expected: List<(T) -> Boolean>) =
+        this shouldNot hasInOrder(expected)
+
 fun <T> hasInOrder(vararg ps: (T) -> Boolean): Matcher<Collection<T>?> = hasInOrder(ps.asList())
 
 /**
  * Assert that a collection has a subsequence matching the sequence of predicates, possibly with
  * values in between.
  */
-fun <T> hasInOrder(predicates: List<(T) -> Boolean>): Matcher<Collection<T>?> = neverNullMatcher { actual ->
-    require(predicates.isNotEmpty()) { "predicates must not be empty" }
+fun <T> hasInOrder(predicates: List<(T) -> Boolean>): Matcher<Collection<T>?> =
+        neverNullMatcher { actual ->
+            require(predicates.isNotEmpty()) { "predicates must not be empty" }
 
-    var subsequenceIndex = 0
-    val actualIterator = actual.iterator()
+            var subsequenceIndex = 0
+            val actualIterator = actual.iterator()
 
-    while (actualIterator.hasNext() && subsequenceIndex < predicates.size) {
-        if (predicates[subsequenceIndex](actualIterator.next())) subsequenceIndex += 1
-    }
+            while (actualIterator.hasNext() && subsequenceIndex < predicates.size) {
+                if (predicates[subsequenceIndex](actualIterator.next())) subsequenceIndex += 1
+            }
 
-    MatcherResult(
-            subsequenceIndex == predicates.size,
-            { "${actual.show().value} did not match the predicates ${predicates.show().value} in order" },
-            { "${actual.show().value} should not match the predicates ${predicates.show().value} in order" }
-    )
-}
+            MatcherResult(
+                    subsequenceIndex == predicates.size,
+                    {
+                        "${actual.show().value} did not match the predicates " +
+                                "${predicates.show().value} in order"
+                    },
+                    {
+                        "${actual.show().value} should not match the predicates " +
+                                "${predicates.show().value} in order"
+                    }
+            )
+        }

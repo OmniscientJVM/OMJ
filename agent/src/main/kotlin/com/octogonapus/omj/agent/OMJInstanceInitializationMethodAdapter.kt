@@ -51,7 +51,8 @@ internal class OMJInstanceInitializationMethodAdapter(
         isInterface: Boolean
     ) {
         logger.debug(
-                "visitMethodInsn opcode = {}, owner = {}, name = {}, descriptor = {}, isInterface = {}",
+                "visitMethodInsn opcode = {}, owner = {}, name = {}, descriptor = {}, " +
+                        "isInterface = {}",
                 opcode,
                 owner,
                 name,

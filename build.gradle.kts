@@ -181,6 +181,11 @@ configure(listOf(project(":agent"), project(":ui"))) {
         }
     }
 
+    ktlint {
+        version.set(Versions.ktlint)
+        additionalEditorconfigFile.set(file(rootProject.rootDir.toPath().resolve("config").resolve("ktlint").resolve(".editorconfig")))
+    }
+
     detekt {
         input = files("src/main/kotlin", "src/test/kotlin")
         parallel = true
