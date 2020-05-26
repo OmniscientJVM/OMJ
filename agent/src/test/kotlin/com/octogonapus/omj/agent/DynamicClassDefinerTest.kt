@@ -27,7 +27,8 @@ internal class DynamicClassDefinerTest {
 
     @Test
     fun generateBooleanContainer() {
-        val body = """
+        val body =
+            """
             $imports
             final public class OMJ_Generated_Z extends MethodTrace {
             private int boolean_counter = 0;
@@ -53,22 +54,65 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(
-                Type.getType(Boolean::class.java))
-        ).body)
+        val dynamicClass = DynamicClassDefiner(null, null).generateClassCodeForMethod(
+            listOf(
+                Type.getType(Boolean::class.java)
+            ),
+            false
+        )
+        assertEquals(body, dynamicClass.body)
+    }
+
+    @Test
+    fun generateBooleanContainerForStaticMethod() {
+        val body =
+            """
+            $imports
+            final public class OMJ_Generated_Z_Static extends MethodTrace {
+            private int boolean_counter = 0;
+            private boolean boolean_0;
+            ${writeConstructor("OMJ_Generated_Z_Static", isStatic = true)}
+            @Override
+            public void set_argument_boolean(final boolean value) {
+            switch (boolean_counter) {
+            case 0: boolean_0 = value;
+            }
+            boolean_counter++;
+            }
+            @Override
+            public void serialize(final OutputStream outputStream) throws IOException {
+            $appendIndex
+            ${writeMethodIdentifier()}
+            $className
+            $lineNumber
+            $methodName
+            $isStatic
+            ${writeNumberOfArguments(1)}
+            ${writeBoolean("boolean_0")}
+            }
+            }
+            """.trimIndent()
+        val dynamicClass = DynamicClassDefiner(null, null).generateClassCodeForMethod(
+            listOf(
+                Type.getType(Boolean::class.java)
+            ),
+            true
+        )
+        assertEquals(body, dynamicClass.body)
     }
 
     @Test
     fun generateIntDoubleDoubleContainer() {
-        val body = """
+        val body =
+            """
             $imports
-            final public class OMJ_Generated_IDD extends MethodTrace {
+            final public class OMJ_Generated_I_D_D extends MethodTrace {
             private int int_counter = 0;
             private int int_0;
             private int double_counter = 0;
             private double double_0;
             private double double_1;
-            ${writeConstructor("OMJ_Generated_IDD")}
+            ${writeConstructor("OMJ_Generated_I_D_D")}
             @Override
             public void set_argument_int(final int value) {
             switch (int_counter) {
@@ -99,16 +143,21 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(
+        val dynamicClass = DynamicClassDefiner(null, null).generateClassCodeForMethod(
+            listOf(
                 Type.getType(Int::class.java),
                 Type.getType(Double::class.java),
                 Type.getType(Double::class.java)
-        )).body)
+            ),
+            false
+        )
+        assertEquals(body, dynamicClass.body)
     }
 
     @Test
     fun generateObjectContainer() {
-        val body = """
+        val body =
+            """
             $imports
             final public class OMJ_Generated_L extends MethodTrace {
             private int Object_counter = 0;
@@ -135,15 +184,19 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(
-                body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(
-                Type.getType(java.lang.Object::class.java))
-        ).body)
+        val dynamicClass = DynamicClassDefiner(null, null).generateClassCodeForMethod(
+            listOf(
+                Type.getType(java.lang.Object::class.java)
+            ),
+            false
+        )
+        assertEquals(body, dynamicClass.body)
     }
 
     @Test
     fun generateStringContainer() {
-        val body = """
+        val body =
+            """
             $imports
             final public class OMJ_Generated_String extends MethodTrace {
             private int Object_counter = 0;
@@ -170,15 +223,19 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(
-                body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(
-                Type.getType(java.lang.String::class.java))
-        ).body)
+        val dynamicClass = DynamicClassDefiner(null, null).generateClassCodeForMethod(
+            listOf(
+                Type.getType(java.lang.String::class.java)
+            ),
+            false
+        )
+        assertEquals(body, dynamicClass.body)
     }
 
     @Test
     fun generateEmptyContainer() {
-        val body = """
+        val body =
+            """
             $imports
             final public class OMJ_Generated_ extends MethodTrace {
             ${writeConstructor("OMJ_Generated_")}
@@ -194,16 +251,22 @@ internal class DynamicClassDefinerTest {
             }
             }
             """.trimIndent()
-        assertEquals(body, DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf()).body)
+        assertEquals(
+            body,
+            DynamicClassDefiner(null, null).generateClassCodeForMethod(listOf(), false).body
+        )
     }
 
     @Test
     fun generateAndCompileBooleanContainer(@TempDir tempDir: File) {
         val dynamicClassDefiner = DynamicClassDefiner(null, tempDir.toPath())
         val file = dynamicClassDefiner.writeToJarFile(
-                dynamicClassDefiner.generateClassCodeForMethod(listOf(
-                        Type.getType(Boolean::class.java))
-                )
+            dynamicClassDefiner.generateClassCodeForMethod(
+                listOf(
+                    Type.getType(Boolean::class.java)
+                ),
+                false
+            )
         )
 
         assertTrue(tempDir.toPath().resolve("OMJ_Generated_Z.java").toFile().exists())
@@ -214,11 +277,13 @@ internal class DynamicClassDefinerTest {
 
     @Suppress("SameParameterValue")
     companion object {
-        const val imports = """import com.octogonapus.omj.agentlib.MethodTrace;
+        const val imports =
+            """import com.octogonapus.omj.agentlib.MethodTrace;
             import java.io.IOException;
             import java.io.OutputStream;"""
 
-        const val appendIndex = """outputStream.write((byte) ((index >> 0) & 0xFF));
+        const val appendIndex =
+            """outputStream.write((byte) ((index >> 0) & 0xFF));
             outputStream.write((byte) ((index >> 8) & 0xFF));
             outputStream.write((byte) ((index >> 16) & 0xFF));
             outputStream.write((byte) ((index >> 24) & 0xFF));
@@ -227,33 +292,37 @@ internal class DynamicClassDefinerTest {
             outputStream.write((byte) ((index >> 48) & 0xFF));
             outputStream.write((byte) ((index >> 56) & 0xFF));"""
 
-        const val className = """outputStream.write(className.getBytes());
+        const val className =
+            """outputStream.write(className.getBytes());
             outputStream.write(0);"""
 
-        const val lineNumber = """outputStream.write((byte) ((lineNumber >> 0) & 0xFF));
+        const val lineNumber =
+            """outputStream.write((byte) ((lineNumber >> 0) & 0xFF));
             outputStream.write((byte) ((lineNumber >> 8) & 0xFF));
             outputStream.write((byte) ((lineNumber >> 16) & 0xFF));
             outputStream.write((byte) ((lineNumber >> 24) & 0xFF));"""
 
-        const val methodName = """outputStream.write(methodName.getBytes());
+        const val methodName =
+            """outputStream.write(methodName.getBytes());
             outputStream.write(0);"""
 
-        const val isStatic = """outputStream.write(isStatic ? 1 : 0);"""
+        const val isStatic =
+            """outputStream.write(isStatic ? 1 : 0);"""
 
         private fun writeObjectName(name: String): String =
-                """outputStream.write('L');
+            """outputStream.write('L');
             outputStream.write($name.getClass().getName().getBytes());
             outputStream.write(0);"""
 
         private fun writeHashCode(name: String): String =
-                """final int ${name}_hashCode = System.identityHashCode($name);
+            """final int ${name}_hashCode = System.identityHashCode($name);
             outputStream.write((byte) ((${name}_hashCode >> 0) & 0xFF));
             outputStream.write((byte) ((${name}_hashCode >> 8) & 0xFF));
             outputStream.write((byte) ((${name}_hashCode >> 16) & 0xFF));
             outputStream.write((byte) ((${name}_hashCode >> 24) & 0xFF));"""
 
         private fun writeStringBytes(name: String): String =
-                """final byte[] ${name}_string_bytes = ((String) $name).getBytes();
+            """final byte[] ${name}_string_bytes = ((String) $name).getBytes();
             outputStream.write((byte) ((${name}_string_bytes.length >> 0) & 0xFF));
             outputStream.write((byte) ((${name}_string_bytes.length >> 8) & 0xFF));
             outputStream.write((byte) ((${name}_string_bytes.length >> 16) & 0xFF));
@@ -261,17 +330,17 @@ internal class DynamicClassDefinerTest {
             outputStream.write(${name}_string_bytes);"""
 
         private fun writeNumberOfArguments(numberOfArguments: Int): String =
-                """outputStream.write($numberOfArguments);"""
+            """outputStream.write($numberOfArguments);"""
 
         private fun writeInt(name: String): String =
-                """outputStream.write('I');
+            """outputStream.write('I');
             outputStream.write((byte) (($name >> 0) & 0xFF));
             outputStream.write((byte) (($name >> 8) & 0xFF));
             outputStream.write((byte) (($name >> 16) & 0xFF));
             outputStream.write((byte) (($name >> 24) & 0xFF));"""
 
         private fun writeDouble(name: String): String =
-                """outputStream.write('D');
+            """outputStream.write('D');
             final long ${name}_l = Double.doubleToRawLongBits($name);
             outputStream.write((byte) ((${name}_l >> 0) & 0xFF));
             outputStream.write((byte) ((${name}_l >> 8) & 0xFF));
@@ -282,15 +351,16 @@ internal class DynamicClassDefinerTest {
             outputStream.write((byte) ((${name}_l >> 48) & 0xFF));
             outputStream.write((byte) ((${name}_l >> 56) & 0xFF));"""
 
-        private fun writeMethodIdentifier(): String = """outputStream.write(0x2);"""
+        private fun writeMethodIdentifier(): String =
+            """outputStream.write(0x2);"""
 
         private fun writeBoolean(name: String): String =
-                """outputStream.write('Z');
+            """outputStream.write('Z');
             outputStream.write($name ? 1 : 0);"""
 
-        private fun writeConstructor(className: String) =
-                """public $className(final boolean isStatic) {
-            super(isStatic);
+        private fun writeConstructor(className: String, isStatic: Boolean = false) =
+            """public $className() {
+            super(${if (isStatic) "true" else "false"});
             }"""
     }
 }

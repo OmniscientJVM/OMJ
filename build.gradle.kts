@@ -181,6 +181,17 @@ configure(listOf(project(":agent"), project(":ui"))) {
         }
     }
 
+    // Always run ktlintFormat after spotlessApply
+    tasks.named("spotlessApply").configure {
+        finalizedBy(tasks.named("ktlintFormat"))
+    }
+
+    ktlint {
+        version.set(Versions.ktlint)
+        enableExperimentalRules.set(true)
+        additionalEditorconfigFile.set(file(rootProject.rootDir.toPath().resolve("config").resolve("ktlint").resolve(".editorconfig")))
+    }
+
     detekt {
         input = files("src/main/kotlin", "src/test/kotlin")
         parallel = true
