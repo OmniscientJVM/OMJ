@@ -70,9 +70,9 @@ internal class OMJInstanceInitializationMethodAdapter(
             // Otherwise, this method just contains normal method calls, so emit the typical
             // preamble.
             superVisitor.visitMethodCallStartPreamble(
-                    currentLineNumber,
-                    fullyQualifiedClassName,
-                    name
+                currentLineNumber,
+                fullyQualifiedClassName,
+                name
             )
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
         }
