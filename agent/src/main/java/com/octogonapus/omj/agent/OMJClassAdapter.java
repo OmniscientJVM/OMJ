@@ -104,6 +104,15 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
     }
   }
 
+  /**
+   * Determines whether the method is the "main method" (entry point) according to JLS Section
+   * 12.1.4.
+   *
+   * @param methodName The name of the method.
+   * @param descriptor The method's descriptor.
+   * @param access The method's access number.
+   * @return True if the method is the "main method".
+   */
   private boolean isMainMethod(final String methodName, final String descriptor, final int access) {
     final Type[] argumentTypes = Type.getArgumentTypes(descriptor);
     return methodName.equals("main")
@@ -115,7 +124,8 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
   }
 
   /**
-   * Determines whether the method is an instance initialization method according to Section 2.9.1.
+   * Determines whether the method is an instance initialization method according to JVMS Section
+   * 2.9.1.
    *
    * @param methodName The method's name.
    * @param descriptor The method's descriptor.
@@ -126,7 +136,8 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
   }
 
   /**
-   * Determines whether the method is an class initialization method according to Section 2.9.2.
+   * Determines whether the method is an class initialization method according to JVMS Section
+   * 2.9.2.
    *
    * @param methodName The method's name.
    * @param descriptor The method's descriptor.

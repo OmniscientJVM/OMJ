@@ -53,7 +53,7 @@ public final class Parser {
    * Parses a method descriptor to extract its parameter list and return type.
    *
    * @param descriptor The descriptor string to parse, like "()V" or "(ID[Ljava/lang/Object;)B". See
-   *     Section 4.3.3 for the definition.
+   *     JVMS Section 4.3.3 for the definition.
    * @return The {@link ParsedMethodDescriptor}.
    */
   public static ParsedMethodDescriptor parseMethodDescriptor(final String descriptor) {
