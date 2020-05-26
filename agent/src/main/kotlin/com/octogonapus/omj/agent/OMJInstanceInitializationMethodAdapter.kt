@@ -59,14 +59,22 @@ internal class OMJInstanceInitializationMethodAdapter(
             isInterface
         )
 
-        superVisitor.visitMethodCallStartPreamble(currentLineNumber, fullyQualifiedClassName, name)
-        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
         if (opcode == Opcodes.INVOKESPECIAL && name == "<init>" && owner == superName) {
-            // This is the superclass instance initialization method. We can't access `this` until after
-            // the superclass is initialized, so recording this method trace has to go in here right after
-            // the superclass is initialized instead of in `visitCode`, which would put it at the start of
-            // this method before the superclass is initialized.
+            // This is the superclass instance initialization method. We can't access `this` until
+            // after the superclass is initialized, so recording this method trace has to go in here
+            // right after the superclass is initialized instead of in `visitCode`, which would put
+            // it at the start of this method before the superclass is initialized.
+            super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
             superVisitor.recordMethodTrace(methodDescriptor, false, dynamicClassDefiner, logger)
+        } else {
+            // Otherwise, this method just contains normal method calls, so emit the typical
+            // preamble.
+            superVisitor.visitMethodCallStartPreamble(
+                    currentLineNumber,
+                    fullyQualifiedClassName,
+                    name
+            )
+            super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
         }
     }
 

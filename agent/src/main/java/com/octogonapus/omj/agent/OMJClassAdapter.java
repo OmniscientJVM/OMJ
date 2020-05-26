@@ -84,8 +84,8 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
       return new OMJInstanceInitializationMethodAdapter(
           api, visitor, dynamicClassDefiner, descriptor, className, superName);
     } else if (isClassInitializationMethod(name, descriptor, access)) {
-      // TODO: Implement me
-      return visitor;
+      return new OMJMethodAdapter(
+          api, visitor, dynamicClassDefiner, descriptor, isStatic(access), className);
     } else {
       return new OMJMethodAdapter(
           api, visitor, dynamicClassDefiner, descriptor, isStatic(access), className);
