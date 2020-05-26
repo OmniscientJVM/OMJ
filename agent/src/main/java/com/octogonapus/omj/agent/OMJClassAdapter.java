@@ -85,15 +85,33 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
           api, visitor, dynamicClassDefiner, descriptor, className, superName);
     } else if (isClassInitializationMethod(name, descriptor, access)) {
       return new OMJMethodAdapter(
-          api, visitor, dynamicClassDefiner, descriptor, isStatic(access), className);
+          api,
+          visitor,
+          dynamicClassDefiner,
+          descriptor,
+          hasAccessFlag(access, ACC_STATIC),
+          className);
+    } else if (isMainMethod(name, descriptor, access)) {
+      return new OMJMainMethodAdapter(api, visitor, dynamicClassDefiner, className);
     } else {
       return new OMJMethodAdapter(
-          api, visitor, dynamicClassDefiner, descriptor, isStatic(access), className);
+          api,
+          visitor,
+          dynamicClassDefiner,
+          descriptor,
+          hasAccessFlag(access, ACC_STATIC),
+          className);
     }
   }
 
-  private boolean isStatic(final int access) {
-    return (access & ACC_STATIC) == ACC_STATIC;
+  private boolean isMainMethod(final String methodName, final String descriptor, final int access) {
+    final Type[] argumentTypes = Type.getArgumentTypes(descriptor);
+    return methodName.equals("main")
+        && hasAccessFlag(access, ACC_PUBLIC)
+        && hasAccessFlag(access, ACC_STATIC)
+        && Type.getReturnType(descriptor).getSort() == Type.VOID
+        && argumentTypes.length == 1
+        && argumentTypes[0].getDescriptor().equals("[Ljava/lang/String;");
   }
 
   /**
@@ -120,7 +138,8 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
 
     final boolean versionCheck;
     if (majorVersion >= 51) {
-      versionCheck = isStatic(access) && Type.getArgumentTypes(descriptor).length == 0;
+      versionCheck =
+          hasAccessFlag(access, ACC_STATIC) && Type.getArgumentTypes(descriptor).length == 0;
     } else {
       versionCheck = true;
     }
@@ -128,5 +147,16 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
     return methodName.equals("<clinit>")
         && Type.getReturnType(descriptor).getSort() == Type.VOID
         && versionCheck;
+  }
+
+  /**
+   * Checks if an access flag is present. See {@link Opcodes} for the flags.
+   *
+   * @param access The access int to check.
+   * @param flag The flag to check for.
+   * @return True if the flag is present.
+   */
+  private static boolean hasAccessFlag(final int access, final int flag) {
+    return (access & flag) == flag;
   }
 }

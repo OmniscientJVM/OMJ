@@ -25,14 +25,17 @@ import org.slf4j.Logger
 internal object MethodAdapterUtil {
 
     /**
-     * Records contextual information about a method call. This should be used before the method call
-     * happens, when visiting method instructions.
+     * Records contextual information about a method call. This should be used before the method
+     * call happens, when visiting method instructions.
+     *
+     * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
+     * this method loads onto the stack is removed by the end of its bytecode.
      *
      * @receiver The method visitor to delegate to.
      * @param currentLineNumber The most up-to-date line number from the method visitor.
      * @param fullyQualifiedClassName The fully-qualified name of the class the method call happens
      * in.
-     * @param name The name of the method.
+     * @param name The name of the method being called.
      */
     internal fun MethodVisitor.visitMethodCallStartPreamble(
         currentLineNumber: Int,
@@ -70,6 +73,9 @@ internal object MethodAdapterUtil {
     /**
      * Generates a method trace container class, makes a new instance of it, records all of the
      * method's arguments, and gives the trace to the agent-lib.
+     *
+     * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
+     * this method loads onto the stack is removed by the end of its bytecode.
      *
      * @receiver The method visitor to delegate to.
      * @param methodDescriptor The method's descriptor.

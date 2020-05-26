@@ -16,6 +16,7 @@
  */
 package com.octogonapus.omj.ui.model
 
+import com.octogonapus.omj.ui.model.TraceIteratorTest.Companion.staticMethodCall
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import java.io.BufferedInputStream
@@ -31,8 +32,14 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_noargs.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.noargs.Foo") },
-            { it.virtualMethodCall("com.agenttest.noargs.Foo") }
+            { it.constructorCall("com.agenttest.noargs.Foo", "com.agenttest.noargs.Main") },
+            {
+                it.virtualMethodCall(
+                    "com.agenttest.noargs.Foo",
+                    "com.agenttest.noargs.Main",
+                    "with"
+                )
+            }
         )
     }
 
@@ -41,8 +48,15 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_byte3c.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.byte3c.Foo") },
-            { it.virtualMethodCall("com.agenttest.byte3c.Foo", "byte" to "60") }
+            { it.constructorCall("com.agenttest.byte3c.Foo", "com.agenttest.byte3c.Main") },
+            {
+                it.virtualMethodCall(
+                    "com.agenttest.byte3c.Foo",
+                    "com.agenttest.byte3c.Main",
+                    "with",
+                    "byte" to "60"
+                )
+            }
         )
     }
 
@@ -51,8 +65,15 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_charQ.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.charQ.Foo") },
-            { it.virtualMethodCall("com.agenttest.charQ.Foo", "char" to "Q") }
+            { it.constructorCall("com.agenttest.charQ.Foo", "com.agenttest.charQ.Main") },
+            {
+                it.virtualMethodCall(
+                    "com.agenttest.charQ.Foo",
+                    "com.agenttest.charQ.Main",
+                    "with",
+                    "char" to "Q"
+                )
+            }
         )
     }
 
@@ -61,8 +82,15 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_double1p2.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.double1p2.Foo") },
-            { it.virtualMethodCall("com.agenttest.double1p2.Foo", "double" to "1.2") }
+            { it.constructorCall("com.agenttest.double1p2.Foo", "com.agenttest.double1p2.Main") },
+            {
+                it.virtualMethodCall(
+                    "com.agenttest.double1p2.Foo",
+                    "com.agenttest.double1p2.Main",
+                    "with",
+                    "double" to "1.2"
+                )
+            }
         )
     }
 
@@ -71,8 +99,15 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_float4p3.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.float4p3.Foo") },
-            { it.virtualMethodCall("com.agenttest.float4p3.Foo", "float" to "4.3") }
+            { it.constructorCall("com.agenttest.float4p3.Foo", "com.agenttest.float4p3.Main") },
+            {
+                it.virtualMethodCall(
+                    "com.agenttest.float4p3.Foo",
+                    "com.agenttest.float4p3.Main",
+                    "with",
+                    "float" to "4.3"
+                )
+            }
         )
     }
 
@@ -81,8 +116,15 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_int42.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.int42.Foo") },
-            { it.virtualMethodCall("com.agenttest.int42.Foo", "int" to "42") }
+            { it.constructorCall("com.agenttest.int42.Foo", "com.agenttest.int42.Main") },
+            {
+                it.virtualMethodCall(
+                    "com.agenttest.int42.Foo",
+                    "com.agenttest.int42.Main",
+                    "with",
+                    "int" to "42"
+                )
+            }
         )
     }
 
@@ -91,10 +133,17 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_long123456789123456789.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.long123456789123456789.Foo") },
+            {
+                it.constructorCall(
+                    "com.agenttest.long123456789123456789.Foo",
+                    "com.agenttest.long123456789123456789.Main"
+                )
+            },
             {
                 it.virtualMethodCall(
                     "com.agenttest.long123456789123456789.Foo",
+                    "com.agenttest.long123456789123456789.Main",
+                    "with",
                     "long" to "123456789123456789"
                 )
             }
@@ -106,10 +155,17 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_stringHello.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.stringHello.Foo") },
+            {
+                it.constructorCall(
+                    "com.agenttest.stringHello.Foo",
+                    "com.agenttest.stringHello.Main"
+                )
+            },
             {
                 it.virtualMethodCall(
                     "com.agenttest.stringHello.Foo",
+                    "com.agenttest.stringHello.Main",
+                    "with",
                     "java.lang.String" to "Hello"
                 )
             }
@@ -121,10 +177,17 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_stringHelloNull1.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.stringHelloNull1.Foo") },
+            {
+                it.constructorCall(
+                    "com.agenttest.stringHelloNull1.Foo",
+                    "com.agenttest.stringHelloNull1.Main"
+                )
+            },
             {
                 it.virtualMethodCall(
                     "com.agenttest.stringHelloNull1.Foo",
+                    "com.agenttest.stringHelloNull1.Main",
+                    "with",
                     "java.lang.String" to "Hello\u0000 1"
                 )
             }
@@ -136,10 +199,17 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_objectStringArray.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.objectStringArray.Foo") },
+            {
+                it.constructorCall(
+                    "com.agenttest.objectStringArray.Foo",
+                    "com.agenttest.objectStringArray.Main"
+                )
+            },
             {
                 it.virtualMethodCall(
                     "com.agenttest.objectStringArray.Foo",
+                    "com.agenttest.objectStringArray.Main",
+                    "with",
                     "[Ljava/lang/String;" to null
                 )
             }
@@ -151,8 +221,15 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_short12345.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.short12345.Foo") },
-            { it.virtualMethodCall("com.agenttest.short12345.Foo", "short" to "12345") }
+            { it.constructorCall("com.agenttest.short12345.Foo", "com.agenttest.short12345.Main") },
+            {
+                it.virtualMethodCall(
+                    "com.agenttest.short12345.Foo",
+                    "com.agenttest.short12345.Main",
+                    "with",
+                    "short" to "12345"
+                )
+            }
         )
     }
 
@@ -161,8 +238,20 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_booleanTrue.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.booleanTrue.Foo") },
-            { it.virtualMethodCall("com.agenttest.booleanTrue.Foo", "boolean" to "true") }
+            {
+                it.constructorCall(
+                    "com.agenttest.booleanTrue.Foo",
+                    "com.agenttest.booleanTrue.Main"
+                )
+            },
+            {
+                it.virtualMethodCall(
+                    "com.agenttest.booleanTrue.Foo",
+                    "com.agenttest.booleanTrue.Main",
+                    "with",
+                    "boolean" to "true"
+                )
+            }
         )
     }
 
@@ -171,10 +260,17 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_objectTestDataClass.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.objectTestDataClass.Foo") },
+            {
+                it.constructorCall(
+                    "com.agenttest.objectTestDataClass.Foo",
+                    "com.agenttest.objectTestDataClass.Main"
+                )
+            },
             {
                 it.virtualMethodCall(
                     "com.agenttest.objectTestDataClass.Foo",
+                    "com.agenttest.objectTestDataClass.Main",
+                    "with",
                     "com.agenttest.objectTestDataClass.TestDataClass" to null
                 )
             }
@@ -186,7 +282,22 @@ internal class TraceIteratorTest {
         val traces = generateTraces(tempDir, "agent-test_constructorInt6.jar")
 
         traces.shouldHaveInOrder(
-            { it.constructorCall("com.agenttest.constructorInt6.Foo", "int" to "6") }
+            {
+                it.constructorCall(
+                    "com.agenttest.constructorInt6.Foo",
+                    "com.agenttest.constructorInt6.Main",
+                    "int" to "6"
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `parse a static method call in a static block`(@TempDir tempDir: File) {
+        val traces = generateTraces(tempDir, "agent-test_staticBlockCallStaticMethod.jar")
+
+        traces.shouldHaveInOrder(
+            { it.staticMethodCall("callMe", "com.agenttest.staticBlockCallStaticMethod.Main") }
         )
     }
 
@@ -232,22 +343,50 @@ internal class TraceIteratorTest {
 
         /**
          * Assumes there is a virtual method call and asserts about its receiver type and arguments.
-         * Excludes instance initialization methods.
+         * Excludes instance and class initialization methods.
          *
          * @param receiverType The expected receiver type.
+         * @param methodName The expected method name.
+         * @param callerClass The class that the method is expected to be called from.
          * @param args The expected (type, value) pairs for each argument in order.
          */
         private fun Trace.virtualMethodCall(
             receiverType: String,
+            methodName: String,
+            callerClass: String,
             vararg args: Pair<String, String?>
         ) = this is MethodTrace && !isStatic && hasArgumentType(0, receiverType) &&
-            methodName != "<init>" && hasArguments(args)
+            methodName != "<init>" && methodName != "<clinit>" && hasArguments(args) &&
+            this.methodName == methodName && this.callerClass == callerClass
 
+        /**
+         * Assumes there is a static method call and asserts about its arguments. Excludes instance
+         * and class initialization methods.
+         *
+         * @param methodName The expected method name.
+         * @param callerClass The class that the method is expected to be called from.
+         * @param args The expected (type, value) pairs for each argument in order.
+         */
+        private fun Trace.staticMethodCall(
+            methodName: String,
+            callerClass: String,
+            vararg args: Pair<String, String?>
+        ) = this is MethodTrace && isStatic && methodName != "<init>" && methodName != "<clinit>" &&
+            hasArguments(args) && this.methodName == methodName && this.callerClass == callerClass
+
+        /**
+         * Assumes there is an instance initializer method call and asserts about its arguments.
+         *
+         * @param receiverType The expected receiver type.
+         * @param callerClass The class that the method is expected to be called from.
+         * @param args The expected (type, value) pairs for each argument in order.
+         */
         private fun Trace.constructorCall(
             receiverType: String,
+            callerClass: String,
             vararg args: Pair<String, String?>
         ) = this is MethodTrace && !isStatic && hasArgumentType(0, receiverType) &&
-            methodName == "<init>" && hasArguments(args)
+            methodName == "<init>" && hasArguments(args) && this.callerClass == callerClass
 
         private fun MethodTrace.hasArguments(args: Array<out Pair<String, String?>>): Boolean {
             return args.iterator().asSequence().foldIndexed(true) { index, acc, (type, value) ->
