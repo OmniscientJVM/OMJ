@@ -16,7 +16,6 @@
  */
 package com.octogonapus.omj.ui.model
 
-import io.kotest.assertions.show.show
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.neverNullMatcher
@@ -63,13 +62,7 @@ fun <T> hasInOrder(predicates: List<(T) -> Boolean>): Matcher<Collection<T>?> =
 
         MatcherResult(
             subsequenceIndex == predicates.size,
-            {
-                "${actual.show().value} did not match the predicates " +
-                    "${predicates.show().value} in order"
-            },
-            {
-                "${actual.show().value} should not match the predicates " +
-                    "${predicates.show().value} in order"
-            }
+            { "$actual did not match the predicates $predicates in order" },
+            { "$actual should not match the predicates $predicates in order" }
         )
     }
