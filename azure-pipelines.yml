@@ -108,7 +108,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            options: '--stacktrace -PlogTests'
+            options: '--stacktrace --scan -PlogTests'
             publishJUnitResults: false
             tasks: 'check'
 
