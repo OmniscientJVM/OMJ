@@ -1,3 +1,7 @@
+plugins {
+    id("com.gradle.enterprise") version "3.3.1"
+}
+
 rootProject.name = "OMJ"
 
 include(":agent")
@@ -22,3 +26,10 @@ include(":agent-tests:short12345")
 include(":agent-tests:staticBlockCallStaticMethod")
 include(":agent-tests:stringHello")
 include(":agent-tests:stringHelloNull1")
+
+gradleEnterprise {
+    buildScan {
+        termsOfServiceUrl = "https://gradle.com/terms-of-service"
+        termsOfServiceAgree = "yes"
+    }
+}
