@@ -108,7 +108,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            options: '--stacktrace -PlogTests'
+            options: '--debug --stacktrace -PlogTests'
             publishJUnitResults: false
             tasks: 'check'
 
@@ -117,7 +117,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            options: '--stacktrace -PlogTests'
+            options: '--debug --stacktrace -PlogTests'
             publishJUnitResults: true
             testResultsFiles: '**/TEST-*.xml'
             tasks: 'jacocoRootReport'
