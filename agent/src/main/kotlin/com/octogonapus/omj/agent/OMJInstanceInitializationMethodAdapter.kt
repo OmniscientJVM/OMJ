@@ -20,6 +20,8 @@ import com.octogonapus.omj.agent.MethodAdapterUtil.convertPathTypeToPackageType
 import com.octogonapus.omj.agent.MethodAdapterUtil.recordMethodTrace
 import com.octogonapus.omj.agent.MethodAdapterUtil.visitMethodCallStartPreamble
 import mu.KotlinLogging
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
@@ -27,13 +29,13 @@ import org.objectweb.asm.Opcodes
 internal class OMJInstanceInitializationMethodAdapter(
     api: Int,
     private val superVisitor: MethodVisitor,
-    private val dynamicClassDefiner: DynamicClassDefiner,
-    private val classFilter: ClassFilter,
     private val methodDescriptor: String,
     currentClassName: String,
     private val superName: String
-) : MethodVisitor(api, superVisitor), Opcodes {
+) : MethodVisitor(api, superVisitor), Opcodes, KoinComponent {
 
+    private val dynamicClassDefiner by inject<DynamicClassDefiner>()
+    private val classFilter by inject<ClassFilter>()
     private val fullyQualifiedClassName = convertPathTypeToPackageType(currentClassName)
     private var currentLineNumber = 0
 

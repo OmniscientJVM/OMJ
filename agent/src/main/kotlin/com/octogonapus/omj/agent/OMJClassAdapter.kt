@@ -19,6 +19,7 @@ package com.octogonapus.omj.agent
 import com.octogonaus.omj.util.nullableSingleAssign
 import com.octogonaus.omj.util.singleAssign
 import mu.KotlinLogging
+import org.koin.core.KoinComponent
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
@@ -26,10 +27,8 @@ import org.objectweb.asm.Type
 
 class OMJClassAdapter(
     api: Int,
-    classVisitor: ClassVisitor,
-    private val dynamicClassDefiner: DynamicClassDefiner,
-    private val classFilter: ClassFilter
-) : ClassVisitor(api, classVisitor), Opcodes {
+    classVisitor: ClassVisitor
+) : ClassVisitor(api, classVisitor), Opcodes, KoinComponent {
 
     private var classVersion = 0
     private var className by singleAssign<String>()
@@ -95,35 +94,22 @@ class OMJClassAdapter(
         access: Int
     ): MethodVisitor = when {
         isInstanceInitializationMethod(name, descriptor) ->
-            OMJInstanceInitializationMethodAdapter(
-                api,
-                visitor,
-                dynamicClassDefiner,
-                classFilter,
-                descriptor,
-                className,
-                superName
-            )
+            OMJInstanceInitializationMethodAdapter(api, visitor, descriptor, className, superName)
 
         isClassInitializationMethod(name, descriptor, access) ->
             OMJMethodAdapter(
                 api,
                 visitor,
-                dynamicClassDefiner,
-                classFilter,
                 descriptor,
                 hasAccessFlag(access, Opcodes.ACC_STATIC),
                 className
             )
 
-        isMainMethod(name, descriptor, access) ->
-            OMJMainMethodAdapter(api, visitor, dynamicClassDefiner, classFilter, className)
+        isMainMethod(name, descriptor, access) -> OMJMainMethodAdapter(api, visitor, className)
 
         else -> OMJMethodAdapter(
             api,
             visitor,
-            dynamicClassDefiner,
-            classFilter,
             descriptor,
             hasAccessFlag(access, Opcodes.ACC_STATIC),
             className

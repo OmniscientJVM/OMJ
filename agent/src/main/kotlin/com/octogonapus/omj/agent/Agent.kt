@@ -22,16 +22,24 @@ import java.io.IOException
 import java.lang.instrument.Instrumentation
 import java.util.jar.JarFile
 import kotlin.system.exitProcess
+import org.koin.core.context.startKoin
+import org.koin.dsl.module
 
 @Suppress("unused")
 object Agent {
 
     @JvmStatic
     fun premain(args: String?, instrumentation: Instrumentation) {
-        val dynamicClassDefiner = DynamicClassDefiner(instrumentation, Util.cacheDir)
-        val classFilter = createFromSystemProperties()
+        startKoin {
+            modules(
+                module {
+                    single { DynamicClassDefiner(instrumentation, Util.cacheDir) }
+                    single { createFromSystemProperties() }
+                }
+            )
+        }
 
-        instrumentation.addTransformer(OMJClassFileTransformer(dynamicClassDefiner, classFilter))
+        instrumentation.addTransformer(OMJClassFileTransformer())
 
         try {
             // Extract the agent-lib jar from our jar and let the instrumented jvm load from it
