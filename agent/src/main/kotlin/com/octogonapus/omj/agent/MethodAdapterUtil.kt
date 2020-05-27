@@ -144,4 +144,18 @@ internal object MethodAdapterUtil {
             false
         )
     }
+
+    /**
+     * Converts a "path-type" class name (e.g., `com/octogonapus/omj/MyClass`) to a "package-type"
+     * class name (e.g., `com.octogonapus.omj.MyClass`).
+     *
+     * @param currentClassName The path-type class name to convert.
+     * @return The package-type version of the [currentClassName].
+     */
+    fun convertPathTypeToPackageType(currentClassName: String): String {
+        val indexOfLastSeparator = currentClassName.lastIndexOf('/') + 1
+        val packagePrefix = currentClassName.substring(0, indexOfLastSeparator)
+        val className = currentClassName.substring(indexOfLastSeparator)
+        return packagePrefix.replace('/', '.') + className
+    }
 }

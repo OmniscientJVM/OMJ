@@ -37,6 +37,7 @@ object Versions {
     const val byteBuddy = "1.10.10"
     const val slf4j_log4j12 = "1.7.28"
     const val apacheLog4jExtras = "1.2.17"
+    const val kotlinLogging = "1.7.9"
 
     const val jacocoTool = "0.8.5"
 }

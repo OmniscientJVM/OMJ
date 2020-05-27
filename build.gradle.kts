@@ -163,6 +163,8 @@ configure(listOf(project(":agent"), project(":ui"))) {
         implementation(group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version = Versions.kotlin)
         implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = Versions.kotlin)
 
+        implementation(group = "io.github.microutils", name = "kotlin-logging", version = Versions.kotlinLogging)
+
         testImplementation(group = "io.kotest", name = "kotest-assertions-core-jvm", version = Versions.kotest)
         testImplementation(group = "io.kotest", name = "kotest-assertions-jvm", version = Versions.kotest)
         testImplementation(group = "io.kotest", name = "kotest-property-jvm", version = Versions.kotest)

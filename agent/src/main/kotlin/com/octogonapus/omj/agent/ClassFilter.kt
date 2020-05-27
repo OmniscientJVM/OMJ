@@ -17,7 +17,7 @@
 package com.octogonapus.omj.agent
 
 import java.util.regex.Pattern
-import org.slf4j.LoggerFactory
+import mu.KotlinLogging
 
 class ClassFilter private constructor(
     private val includeFilter: Pattern,
@@ -33,7 +33,7 @@ class ClassFilter private constructor(
 
     companion object {
 
-        private val logger = LoggerFactory.getLogger(ClassFilter::class.java)
+        private val logger = KotlinLogging.logger { }
 
         /**
          * Creates a [ClassFilter] by loading the include and exclude filters from the system
@@ -42,8 +42,12 @@ class ClassFilter private constructor(
         fun createFromSystemProperties(): ClassFilter {
             val includeFilterString = System.getProperty("agent.include-package")
             val excludeFilterString = System.getProperty("agent.exclude-package")
-            logger.debug("includeFilterString = {}", includeFilterString)
-            logger.debug("excludeFilterString = {}", excludeFilterString)
+            logger.debug {
+                """
+                includeFilterString = $includeFilterString
+                excludeFilterString = $excludeFilterString
+                """.trimIndent()
+            }
 
             checkNotNull(includeFilterString) {
                 "An include filter must be specified with agent.include-package"

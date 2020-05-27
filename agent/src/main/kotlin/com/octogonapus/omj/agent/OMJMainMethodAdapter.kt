@@ -16,12 +16,13 @@
  */
 package com.octogonapus.omj.agent
 
+import com.octogonapus.omj.agent.MethodAdapterUtil.convertPathTypeToPackageType
 import com.octogonapus.omj.agent.MethodAdapterUtil.recordMethodTrace
 import com.octogonapus.omj.agent.MethodAdapterUtil.visitMethodCallStartPreamble
+import mu.KotlinLogging
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.slf4j.LoggerFactory
 
 internal class OMJMainMethodAdapter(
     api: Int,
@@ -31,16 +32,8 @@ internal class OMJMainMethodAdapter(
     currentClassName: String
 ) : MethodVisitor(api, superVisitor), Opcodes {
 
-    private val logger = LoggerFactory.getLogger(OMJMainMethodAdapter::class.java)
-    private val fullyQualifiedClassName: String
+    private val fullyQualifiedClassName = convertPathTypeToPackageType(currentClassName)
     private var currentLineNumber = 0
-
-    init {
-        val indexOfLastSeparator = currentClassName.lastIndexOf('/') + 1
-        val packagePrefix = currentClassName.substring(0, indexOfLastSeparator)
-        val className = currentClassName.substring(indexOfLastSeparator)
-        fullyQualifiedClassName = packagePrefix.replace('/', '.') + className
-    }
 
     override fun visitCode() {
         super.visitCode()
@@ -62,6 +55,16 @@ internal class OMJMainMethodAdapter(
         descriptor: String,
         isInterface: Boolean
     ) {
+        logger.debug {
+            """
+            opcode = $opcode
+            owner = $owner
+            name = $name
+            descriptor = $descriptor
+            isInterface = $isInterface
+            """.trimIndent()
+        }
+
         // Only add the preamble to methods which we will also record a trace for
         if (classFilter.shouldTransform(owner)) {
             superVisitor.visitMethodCallStartPreamble(
@@ -77,5 +80,10 @@ internal class OMJMainMethodAdapter(
     override fun visitLineNumber(line: Int, start: Label) {
         super.visitLineNumber(line, start)
         currentLineNumber = line
+    }
+
+    companion object {
+
+        private val logger = KotlinLogging.logger { }
     }
 }

@@ -16,12 +16,13 @@
  */
 package com.octogonapus.omj.agent
 
+import com.octogonapus.omj.agent.MethodAdapterUtil.convertPathTypeToPackageType
 import com.octogonapus.omj.agent.MethodAdapterUtil.recordMethodTrace
 import com.octogonapus.omj.agent.MethodAdapterUtil.visitMethodCallStartPreamble
+import mu.KotlinLogging
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.slf4j.LoggerFactory
 
 internal class OMJInstanceInitializationMethodAdapter(
     api: Int,
@@ -33,16 +34,8 @@ internal class OMJInstanceInitializationMethodAdapter(
     private val superName: String
 ) : MethodVisitor(api, superVisitor), Opcodes {
 
-    private val logger = LoggerFactory.getLogger(OMJInstanceInitializationMethodAdapter::class.java)
-    private val fullyQualifiedClassName: String
+    private val fullyQualifiedClassName = convertPathTypeToPackageType(currentClassName)
     private var currentLineNumber = 0
-
-    init {
-        val indexOfLastSeparator = currentClassName.lastIndexOf('/') + 1
-        val packagePrefix = currentClassName.substring(0, indexOfLastSeparator)
-        val className = currentClassName.substring(indexOfLastSeparator)
-        fullyQualifiedClassName = packagePrefix.replace('/', '.') + className
-    }
 
     override fun visitMethodInsn(
         opcode: Int,
@@ -51,14 +44,15 @@ internal class OMJInstanceInitializationMethodAdapter(
         descriptor: String,
         isInterface: Boolean
     ) {
-        logger.debug(
-            "visitMethodInsn opcode = {}, owner = {}, name = {}, descriptor = {}, isInterface = {}",
-            opcode,
-            owner,
-            name,
-            descriptor,
-            isInterface
-        )
+        logger.debug {
+            """
+            opcode = $opcode
+            owner = $owner
+            name = $name
+            descriptor = $descriptor
+            isInterface = $isInterface
+            """.trimIndent()
+        }
 
         if (opcode == Opcodes.INVOKESPECIAL && name == "<init>" && owner == superName) {
             // This is the superclass instance initialization method. We can't access `this` until
@@ -86,5 +80,10 @@ internal class OMJInstanceInitializationMethodAdapter(
     override fun visitLineNumber(line: Int, start: Label) {
         super.visitLineNumber(line, start)
         currentLineNumber = line
+    }
+
+    companion object {
+
+        private val logger = KotlinLogging.logger { }
     }
 }
