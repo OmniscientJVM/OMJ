@@ -77,11 +77,6 @@ subprojects {
         plugin("jacoco")
     }
 
-    dependencies {
-        testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-api", version = Versions.junit)
-        testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = Versions.junit)
-    }
-
     java {
         sourceCompatibility = JavaVersion.VERSION_14
         targetCompatibility = JavaVersion.VERSION_14
@@ -149,7 +144,7 @@ subprojects {
 }
 
 // Kotlin projects
-configure(listOf(project(":agent"), project(":ui"), project(":util"))) {
+configure(listOf(project(":agent"), project(":testUtil"), project(":ui"), project(":util"))) {
     apply {
         plugin("kotlin")
         plugin("org.jlleitschuh.gradle.ktlint")
@@ -163,12 +158,6 @@ configure(listOf(project(":agent"), project(":ui"), project(":util"))) {
         implementation(group = "io.github.microutils", name = "kotlin-logging", version = Versions.kotlinLogging)
 
         implementation(group = "org.koin", name = "koin-core", version = Versions.koin)
-
-        testImplementation(group = "io.kotest", name = "kotest-assertions-core-jvm", version = Versions.kotest)
-        testImplementation(group = "io.kotest", name = "kotest-assertions-jvm", version = Versions.kotest)
-        testImplementation(group = "io.kotest", name = "kotest-property-jvm", version = Versions.kotest)
-
-        testImplementation(group = "org.koin", name = "koin-test", version = Versions.koin)
     }
 
     tasks.withType<KotlinCompile> {

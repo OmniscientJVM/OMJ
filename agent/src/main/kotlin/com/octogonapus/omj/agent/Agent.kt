@@ -35,6 +35,7 @@ object Agent {
                 module {
                     single { DynamicClassDefiner(instrumentation, Util.cacheDir) }
                     single { createFromSystemProperties() }
+                    single { MethodAdapterUtil() }
                 }
             )
         }

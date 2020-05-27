@@ -16,9 +16,6 @@
  */
 package com.octogonapus.omj.agent
 
-import com.octogonapus.omj.agent.MethodAdapterUtil.convertPathTypeToPackageType
-import com.octogonapus.omj.agent.MethodAdapterUtil.recordMethodTrace
-import com.octogonapus.omj.agent.MethodAdapterUtil.visitMethodCallStartPreamble
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -36,7 +33,9 @@ internal class OMJInstanceInitializationMethodAdapter(
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
     private val classFilter by inject<ClassFilter>()
-    private val fullyQualifiedClassName = convertPathTypeToPackageType(currentClassName)
+    private val methodAdapterUtil by inject<MethodAdapterUtil>()
+    private val fullyQualifiedClassName =
+        MethodAdapterUtil.convertPathTypeToPackageType(currentClassName)
     private var currentLineNumber = 0
 
     override fun visitMethodInsn(
@@ -62,13 +61,19 @@ internal class OMJInstanceInitializationMethodAdapter(
             // right after the superclass is initialized instead of in `visitCode`, which would put
             // it at the start of this method before the superclass is initialized.
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-            superVisitor.recordMethodTrace(methodDescriptor, false, dynamicClassDefiner)
+            methodAdapterUtil.recordMethodTrace(
+                superVisitor,
+                methodDescriptor,
+                false,
+                dynamicClassDefiner
+            )
         } else {
             // Only add the preamble to methods which we will also record a trace for
             if (classFilter.shouldTransform(owner)) {
                 // Otherwise, this method just contains normal method calls, so emit the typical
                 // preamble.
-                superVisitor.visitMethodCallStartPreamble(
+                methodAdapterUtil.visitMethodCallStartPreamble(
+                    superVisitor,
                     currentLineNumber,
                     fullyQualifiedClassName,
                     name

@@ -8,18 +8,17 @@ plugins {
 description = "The Agent."
 
 dependencies {
-    // Bytecode instrumentation
     implementation(group = "org.ow2.asm", name = "asm", version = Versions.asm)
     implementation(group = "org.ow2.asm", name = "asm-util", version = Versions.asm)
     implementation(group = "net.bytebuddy", name = "byte-buddy", version = Versions.byteBuddy)
 
-    // Other projects
     implementation(project(":agent-lib"))
     implementation(project(":util"))
     implementation(project(":logging"))
 
     // Need the agent (yes, THIS project) shadow jar at runtime to dynamically load the agent-lib
     testRuntimeOnly(project(path = ":agent", configuration = "shadow"))
+    testImplementation(project(":testUtil"))
 }
 
 tasks.jar {

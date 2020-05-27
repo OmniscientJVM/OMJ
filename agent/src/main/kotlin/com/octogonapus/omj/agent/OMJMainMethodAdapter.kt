@@ -16,9 +16,6 @@
  */
 package com.octogonapus.omj.agent
 
-import com.octogonapus.omj.agent.MethodAdapterUtil.convertPathTypeToPackageType
-import com.octogonapus.omj.agent.MethodAdapterUtil.recordMethodTrace
-import com.octogonapus.omj.agent.MethodAdapterUtil.visitMethodCallStartPreamble
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -34,7 +31,9 @@ internal class OMJMainMethodAdapter(
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
     private val classFilter by inject<ClassFilter>()
-    private val fullyQualifiedClassName = convertPathTypeToPackageType(currentClassName)
+    private val methodAdapterUtil by inject<MethodAdapterUtil>()
+    private val fullyQualifiedClassName =
+        MethodAdapterUtil.convertPathTypeToPackageType(currentClassName)
     private var currentLineNumber = 0
 
     override fun visitCode() {
@@ -42,12 +41,18 @@ internal class OMJMainMethodAdapter(
         // Hardcode the main method name because otherwise we usually won't emit a preamble for it
         // because it's usually called by the JVM, not by user code. In the case that a user does
         // call main themselves, then this preamble is redundant.
-        superVisitor.visitMethodCallStartPreamble(
+        methodAdapterUtil.visitMethodCallStartPreamble(
+            superVisitor,
             currentLineNumber,
             fullyQualifiedClassName,
             "main"
         )
-        superVisitor.recordMethodTrace("([Ljava/lang/String;)V", true, dynamicClassDefiner)
+        methodAdapterUtil.recordMethodTrace(
+            superVisitor,
+            "([Ljava/lang/String;)V",
+            true,
+            dynamicClassDefiner
+        )
     }
 
     override fun visitMethodInsn(
@@ -69,7 +74,8 @@ internal class OMJMainMethodAdapter(
 
         // Only add the preamble to methods which we will also record a trace for
         if (classFilter.shouldTransform(owner)) {
-            superVisitor.visitMethodCallStartPreamble(
+            methodAdapterUtil.visitMethodCallStartPreamble(
+                superVisitor,
                 currentLineNumber,
                 fullyQualifiedClassName,
                 name

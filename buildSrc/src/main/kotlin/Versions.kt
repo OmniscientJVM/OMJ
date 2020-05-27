@@ -39,6 +39,7 @@ object Versions {
     const val apacheLog4jExtras = "1.2.17"
     const val kotlinLogging = "1.7.9"
     const val koin = "2.1.5"
+    const val mockk = "1.10.0"
 
     const val jacocoTool = "0.8.5"
 }
