@@ -56,19 +56,6 @@ public final class OMJClassFileTransformer implements ClassFileTransformer {
     // Check the include and exclude class filters as to whether we should transform this
     // class. We need to check this here so that we can return `null` to obey `transform`'s
     // contract.
-    final String includeFilterString = System.getProperty("agent.include-package");
-    final String excludeFilterString = System.getProperty("agent.exclude-package");
-    logger.debug("includeFilterString = {}", includeFilterString);
-    logger.debug("excludeFilterString = {}", excludeFilterString);
-
-    if (includeFilterString == null) {
-      throw new IllegalStateException(
-          "An include filter must be specified with agent.include-package");
-    } else if (excludeFilterString == null) {
-      throw new IllegalStateException(
-          "An exclude filter must be specified with agent.exclude-package");
-    }
-
     if (classFilter.shouldTransform(className)) {
       try {
         // If transformClassBytes throws an exception, then the class will silently not

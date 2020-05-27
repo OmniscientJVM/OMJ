@@ -24,6 +24,12 @@ allprojects {
 
     repositories {
         mavenCentral()
+        jcenter {
+            content {
+                includeGroup("org.jetbrains.kotlinx")
+                includeGroup("org.koin")
+            }
+        }
     }
 
     // Configures the Jacoco tool version to be the same for all projects that have it applied.
@@ -72,7 +78,6 @@ subprojects {
     }
 
     dependencies {
-        // JUnit
         testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-api", version = Versions.junit)
         testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = Versions.junit)
     }
@@ -144,19 +149,11 @@ subprojects {
 }
 
 // Kotlin projects
-configure(listOf(project(":agent"), project(":ui"))) {
+configure(listOf(project(":agent"), project(":ui"), project(":util"))) {
     apply {
         plugin("kotlin")
         plugin("org.jlleitschuh.gradle.ktlint")
         plugin("io.gitlab.arturbosch.detekt")
-    }
-
-    repositories {
-        jcenter {
-            content {
-                includeGroup("org.jetbrains.kotlinx")
-            }
-        }
     }
 
     dependencies {
@@ -165,9 +162,13 @@ configure(listOf(project(":agent"), project(":ui"))) {
 
         implementation(group = "io.github.microutils", name = "kotlin-logging", version = Versions.kotlinLogging)
 
+        implementation(group = "org.koin", name = "koin-core", version = Versions.koin)
+
         testImplementation(group = "io.kotest", name = "kotest-assertions-core-jvm", version = Versions.kotest)
         testImplementation(group = "io.kotest", name = "kotest-assertions-jvm", version = Versions.kotest)
         testImplementation(group = "io.kotest", name = "kotest-property-jvm", version = Versions.kotest)
+
+        testImplementation(group = "org.koin", name = "koin-test", version = Versions.koin)
     }
 
     tasks.withType<KotlinCompile> {

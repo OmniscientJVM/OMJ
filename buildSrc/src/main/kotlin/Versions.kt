@@ -38,6 +38,7 @@ object Versions {
     const val slf4j_log4j12 = "1.7.28"
     const val apacheLog4jExtras = "1.2.17"
     const val kotlinLogging = "1.7.9"
+    const val koin = "2.1.5"
 
     const val jacocoTool = "0.8.5"
 }
