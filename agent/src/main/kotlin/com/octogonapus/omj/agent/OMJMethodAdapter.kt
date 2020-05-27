@@ -27,6 +27,7 @@ internal class OMJMethodAdapter(
     api: Int,
     private val superVisitor: MethodVisitor,
     private val dynamicClassDefiner: DynamicClassDefiner,
+    private val classFilter: ClassFilter,
     private val methodDescriptor: String,
     private val isStatic: Boolean,
     currentClassName: String
@@ -55,7 +56,15 @@ internal class OMJMethodAdapter(
         descriptor: String,
         isInterface: Boolean
     ) {
-        superVisitor.visitMethodCallStartPreamble(currentLineNumber, fullyQualifiedClassName, name)
+        // Only add the preamble to methods which we will also record a trace for
+        if (classFilter.shouldTransform(owner)) {
+            superVisitor.visitMethodCallStartPreamble(
+                currentLineNumber,
+                fullyQualifiedClassName,
+                name
+            )
+        }
+
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
     }
 
