@@ -27,6 +27,7 @@ internal class OMJInstanceInitializationMethodAdapter(
     api: Int,
     private val superVisitor: MethodVisitor,
     private val dynamicClassDefiner: DynamicClassDefiner,
+    private val classFilter: ClassFilter,
     private val methodDescriptor: String,
     currentClassName: String,
     private val superName: String
@@ -67,13 +68,17 @@ internal class OMJInstanceInitializationMethodAdapter(
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
             superVisitor.recordMethodTrace(methodDescriptor, false, dynamicClassDefiner, logger)
         } else {
-            // Otherwise, this method just contains normal method calls, so emit the typical
-            // preamble.
-            superVisitor.visitMethodCallStartPreamble(
-                currentLineNumber,
-                fullyQualifiedClassName,
-                name
-            )
+            // Only add the preamble to methods which we will also record a trace for
+            if (classFilter.shouldTransform(owner)) {
+                // Otherwise, this method just contains normal method calls, so emit the typical
+                // preamble.
+                superVisitor.visitMethodCallStartPreamble(
+                    currentLineNumber,
+                    fullyQualifiedClassName,
+                    name
+                )
+            }
+
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
         }
     }

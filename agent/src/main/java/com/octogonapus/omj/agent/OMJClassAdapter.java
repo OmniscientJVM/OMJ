@@ -28,6 +28,7 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
 
   private final Logger logger = LoggerFactory.getLogger(OMJClassAdapter.class);
   private final DynamicClassDefiner dynamicClassDefiner;
+  private final ClassFilter classFilter;
   private int classVersion;
   private String className;
   private String superName;
@@ -35,9 +36,11 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
   public OMJClassAdapter(
       final int api,
       final ClassVisitor classVisitor,
-      final DynamicClassDefiner dynamicClassDefiner) {
+      final DynamicClassDefiner dynamicClassDefiner,
+      final ClassFilter classFilter) {
     super(api, classVisitor);
     this.dynamicClassDefiner = dynamicClassDefiner;
+    this.classFilter = classFilter;
   }
 
   @Override
@@ -82,22 +85,24 @@ public final class OMJClassAdapter extends ClassVisitor implements Opcodes {
 
     if (isInstanceInitializationMethod(name, descriptor)) {
       return new OMJInstanceInitializationMethodAdapter(
-          api, visitor, dynamicClassDefiner, descriptor, className, superName);
+          api, visitor, dynamicClassDefiner, classFilter, descriptor, className, superName);
     } else if (isClassInitializationMethod(name, descriptor, access)) {
       return new OMJMethodAdapter(
           api,
           visitor,
           dynamicClassDefiner,
+          classFilter,
           descriptor,
           hasAccessFlag(access, ACC_STATIC),
           className);
     } else if (isMainMethod(name, descriptor, access)) {
-      return new OMJMainMethodAdapter(api, visitor, dynamicClassDefiner, className);
+      return new OMJMainMethodAdapter(api, visitor, dynamicClassDefiner, classFilter, className);
     } else {
       return new OMJMethodAdapter(
           api,
           visitor,
           dynamicClassDefiner,
+          classFilter,
           descriptor,
           hasAccessFlag(access, ACC_STATIC),
           className);

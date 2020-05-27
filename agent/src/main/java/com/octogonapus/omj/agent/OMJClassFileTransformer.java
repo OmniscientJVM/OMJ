@@ -20,7 +20,6 @@ import java.io.PrintWriter;
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
-import java.util.regex.Pattern;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -32,9 +31,12 @@ public final class OMJClassFileTransformer implements ClassFileTransformer {
 
   private final Logger logger = LoggerFactory.getLogger(OMJClassFileTransformer.class);
   private final DynamicClassDefiner dynamicClassDefiner;
+  private final ClassFilter classFilter;
 
-  public OMJClassFileTransformer(final DynamicClassDefiner dynamicClassDefiner) {
+  public OMJClassFileTransformer(
+      final DynamicClassDefiner dynamicClassDefiner, final ClassFilter classFilter) {
     this.dynamicClassDefiner = dynamicClassDefiner;
+    this.classFilter = classFilter;
   }
 
   @Override
@@ -67,14 +69,7 @@ public final class OMJClassFileTransformer implements ClassFileTransformer {
           "An exclude filter must be specified with agent.exclude-package");
     }
 
-    final Pattern includeFilter = Pattern.compile(includeFilterString);
-    final Pattern excludeFilter = Pattern.compile(excludeFilterString);
-    final boolean shouldAdapt =
-        includeFilter.matcher(className).matches() && !excludeFilter.matcher(className).matches();
-
-    logger.debug("shouldAdapt = {}", shouldAdapt);
-
-    if (shouldAdapt) {
+    if (classFilter.shouldTransform(className)) {
       try {
         // If transformClassBytes throws an exception, then the class will silently not
         // be transformed. This is very hard to debug, so catch anything it throws and
@@ -100,7 +95,8 @@ public final class OMJClassFileTransformer implements ClassFileTransformer {
     final var classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
     final var trace = new TraceClassVisitor(classWriter, new PrintWriter(System.out));
 
-    classReader.accept(new OMJClassAdapter(Opcodes.ASM8, trace, dynamicClassDefiner), 0);
+    classReader.accept(
+        new OMJClassAdapter(Opcodes.ASM8, trace, dynamicClassDefiner, classFilter), 0);
     return classWriter.toByteArray();
   }
 }

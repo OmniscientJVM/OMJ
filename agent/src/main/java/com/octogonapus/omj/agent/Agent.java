@@ -27,7 +27,9 @@ public final class Agent {
     final DynamicClassDefiner dynamicClassDefiner =
         new DynamicClassDefiner(instrumentation, Util.cacheDir);
 
-    instrumentation.addTransformer(new OMJClassFileTransformer(dynamicClassDefiner));
+    final var classFilter = ClassFilter.Companion.createFromSystemProperties();
+
+    instrumentation.addTransformer(new OMJClassFileTransformer(dynamicClassDefiner, classFilter));
 
     try {
       // Extract the agent-lib jar from our jar and let the instrumented jvm load from it
