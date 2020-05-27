@@ -16,13 +16,14 @@
  */
 package com.octogonapus.omj.agent
 
-import java.util.Arrays
+import mu.KotlinLogging
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import org.slf4j.Logger
 
 internal object MethodAdapterUtil {
+
+    private val logger = KotlinLogging.logger { }
 
     /**
      * Records contextual information about a method call. This should be used before the method
@@ -82,13 +83,11 @@ internal object MethodAdapterUtil {
      * @param isStatic True if the method is static.
      * @param dynamicClassDefiner The [DynamicClassDefiner] to use to generate the method trace
      * container class.
-     * @param logger Used to log debug information.
      */
     internal fun MethodVisitor.recordMethodTrace(
         methodDescriptor: String,
         isStatic: Boolean,
-        dynamicClassDefiner: DynamicClassDefiner,
-        logger: Logger
+        dynamicClassDefiner: DynamicClassDefiner
     ) {
         // Generate a method trace container class and make a new instance of it. Contextual information
         // about the is passed to the agent lib earlier when method instructions are visited using
@@ -106,7 +105,7 @@ internal object MethodAdapterUtil {
         )
 
         val argumentTypes = Type.getArgumentTypes(methodDescriptor)
-        logger.debug("argumentTypes = " + Arrays.toString(argumentTypes))
+        logger.debug { "argumentTypes = ${argumentTypes?.contentDeepToString()}" }
 
         val virtualOffset = if (isStatic) 0 else 1
         if (!isStatic) {
@@ -124,8 +123,15 @@ internal object MethodAdapterUtil {
             val argumentType = argumentTypes[i]
             val methodName = "methodCall_argument_" + TypeUtil.getAdaptedClassName(argumentType)
             val methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V"
-            logger.debug("Generated methodName = $methodName")
-            logger.debug("Generated methodDesc = $methodDesc")
+
+            logger.debug {
+                """
+                Generated methodCall_argument_xxx override
+                methodName = $methodName
+                methodDescriptor = $methodDesc
+                """.trimIndent()
+            }
+
             visitVarInsn(argumentType.getOpcode(Opcodes.ILOAD), i + virtualOffset)
             visitMethodInsn(
                 Opcodes.INVOKESTATIC,

@@ -41,7 +41,7 @@ internal class OMJMethodAdapter(
 
     override fun visitCode() {
         super.visitCode()
-        superVisitor.recordMethodTrace(methodDescriptor, isStatic, dynamicClassDefiner, logger)
+        superVisitor.recordMethodTrace(methodDescriptor, isStatic, dynamicClassDefiner)
     }
 
     override fun visitMethodInsn(

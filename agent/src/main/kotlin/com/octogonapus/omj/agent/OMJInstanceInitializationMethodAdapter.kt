@@ -62,7 +62,7 @@ internal class OMJInstanceInitializationMethodAdapter(
             // right after the superclass is initialized instead of in `visitCode`, which would put
             // it at the start of this method before the superclass is initialized.
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-            superVisitor.recordMethodTrace(methodDescriptor, false, dynamicClassDefiner, logger)
+            superVisitor.recordMethodTrace(methodDescriptor, false, dynamicClassDefiner)
         } else {
             // Only add the preamble to methods which we will also record a trace for
             if (classFilter.shouldTransform(owner)) {

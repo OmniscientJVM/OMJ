@@ -47,7 +47,7 @@ internal class OMJMainMethodAdapter(
             fullyQualifiedClassName,
             "main"
         )
-        superVisitor.recordMethodTrace("([Ljava/lang/String;)V", true, dynamicClassDefiner, logger)
+        superVisitor.recordMethodTrace("([Ljava/lang/String;)V", true, dynamicClassDefiner)
     }
 
     override fun visitMethodInsn(
