@@ -33,4 +33,6 @@ public final class Util {
   public static Path getAgentLibJarDir() {
     return Paths.get(System.getProperty("agent-lib.jar-dir", cacheDir.toString()));
   }
+
+  public static String mainMethodDescriptor = "([Ljava/lang/String;)V";
 }

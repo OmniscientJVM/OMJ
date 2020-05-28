@@ -16,6 +16,7 @@
  */
 package com.octogonapus.omj.agent
 
+import com.octogonapus.omj.util.Util
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.koin.core.inject
@@ -49,7 +50,7 @@ internal class OMJMainMethodAdapter(
         )
         methodAdapterUtil.recordMethodTrace(
             superVisitor,
-            "([Ljava/lang/String;)V",
+            Util.mainMethodDescriptor,
             true,
             dynamicClassDefiner
         )

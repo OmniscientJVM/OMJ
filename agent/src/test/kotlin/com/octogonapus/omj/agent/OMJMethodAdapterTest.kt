@@ -32,8 +32,6 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
     companion object {
         private const val methodDescriptor = "()V"
         private const val className = "ClassName"
-        private const val methodOwner = "MethodOwner"
-        private const val methodName = "methodName"
         private const val anotherClassName = "SomeClass"
         private const val anotherMethodName = "someMethod"
         private const val anotherMethodDescriptor = "(BZ)J"
@@ -93,13 +91,12 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
 
         val superVisitor = mockk<MethodVisitor>(relaxed = true)
 
-        val currentClassName = ""
         val methodAdapter = OMJMethodAdapter(
             ASM8,
             superVisitor,
             methodDescriptor,
             false,
-            currentClassName
+            className
         )
 
         // Visit a line number before the method insn to simulate a class file with debug info
@@ -122,7 +119,7 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
             methodAdapterUtil.visitMethodCallStartPreamble(
                 superVisitor,
                 lineNumber,
-                currentClassName,
+                className,
                 anotherMethodName
             )
 
@@ -155,13 +152,12 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
 
         val superVisitor = mockk<MethodVisitor>(relaxed = true)
 
-        val currentClassName = ""
         val methodAdapter = OMJMethodAdapter(
             ASM8,
             superVisitor,
             methodDescriptor,
             false,
-            currentClassName
+            className
         )
 
         methodAdapter.visitMethodInsn(
