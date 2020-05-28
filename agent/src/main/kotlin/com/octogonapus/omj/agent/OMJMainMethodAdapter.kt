@@ -22,13 +22,12 @@ import org.koin.core.KoinComponent
 import org.koin.core.inject
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
 
 internal class OMJMainMethodAdapter(
     api: Int,
     private val superVisitor: MethodVisitor,
     currentClassName: String
-) : MethodVisitor(api, superVisitor), Opcodes, KoinComponent {
+) : MethodVisitor(api, superVisitor), KoinComponent {
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
     private val classFilter by inject<ClassFilter>()

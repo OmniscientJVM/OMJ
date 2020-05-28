@@ -161,6 +161,10 @@ internal class MethodAdapterUtil {
         }
     }
 
+    fun recordStore(className: String, lineNumber: Int, opcode: Int, index: Int) {
+        TODO("Not yet implemented")
+    }
+
     companion object {
 
         private val logger = KotlinLogging.logger { }

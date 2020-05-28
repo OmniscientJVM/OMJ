@@ -21,7 +21,11 @@ import org.koin.core.KoinComponent
 import org.koin.core.inject
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.ASTORE
+import org.objectweb.asm.Opcodes.DSTORE
+import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LSTORE
 
 internal class OMJMethodAdapter(
     api: Int,
@@ -29,7 +33,7 @@ internal class OMJMethodAdapter(
     private val methodDescriptor: String,
     private val isStatic: Boolean,
     currentClassName: String
-) : MethodVisitor(api, superVisitor), Opcodes, KoinComponent {
+) : MethodVisitor(api, superVisitor), KoinComponent {
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
     private val classFilter by inject<ClassFilter>()
@@ -80,7 +84,16 @@ internal class OMJMethodAdapter(
     }
 
     override fun visitVarInsn(opcode: Int, index: Int) {
-        super.visitVarInsn(opcode, index)
+        when (opcode) {
+            ISTORE, LSTORE, FSTORE, DSTORE, ASTORE -> methodAdapterUtil.recordStore(
+                fullyQualifiedClassName,
+                currentLineNumber,
+                opcode,
+                index
+            )
+
+            else -> super.visitVarInsn(opcode, index)
+        }
     }
 
     override fun visitLineNumber(line: Int, start: Label) {

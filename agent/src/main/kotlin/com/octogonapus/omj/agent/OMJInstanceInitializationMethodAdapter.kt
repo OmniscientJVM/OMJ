@@ -29,7 +29,7 @@ internal class OMJInstanceInitializationMethodAdapter(
     private val methodDescriptor: String,
     currentClassName: String,
     private val superName: String
-) : MethodVisitor(api, superVisitor), Opcodes, KoinComponent {
+) : MethodVisitor(api, superVisitor), KoinComponent {
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
     private val classFilter by inject<ClassFilter>()
