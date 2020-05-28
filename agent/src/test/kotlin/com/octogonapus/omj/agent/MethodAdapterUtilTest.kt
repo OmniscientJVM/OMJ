@@ -38,12 +38,12 @@ internal class MethodAdapterUtilTest {
     @Nested
     inner class MethodCallStartPreambleTest {
 
+        private val lineNumber = 2398
+        private val className = "ClassName"
+        private val methodName = "methodName"
+
         @Test
         fun `visit a preamble`() {
-            val lineNumber = 2398
-            val className = "ClassName"
-            val methodName = "methodName"
-
             val visitor = mockk<MethodVisitor>(relaxed = true)
             MethodAdapterUtil().visitMethodCallStartPreamble(
                 visitor,
@@ -87,11 +87,12 @@ internal class MethodAdapterUtilTest {
     @Nested
     inner class RecordMethodTraceTest {
 
+        private val dynamicClassName = "DynamicClassName"
+
         @Test
         fun `visit start of method with no args`() {
             val methodDescriptor = "()V"
             val isStatic = false
-            val dynamicClassName = "DynamicClassName"
             val dynamicClassDefiner =
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
@@ -115,7 +116,6 @@ internal class MethodAdapterUtilTest {
         fun `visit start of static method with no args`() {
             val methodDescriptor = "()V"
             val isStatic = true
-            val dynamicClassName = "DynamicClassName"
             val dynamicClassDefiner =
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
@@ -138,7 +138,6 @@ internal class MethodAdapterUtilTest {
         fun `visit start of method with one int arg`() {
             val methodDescriptor = "(I)V"
             val isStatic = false
-            val dynamicClassName = "DynamicClassName"
             val dynamicClassDefiner =
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
@@ -163,7 +162,6 @@ internal class MethodAdapterUtilTest {
         fun `visit start of static method with one double arg`() {
             val methodDescriptor = "(D)V"
             val isStatic = true
-            val dynamicClassName = "DynamicClassName"
             val dynamicClassDefiner =
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
