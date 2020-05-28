@@ -79,6 +79,10 @@ internal class OMJMethodAdapter(
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
     }
 
+    override fun visitVarInsn(opcode: Int, index: Int) {
+        super.visitVarInsn(opcode, index)
+    }
+
     override fun visitLineNumber(line: Int, start: Label) {
         super.visitLineNumber(line, start)
         currentLineNumber = line

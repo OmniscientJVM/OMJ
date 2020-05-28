@@ -16,12 +16,15 @@
  */
 package com.octogonapus.omj.agent
 
+import arrow.core.Tuple4
 import com.octogonapus.omj.testutil.KoinTestFixture
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifySequence
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.koin.dsl.ModuleDeclaration
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ASM8
@@ -38,148 +41,144 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
         private const val lineNumber = 23498
     }
 
-    @Test
-    fun `visit start of method`() {
-        val isStatic = false
+    @Nested
+    inner class MethodTests {
+        @Test
+        fun `visit start of method`() {
+            val (methodAdapter, superVisitor, methodAdapterUtil, dynamicClassDefiner) =
+                    getMethodAdapter { }
 
-        val methodAdapterUtil = mockk<MethodAdapterUtil>(relaxed = true)
-        val dynamicClassDefiner = mockk<DynamicClassDefiner>(relaxed = true)
-        testKoin {
-            single { methodAdapterUtil }
-            single { dynamicClassDefiner }
-        }
+            methodAdapter.visitCode()
 
-        val superVisitor = mockk<MethodVisitor>(relaxed = true)
+            verifySequence {
+                // Start the code first
+                superVisitor.visitCode()
 
-        val methodAdapter = OMJMethodAdapter(
-            ASM8,
-            superVisitor,
-            methodDescriptor,
-            isStatic,
-            className
-        )
-
-        methodAdapter.visitCode()
-
-        verifySequence {
-            // Start the code first
-            superVisitor.visitCode()
-
-            // Then record the arguments right after the signature, before any other bytecode
-            methodAdapterUtil.recordMethodTrace(
-                superVisitor,
-                methodDescriptor,
-                isStatic,
-                dynamicClassDefiner
-            )
-        }
-    }
-
-    @Test
-    fun `visit a method insn contained in a class that will be transformed`() {
-        val methodAdapterUtil = mockk<MethodAdapterUtil>(relaxed = true)
-        val dynamicClassDefiner = mockk<DynamicClassDefiner>(relaxed = true)
-        testKoin {
-            single { methodAdapterUtil }
-            single { dynamicClassDefiner }
-            single {
-                mockk<ClassFilter> {
-                    every { shouldTransform(anotherClassName) } returns true
-                }
+                // Then record the arguments right after the signature, before any other bytecode
+                methodAdapterUtil.recordMethodTrace(
+                        superVisitor,
+                        methodDescriptor,
+                        false,
+                        dynamicClassDefiner
+                )
             }
         }
 
-        val superVisitor = mockk<MethodVisitor>(relaxed = true)
+        @Test
+        fun `visit a method insn contained in a class that will be transformed`() {
+            val (methodAdapter, superVisitor, methodAdapterUtil, _) =
+                    getMethodAdapter {
+                        single {
+                            mockk<ClassFilter> {
+                                every { shouldTransform(anotherClassName) } returns true
+                            }
+                        }
+                    }
 
-        val methodAdapter = OMJMethodAdapter(
-            ASM8,
-            superVisitor,
-            methodDescriptor,
-            false,
-            className
-        )
+            // Visit a line number before the method insn to simulate a class file with debug info
+            methodAdapter.visitLineNumber(lineNumber, Label())
 
-        // Visit a line number before the method insn to simulate a class file with debug info
-        methodAdapter.visitLineNumber(lineNumber, Label())
-
-        // Visit a normal method call
-        methodAdapter.visitMethodInsn(
-            INVOKEVIRTUAL,
-            anotherClassName,
-            anotherMethodName,
-            anotherMethodDescriptor,
-            false
-        )
-
-        verifySequence {
-            // Emit the line number
-            superVisitor.visitLineNumber(lineNumber, any())
-
-            // The filter says we will transform the class containing the method, so emit a preamble
-            methodAdapterUtil.visitMethodCallStartPreamble(
-                superVisitor,
-                lineNumber,
-                className,
-                anotherMethodName
+            // Visit a normal method call
+            methodAdapter.visitMethodInsn(
+                    INVOKEVIRTUAL,
+                    anotherClassName,
+                    anotherMethodName,
+                    anotherMethodDescriptor,
+                    false
             )
 
-            // Emit the method insn
-            superVisitor.visitMethodInsn(
-                INVOKEVIRTUAL,
-                anotherClassName,
-                anotherMethodName,
-                anotherMethodDescriptor,
-                false
-            )
+            verifySequence {
+                // Emit the line number
+                superVisitor.visitLineNumber(lineNumber, any())
+
+                // The filter says we will transform the class containing the method, so emit a preamble
+                methodAdapterUtil.visitMethodCallStartPreamble(
+                        superVisitor,
+                        lineNumber,
+                        className,
+                        anotherMethodName
+                )
+
+                // Emit the method insn
+                superVisitor.visitMethodInsn(
+                        INVOKEVIRTUAL,
+                        anotherClassName,
+                        anotherMethodName,
+                        anotherMethodDescriptor,
+                        false
+                )
+            }
+
+            confirmVerified(methodAdapterUtil, superVisitor)
         }
 
-        confirmVerified(methodAdapterUtil, superVisitor)
+        @Test
+        fun `visit a method insn contained in a class that will not be transformed`() {
+            val (methodAdapter, superVisitor, methodAdapterUtil, _) =
+                    getMethodAdapter {
+                        single {
+                            mockk<ClassFilter> {
+                                every { shouldTransform(any()) } returns false
+                            }
+                        }
+                    }
+
+            methodAdapter.visitMethodInsn(
+                    INVOKEVIRTUAL,
+                    anotherClassName,
+                    anotherMethodName,
+                    anotherMethodDescriptor,
+                    false
+            )
+
+            verifySequence {
+                // Emit the method insn. No preamble because the method's containing class won't be
+                // transformed.
+                superVisitor.visitMethodInsn(
+                        INVOKEVIRTUAL,
+                        anotherClassName,
+                        anotherMethodName,
+                        anotherMethodDescriptor,
+                        false
+                )
+            }
+
+            confirmVerified(methodAdapterUtil, superVisitor)
+        }
+
+        private fun getMethodAdapter(
+                isStatic: Boolean = false,
+                addModules: ModuleDeclaration
+        ): Tuple4<OMJMethodAdapter, MethodVisitor, MethodAdapterUtil,
+                DynamicClassDefiner> {
+            val methodAdapterUtil = mockk<MethodAdapterUtil>(relaxed = true)
+            val dynamicClassDefiner = mockk<DynamicClassDefiner>(relaxed = true)
+            testKoin {
+                single { methodAdapterUtil }
+                single { dynamicClassDefiner }
+                addModules()
+            }
+
+            val superVisitor = mockk<MethodVisitor>(relaxed = true)
+
+            val methodAdapter = OMJMethodAdapter(
+                    ASM8,
+                    superVisitor,
+                    methodDescriptor,
+                    isStatic,
+                    className
+            )
+
+            return Tuple4(methodAdapter, superVisitor, methodAdapterUtil, dynamicClassDefiner)
+        }
     }
 
-    @Test
-    fun `visit a method insn contained in a class that will not be transformed`() {
-        val methodAdapterUtil = mockk<MethodAdapterUtil>(relaxed = true)
-        val dynamicClassDefiner = mockk<DynamicClassDefiner>(relaxed = true)
-        testKoin {
-            single { methodAdapterUtil }
-            single { dynamicClassDefiner }
-            single {
-                mockk<ClassFilter> {
-                    every { shouldTransform(any()) } returns false
-                }
-            }
+    @Nested
+    inner class StoreTests {
+
+        @Test
+        fun `visit int store`() {
+
         }
-
-        val superVisitor = mockk<MethodVisitor>(relaxed = true)
-
-        val methodAdapter = OMJMethodAdapter(
-            ASM8,
-            superVisitor,
-            methodDescriptor,
-            false,
-            className
-        )
-
-        methodAdapter.visitMethodInsn(
-            INVOKEVIRTUAL,
-            anotherClassName,
-            anotherMethodName,
-            anotherMethodDescriptor,
-            false
-        )
-
-        verifySequence {
-            // Emit the method insn. No preamble because the method's containing class won't be
-            // transformed.
-            superVisitor.visitMethodInsn(
-                INVOKEVIRTUAL,
-                anotherClassName,
-                anotherMethodName,
-                anotherMethodDescriptor,
-                false
-            )
-        }
-
-        confirmVerified(methodAdapterUtil, superVisitor)
     }
 }
