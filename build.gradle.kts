@@ -193,7 +193,8 @@ configure(listOf(project(":agent"), project(":testUtil"), project(":ui"), projec
 
 val jacocoRootReport by tasks.creating(JacocoReport::class) {
     group = "verification"
-    val excludedProjects = listOf<Project>()
+    // The agent-tests projects are glorified strings; no point in getting coverage for them.
+    val excludedProjects = listOf(project(":agent-tests")) + project(":agent-tests").subprojects
     val includedProjects = subprojects.filter { it !in excludedProjects }
 
     dependsOn(includedProjects.flatMap { it.tasks.withType(JacocoReport::class) } - this)
