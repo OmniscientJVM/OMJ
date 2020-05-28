@@ -42,4 +42,5 @@ object Versions {
     const val mockk = "1.10.0"
 
     const val jacocoTool = "0.8.5"
+    const val gradleWrapper = "6.4.1"
 }

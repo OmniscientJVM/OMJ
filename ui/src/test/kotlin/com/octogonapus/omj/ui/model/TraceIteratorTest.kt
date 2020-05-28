@@ -16,7 +16,8 @@
  */
 package com.octogonapus.omj.ui.model
 
-import com.octogonapus.omj.ui.model.TraceIteratorTest.Companion.staticMethodCall
+import com.octogonapus.omj.testutil.runAgent
+import com.octogonapus.omj.testutil.shouldHaveInOrder
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import java.io.BufferedInputStream

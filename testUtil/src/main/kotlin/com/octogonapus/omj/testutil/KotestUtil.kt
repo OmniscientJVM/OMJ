@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.ui.model
+package com.octogonapus.omj.testutil
 
 import io.kotest.matchers.Matcher
 import io.kotest.matchers.MatcherResult
