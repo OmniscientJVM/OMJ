@@ -16,11 +16,8 @@
  */
 package com.octogonapus.omj.agentlib;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
 @SuppressWarnings("unused")
-public abstract class MethodTrace {
+public abstract class MethodTrace implements Trace {
 
   protected final boolean isStatic;
   protected long index;
@@ -65,6 +62,4 @@ public abstract class MethodTrace {
   public void set_argument_double(final double value) {}
 
   public void set_argument_Object(final Object value) {}
-
-  public abstract void serialize(final OutputStream outputStream) throws IOException;
 }

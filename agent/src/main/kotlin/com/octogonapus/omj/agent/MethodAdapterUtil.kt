@@ -161,8 +161,28 @@ internal class MethodAdapterUtil {
         }
     }
 
-    fun recordStore(className: String, lineNumber: Int, opcode: Int, index: Int) {
-        TODO("Not yet implemented")
+    fun recordStore(
+        methodVisitor: MethodVisitor,
+        className: String,
+        lineNumber: Int,
+        opcode: Int,
+        index: Int
+    ) {
+        with(methodVisitor) {
+            visitInsn(OpcodeUtil.getDupOpcode(opcode))
+
+            visitVarInsn(opcode, index)
+
+            visitLdcInsn(className)
+            visitLdcInsn(lineNumber)
+            visitMethodInsn(
+                INVOKESTATIC,
+                agentLibClassName,
+                "store",
+                "(" + OpcodeUtil.getStoreDescriptor(opcode) + "Ljava/lang/String;I)V",
+                false
+            )
+        }
     }
 
     companion object {

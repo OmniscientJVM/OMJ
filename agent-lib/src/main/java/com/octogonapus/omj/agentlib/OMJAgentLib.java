@@ -28,13 +28,12 @@ import java.util.concurrent.atomic.AtomicLong;
 @SuppressWarnings("unused")
 public final class OMJAgentLib {
 
-  private static final AtomicLong methodCounter = new AtomicLong(0);
+  private static final AtomicLong traceCounter = new AtomicLong(0);
   private static final ThreadLocal<MethodTrace> currentMethodTrace = new ThreadLocal<>();
   private static final ThreadLocal<String> currentClassName = ThreadLocal.withInitial(() -> "");
   private static final ThreadLocal<Integer> currentLineNumber = ThreadLocal.withInitial(() -> 0);
   private static final ThreadLocal<String> currentMethodName = ThreadLocal.withInitial(() -> "");
-  private static final ConcurrentLinkedQueue<MethodTrace> methodTraceQueue =
-      new ConcurrentLinkedQueue<>();
+  private static final ConcurrentLinkedQueue<Trace> traceQueue = new ConcurrentLinkedQueue<>();
 
   static {
     final Semaphore traceProcessorRunning = new Semaphore(1);
@@ -81,10 +80,10 @@ public final class OMJAgentLib {
 
   private static void loopWriteTraces(final OutputStream os) {
     while (!Thread.currentThread().isInterrupted()) {
-      final var methodTrace = methodTraceQueue.poll();
-      if (methodTrace != null) {
+      final var trace = traceQueue.poll();
+      if (trace != null) {
         try {
-          methodTrace.serialize(os);
+          trace.serialize(os);
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -98,10 +97,10 @@ public final class OMJAgentLib {
       }
     }
 
-    methodTraceQueue.forEach(
-        methodTrace -> {
+    traceQueue.forEach(
+        trace -> {
           try {
-            methodTrace.serialize(os);
+            trace.serialize(os);
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -121,7 +120,7 @@ public final class OMJAgentLib {
   }
 
   public static void methodCall_start(final MethodTrace methodTrace) {
-    methodTrace.setIndex(methodCounter.getAndIncrement());
+    methodTrace.setIndex(traceCounter.getAndIncrement());
     methodTrace.setClassName(currentClassName.get());
     methodTrace.setLineNumber(currentLineNumber.get());
     methodTrace.setMethodName(currentMethodName.get());
@@ -131,7 +130,61 @@ public final class OMJAgentLib {
   public static void methodCall_end() {
     final MethodTrace trace = currentMethodTrace.get();
     currentMethodTrace.remove();
-    methodTraceQueue.add(trace);
+    traceQueue.add(trace);
+  }
+
+  public static void store(final boolean value, final String className, final int lineNumber) {
+    final var trace =
+        new StoreTrace_boolean(traceCounter.getAndIncrement(), className, lineNumber, value);
+    traceQueue.add(trace);
+  }
+
+  public static void store(final char value, final String className, final int lineNumber) {
+    final var trace =
+        new StoreTrace_char(traceCounter.getAndIncrement(), className, lineNumber, value);
+    traceQueue.add(trace);
+  }
+
+  public static void store(final byte value, final String className, final int lineNumber) {
+    final var trace =
+        new StoreTrace_byte(traceCounter.getAndIncrement(), className, lineNumber, value);
+    traceQueue.add(trace);
+  }
+
+  public static void store(final short value, final String className, final int lineNumber) {
+    final var trace =
+        new StoreTrace_short(traceCounter.getAndIncrement(), className, lineNumber, value);
+    traceQueue.add(trace);
+  }
+
+  public static void store(final int value, final String className, final int lineNumber) {
+    final var trace =
+        new StoreTrace_int(traceCounter.getAndIncrement(), className, lineNumber, value);
+    traceQueue.add(trace);
+  }
+
+  public static void store(final float value, final String className, final int lineNumber) {
+    final var trace =
+        new StoreTrace_float(traceCounter.getAndIncrement(), className, lineNumber, value);
+    traceQueue.add(trace);
+  }
+
+  public static void store(final long value, final String className, final int lineNumber) {
+    final var trace =
+        new StoreTrace_long(traceCounter.getAndIncrement(), className, lineNumber, value);
+    traceQueue.add(trace);
+  }
+
+  public static void store(final double value, final String className, final int lineNumber) {
+    final var trace =
+        new StoreTrace_double(traceCounter.getAndIncrement(), className, lineNumber, value);
+    traceQueue.add(trace);
+  }
+
+  public static void store(final Object value, final String className, final int lineNumber) {
+    final var trace =
+        new StoreTrace_Object(traceCounter.getAndIncrement(), className, lineNumber, value);
+    traceQueue.add(trace);
   }
 
   public static void methodCall_argument_boolean(boolean value) {

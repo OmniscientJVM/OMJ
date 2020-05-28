@@ -86,6 +86,7 @@ internal class OMJMethodAdapter(
     override fun visitVarInsn(opcode: Int, index: Int) {
         when (opcode) {
             ISTORE, LSTORE, FSTORE, DSTORE, ASTORE -> methodAdapterUtil.recordStore(
+                superVisitor,
                 fullyQualifiedClassName,
                 currentLineNumber,
                 opcode,

@@ -14,13 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.ui.model
+package com.octogonapus.omj.agentlib;
 
-data class MethodTrace(
-    val index: Long,
-    val callerClass: String,
-    val callerLine: Int,
-    val methodName: String,
-    val isStatic: Boolean,
-    val arguments: MutableList<TypeValuePair>
-) : Trace
+import java.io.IOException;
+import java.io.OutputStream;
+
+public interface Trace {
+
+  void serialize(final OutputStream outputStream) throws IOException;
+}

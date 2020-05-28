@@ -17,8 +17,7 @@
 package com.octogonapus.omj.ui.model
 
 /**
- * @param type The class name of the argument, or the primitive type name.
- * @param value The value of the argument. Either the value of the primitive or the hash code of the
- * class.
+ * @param type The class name or the primitive type name.
+ * @param value The value. Either the value of the primitive or the hash code of the class.
  */
-data class MethodArgument(val type: String, val value: String)
+data class TypeValuePair(val type: String, val value: String)

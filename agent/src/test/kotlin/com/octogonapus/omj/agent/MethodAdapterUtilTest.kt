@@ -27,20 +27,26 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.DLOAD
 import org.objectweb.asm.Opcodes.DUP
+import org.objectweb.asm.Opcodes.DUP2
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
+import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
 
 @Suppress("SameParameterValue")
 internal class MethodAdapterUtilTest {
 
+    companion object {
+        private const val lineNumber = 2398
+        private const val className = "ClassName"
+        private const val methodName = "methodName"
+        private const val dynamicClassName = "DynamicClassName"
+    }
+
     @Nested
     inner class MethodCallStartPreambleTest {
-
-        private val lineNumber = 2398
-        private val className = "ClassName"
-        private val methodName = "methodName"
 
         @Test
         fun `visit a preamble`() {
@@ -87,8 +93,6 @@ internal class MethodAdapterUtilTest {
     @Nested
     inner class RecordMethodTraceTest {
 
-        private val dynamicClassName = "DynamicClassName"
-
         @Test
         fun `visit start of method with no args`() {
             val methodDescriptor = "()V"
@@ -106,9 +110,9 @@ internal class MethodAdapterUtilTest {
 
             // Order is important
             verifySequence {
-                startTrace(visitor, dynamicClassName)
+                startMethodTrace(visitor, dynamicClassName)
                 receiver(visitor)
-                endTrace(visitor)
+                endMethodTrace(visitor)
             }
         }
 
@@ -129,8 +133,8 @@ internal class MethodAdapterUtilTest {
 
             // Order is important
             verifySequence {
-                startTrace(visitor, dynamicClassName)
-                endTrace(visitor)
+                startMethodTrace(visitor, dynamicClassName)
+                endMethodTrace(visitor)
             }
         }
 
@@ -151,10 +155,10 @@ internal class MethodAdapterUtilTest {
 
             // Order is important
             verifySequence {
-                startTrace(visitor, dynamicClassName)
+                startMethodTrace(visitor, dynamicClassName)
                 receiver(visitor)
                 intArg(visitor, 1) // Index 1 because there is a receiver
-                endTrace(visitor)
+                endMethodTrace(visitor)
             }
         }
 
@@ -175,9 +179,83 @@ internal class MethodAdapterUtilTest {
 
             // Order is important
             verifySequence {
-                startTrace(visitor, dynamicClassName)
+                startMethodTrace(visitor, dynamicClassName)
                 doubleArg(visitor, 0) // Index 0 because there is no receiver
-                endTrace(visitor)
+                endMethodTrace(visitor)
+            }
+        }
+    }
+
+    @Nested
+    inner class RecordStoreTest {
+
+        @Test
+        fun `visit istore`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            MethodAdapterUtil().recordStore(
+                visitor,
+                className,
+                lineNumber,
+                ISTORE,
+                1
+            )
+
+            verifySequence {
+                // Save what will be stored
+                visitor.visitInsn(DUP)
+
+                // Store it
+                visitor.visitVarInsn(ISTORE, 1)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(ILjava/lang/String;I)V",
+                    false
+                )
+            }
+        }
+
+        @Test
+        fun `visit lstore`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            MethodAdapterUtil().recordStore(
+                visitor,
+                className,
+                lineNumber,
+                LSTORE,
+                1
+            )
+
+            verifySequence {
+                // Save what will be stored
+                visitor.visitInsn(DUP2)
+
+                // Store it
+                visitor.visitVarInsn(LSTORE, 1)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(JLjava/lang/String;I)V",
+                    false
+                )
             }
         }
     }
@@ -190,7 +268,7 @@ internal class MethodAdapterUtilTest {
         every { defineClassForMethod(methodDescriptor, isStatic) } returns dynamicClassName
     }
 
-    private fun startTrace(visitor: MethodVisitor, dynamicClassName: String) {
+    private fun startMethodTrace(visitor: MethodVisitor, dynamicClassName: String) {
         visitor.visitTypeInsn(NEW, dynamicClassName)
         visitor.visitInsn(DUP)
         visitor.visitMethodInsn(INVOKESPECIAL, dynamicClassName, "<init>", "()V", false)
@@ -236,7 +314,7 @@ internal class MethodAdapterUtilTest {
         )
     }
 
-    private fun endTrace(visitor: MethodVisitor) {
+    private fun endMethodTrace(visitor: MethodVisitor) {
         visitor.visitMethodInsn(
             INVOKESTATIC,
             agentLibClassName,

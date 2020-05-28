@@ -180,6 +180,7 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
 
                 // Trace it, which will emit the store on its own
                 methodAdapterUtil.recordStore(
+                    superVisitor,
                     className,
                     lineNumber,
                     storeOpcode,

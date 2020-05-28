@@ -88,7 +88,9 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
             .getLong();
 
     final byte type = parseByte();
-    if (type == 0x2) {
+    if (type == 0x1) {
+      return parseStoreTrace(index);
+    } else if (type == 0x2) {
       return parseMethodTrace(index);
     } else {
       throw new UnsupportedOperationException("Unknown trace type: " + type);
@@ -101,6 +103,18 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
 
   private boolean parseBoolean() throws IOException {
     return parseByte() != 0;
+  }
+
+  private Trace parseStoreTrace(final long index) throws IOException {
+    // Parse class name
+    final String className = parseString();
+    logger.debug("className = {}", className);
+
+    // Parse line number
+    final int lineNumber = parseInt();
+    logger.debug("lineNumber = {}", lineNumber);
+
+    return new StoreTrace(index, className, lineNumber, parseTypeValuePair());
   }
 
   private Trace parseMethodTrace(final long index) throws IOException {
@@ -125,48 +139,54 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     logger.debug("numArguments = {}", numArguments);
 
     // Parse arguments
-    final var arguments = new ArrayList<MethodArgument>();
+    final var arguments = new ArrayList<TypeValuePair>();
     for (int i = 0; i < numArguments; i++) {
-      final byte typeByte = (byte) traceStream.read();
-      final SimpleTypeUtil.SimpleType type =
-          SimpleTypeUtil.getSimpleTypeFromDescriptorByte(typeByte);
-
-      logger.debug("Parsed type {} from {}", type, Integer.toHexString(typeByte));
-
-      if (type == SimpleTypeUtil.SimpleType.REFERENCE) {
-        // Need to treat references specially here because SimpleTypeUtil.getLengthOfTypeForTrace
-        // tries to compute the length based on the class name, which is not present until we parse
-        // it right here.
-        final String classType = parseString();
-
-        if (classType.equals("java.lang.String")) {
-          // For strings, the value is the length of the string and the bytes
-          final int stringLength = parseInt();
-          final String stringValue = parseString(stringLength);
-          arguments.add(new MethodArgument(classType, stringValue));
-        } else {
-          // For objects, the value is the hashcode
-          final String hashCode =
-              Integer.toHexString(traceStream.read())
-                  + Integer.toHexString(traceStream.read())
-                  + Integer.toHexString(traceStream.read())
-                  + Integer.toHexString(traceStream.read());
-
-          arguments.add(new MethodArgument(classType, hashCode));
-        }
-      } else {
-        // Can use SimpleTypeUtil.getLengthOfTypeForTrace for the rest
-        final int length = SimpleTypeUtil.getLengthOfTypeForTrace(type);
-        final var valueBytes = traceStream.readNBytes(length);
-
-        arguments.add(
-            new MethodArgument(
-                SimpleTypeUtil.getAdaptedClassName(type),
-                parsePrimitiveBytesToString(type, valueBytes)));
-      }
+      arguments.add(parseTypeValuePair());
     }
 
     return new MethodTrace(index, className, lineNumber, methodName, isStatic, arguments);
+  }
+
+  private TypeValuePair parseTypeValuePair() throws IOException {
+    final SimpleTypeUtil.SimpleType type = parseType();
+
+    if (type == SimpleTypeUtil.SimpleType.REFERENCE) {
+      // Need to treat references specially here because SimpleTypeUtil.getLengthOfTypeForTrace
+      // tries to compute the length based on the class name, which is not present until we parse
+      // it right here.
+      final String classType = parseString();
+
+      if (classType.equals("java.lang.String")) {
+        // For strings, the value is the length of the string and the bytes
+        final int stringLength = parseInt();
+        final String stringValue = parseString(stringLength);
+        return new TypeValuePair(classType, stringValue);
+      } else {
+        // For objects, the value is the hashcode
+        final String hashCode =
+            Integer.toHexString(traceStream.read())
+                + Integer.toHexString(traceStream.read())
+                + Integer.toHexString(traceStream.read())
+                + Integer.toHexString(traceStream.read());
+
+        return new TypeValuePair(classType, hashCode);
+      }
+    } else {
+      // Can use SimpleTypeUtil.getLengthOfTypeForTrace for the rest
+      final int length = SimpleTypeUtil.getLengthOfTypeForTrace(type);
+      final var valueBytes = traceStream.readNBytes(length);
+
+      return new TypeValuePair(
+          SimpleTypeUtil.getAdaptedClassName(type), parsePrimitiveBytesToString(type, valueBytes));
+    }
+  }
+
+  private SimpleTypeUtil.SimpleType parseType() throws IOException {
+    final byte typeByte = (byte) traceStream.read();
+    final SimpleTypeUtil.SimpleType type = SimpleTypeUtil.getSimpleTypeFromDescriptorByte(typeByte);
+
+    logger.debug("Parsed type {} from {}", type, Integer.toHexString(typeByte));
+    return type;
   }
 
   /**
