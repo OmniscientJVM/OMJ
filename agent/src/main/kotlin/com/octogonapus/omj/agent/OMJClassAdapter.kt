@@ -16,8 +16,8 @@
  */
 package com.octogonapus.omj.agent
 
-import com.octogonaus.omj.util.nullableSingleAssign
-import com.octogonaus.omj.util.singleAssign
+import com.octogonapus.omj.util.nullableSingleAssign
+import com.octogonapus.omj.util.singleAssign
 import mu.KotlinLogging
 import org.koin.core.KoinComponent
 import org.objectweb.asm.ClassVisitor

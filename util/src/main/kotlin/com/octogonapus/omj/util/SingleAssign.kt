@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonaus.omj.util
+package com.octogonapus.omj.util
 
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.properties.ReadWriteProperty
@@ -22,7 +22,7 @@ import kotlin.reflect.KProperty
 
 fun <T : Any?> singleAssign(): ReadWriteProperty<Any?, T> = SingleAssignVar()
 
-fun <T : Any?> nullableSingleAssign(): ReadWriteProperty<Any?, T?> = SingleAssignVar()
+fun <T : Any?> nullableSingleAssign(): ReadWriteProperty<Any?, T?> = NullableSingleAssignVar()
 
 private class SingleAssignVar<T : Any?> : ReadWriteProperty<Any?, T> {
 
