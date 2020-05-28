@@ -16,13 +16,17 @@
  */
 package com.octogonapus.omj.agent
 
-import java.util.Arrays
+import mu.KotlinLogging
 import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.ALOAD
+import org.objectweb.asm.Opcodes.DUP
+import org.objectweb.asm.Opcodes.ILOAD
+import org.objectweb.asm.Opcodes.INVOKESPECIAL
+import org.objectweb.asm.Opcodes.INVOKESTATIC
+import org.objectweb.asm.Opcodes.NEW
 import org.objectweb.asm.Type
-import org.slf4j.Logger
 
-internal object MethodAdapterUtil {
+internal class MethodAdapterUtil {
 
     /**
      * Records contextual information about a method call. This should be used before the method
@@ -37,37 +41,40 @@ internal object MethodAdapterUtil {
      * in.
      * @param name The name of the method being called.
      */
-    internal fun MethodVisitor.visitMethodCallStartPreamble(
+    internal fun visitMethodCallStartPreamble(
+        methodVisitor: MethodVisitor,
         currentLineNumber: Int,
         fullyQualifiedClassName: String,
         name: String
     ) {
-        visitLdcInsn(fullyQualifiedClassName)
-        visitMethodInsn(
-            Opcodes.INVOKESTATIC,
-            "com/octogonapus/omj/agentlib/OMJAgentLib",
-            "className",
-            "(Ljava/lang/String;)V",
-            false
-        )
+        with(methodVisitor) {
+            visitLdcInsn(fullyQualifiedClassName)
+            visitMethodInsn(
+                INVOKESTATIC,
+                agentLibClassName,
+                "className",
+                "(Ljava/lang/String;)V",
+                false
+            )
 
-        visitLdcInsn(currentLineNumber)
-        visitMethodInsn(
-            Opcodes.INVOKESTATIC,
-            "com/octogonapus/omj/agentlib/OMJAgentLib",
-            "lineNumber",
-            "(I)V",
-            false
-        )
+            visitLdcInsn(currentLineNumber)
+            visitMethodInsn(
+                INVOKESTATIC,
+                agentLibClassName,
+                "lineNumber",
+                "(I)V",
+                false
+            )
 
-        visitLdcInsn(name)
-        visitMethodInsn(
-            Opcodes.INVOKESTATIC,
-            "com/octogonapus/omj/agentlib/OMJAgentLib",
-            "methodName",
-            "(Ljava/lang/String;)V",
-            false
-        )
+            visitLdcInsn(name)
+            visitMethodInsn(
+                INVOKESTATIC,
+                agentLibClassName,
+                "methodName",
+                "(Ljava/lang/String;)V",
+                false
+            )
+        }
     }
 
     /**
@@ -82,66 +89,95 @@ internal object MethodAdapterUtil {
      * @param isStatic True if the method is static.
      * @param dynamicClassDefiner The [DynamicClassDefiner] to use to generate the method trace
      * container class.
-     * @param logger Used to log debug information.
      */
-    internal fun MethodVisitor.recordMethodTrace(
+    internal fun recordMethodTrace(
+        methodVisitor: MethodVisitor,
         methodDescriptor: String,
         isStatic: Boolean,
-        dynamicClassDefiner: DynamicClassDefiner,
-        logger: Logger
+        dynamicClassDefiner: DynamicClassDefiner
     ) {
-        // Generate a method trace container class and make a new instance of it. Contextual information
-        // about the is passed to the agent lib earlier when method instructions are visited using
-        // `visitMethodCallStartPreamble`.
-        val dynamicClassName = dynamicClassDefiner.defineClassForMethod(methodDescriptor, isStatic)
-        visitTypeInsn(Opcodes.NEW, dynamicClassName)
-        visitInsn(Opcodes.DUP)
-        visitMethodInsn(Opcodes.INVOKESPECIAL, dynamicClassName, "<init>", "()V", false)
-        visitMethodInsn(
-            Opcodes.INVOKESTATIC,
-            "com/octogonapus/omj/agentlib/OMJAgentLib",
-            "methodCall_start",
-            "(Lcom/octogonapus/omj/agentlib/MethodTrace;)V",
-            false
-        )
-
-        val argumentTypes = Type.getArgumentTypes(methodDescriptor)
-        logger.debug("argumentTypes = " + Arrays.toString(argumentTypes))
-
-        val virtualOffset = if (isStatic) 0 else 1
-        if (!isStatic) {
-            visitVarInsn(Opcodes.ALOAD, 0)
+        with(methodVisitor) {
+            // Generate a method trace container class and make a new instance of it. Contextual
+            // information about the is passed to the agent lib earlier when method instructions are
+            // visited using `visitMethodCallStartPreamble`.
+            val dynamicClassName =
+                dynamicClassDefiner.defineClassForMethod(methodDescriptor, isStatic)
+            visitTypeInsn(NEW, dynamicClassName)
+            visitInsn(DUP)
+            visitMethodInsn(INVOKESPECIAL, dynamicClassName, "<init>", "()V", false)
             visitMethodInsn(
-                Opcodes.INVOKESTATIC,
-                "com/octogonapus/omj/agentlib/OMJAgentLib",
-                "methodCall_argument_Object",
-                "(Ljava/lang/Object;)V",
+                INVOKESTATIC,
+                agentLibClassName,
+                "methodCall_start",
+                "(Lcom/octogonapus/omj/agentlib/MethodTrace;)V",
+                false
+            )
+
+            val argumentTypes = Type.getArgumentTypes(methodDescriptor)
+            logger.debug { "argumentTypes = ${argumentTypes?.contentDeepToString()}" }
+
+            val virtualOffset = if (isStatic) 0 else 1
+            if (!isStatic) {
+                visitVarInsn(ALOAD, 0)
+                visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "methodCall_argument_Object",
+                    "(Ljava/lang/Object;)V",
+                    false
+                )
+            }
+
+            for (i in argumentTypes.indices) {
+                val argumentType = argumentTypes[i]
+                val methodName = "methodCall_argument_" + TypeUtil.getAdaptedClassName(argumentType)
+                val methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V"
+
+                logger.debug {
+                    """
+                    Generated methodCall_argument_xxx override
+                    methodName = $methodName
+                    methodDescriptor = $methodDesc
+                    """.trimIndent()
+                }
+
+                visitVarInsn(argumentType.getOpcode(ILOAD), i + virtualOffset)
+                visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    methodName,
+                    methodDesc,
+                    false
+                )
+            }
+
+            visitMethodInsn(
+                INVOKESTATIC,
+                agentLibClassName,
+                "methodCall_end",
+                "()V",
                 false
             )
         }
+    }
 
-        for (i in argumentTypes.indices) {
-            val argumentType = argumentTypes[i]
-            val methodName = "methodCall_argument_" + TypeUtil.getAdaptedClassName(argumentType)
-            val methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V"
-            logger.debug("Generated methodName = $methodName")
-            logger.debug("Generated methodDesc = $methodDesc")
-            visitVarInsn(argumentType.getOpcode(Opcodes.ILOAD), i + virtualOffset)
-            visitMethodInsn(
-                Opcodes.INVOKESTATIC,
-                "com/octogonapus/omj/agentlib/OMJAgentLib",
-                methodName,
-                methodDesc,
-                false
-            )
+    companion object {
+
+        private val logger = KotlinLogging.logger { }
+        const val agentLibClassName = "com/octogonapus/omj/agentlib/OMJAgentLib"
+
+        /**
+         * Converts a "path-type" class name (e.g., `com/octogonapus/omj/MyClass`) to a
+         * "package-type" class name (e.g., `com.octogonapus.omj.MyClass`).
+         *
+         * @param currentClassName The path-type class name to convert.
+         * @return The package-type version of the [currentClassName].
+         */
+        internal fun convertPathTypeToPackageType(currentClassName: String): String {
+            val indexOfLastSeparator = currentClassName.lastIndexOf('/') + 1
+            val packagePrefix = currentClassName.substring(0, indexOfLastSeparator)
+            val className = currentClassName.substring(indexOfLastSeparator)
+            return packagePrefix.replace('/', '.') + className
         }
-
-        visitMethodInsn(
-            Opcodes.INVOKESTATIC,
-            "com/octogonapus/omj/agentlib/OMJAgentLib",
-            "methodCall_end",
-            "()V",
-            false
-        )
     }
 }

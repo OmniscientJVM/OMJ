@@ -16,37 +16,36 @@
  */
 package com.octogonapus.omj.agent
 
-import com.octogonapus.omj.agent.MethodAdapterUtil.recordMethodTrace
-import com.octogonapus.omj.agent.MethodAdapterUtil.visitMethodCallStartPreamble
+import mu.KotlinLogging
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.slf4j.LoggerFactory
 
 internal class OMJMethodAdapter(
     api: Int,
     private val superVisitor: MethodVisitor,
-    private val dynamicClassDefiner: DynamicClassDefiner,
-    private val classFilter: ClassFilter,
     private val methodDescriptor: String,
     private val isStatic: Boolean,
     currentClassName: String
-) : MethodVisitor(api, superVisitor), Opcodes {
+) : MethodVisitor(api, superVisitor), Opcodes, KoinComponent {
 
-    private val logger = LoggerFactory.getLogger(OMJMethodAdapter::class.java)
-    private val fullyQualifiedClassName: String
+    private val dynamicClassDefiner by inject<DynamicClassDefiner>()
+    private val classFilter by inject<ClassFilter>()
+    private val methodAdapterUtil by inject<MethodAdapterUtil>()
+    private val fullyQualifiedClassName =
+        MethodAdapterUtil.convertPathTypeToPackageType(currentClassName)
     private var currentLineNumber = 0
-
-    init {
-        val indexOfLastSeparator = currentClassName.lastIndexOf('/') + 1
-        val packagePrefix = currentClassName.substring(0, indexOfLastSeparator)
-        val className = currentClassName.substring(indexOfLastSeparator)
-        fullyQualifiedClassName = packagePrefix.replace('/', '.') + className
-    }
 
     override fun visitCode() {
         super.visitCode()
-        superVisitor.recordMethodTrace(methodDescriptor, isStatic, dynamicClassDefiner, logger)
+        methodAdapterUtil.recordMethodTrace(
+            superVisitor,
+            methodDescriptor,
+            isStatic,
+            dynamicClassDefiner
+        )
     }
 
     override fun visitMethodInsn(
@@ -56,9 +55,21 @@ internal class OMJMethodAdapter(
         descriptor: String,
         isInterface: Boolean
     ) {
+        @Suppress("DuplicatedCode")
+        logger.debug {
+            """
+            opcode = $opcode
+            owner = $owner
+            name = $name
+            descriptor = $descriptor
+            isInterface = $isInterface
+            """.trimIndent()
+        }
+
         // Only add the preamble to methods which we will also record a trace for
         if (classFilter.shouldTransform(owner)) {
-            superVisitor.visitMethodCallStartPreamble(
+            methodAdapterUtil.visitMethodCallStartPreamble(
+                superVisitor,
                 currentLineNumber,
                 fullyQualifiedClassName,
                 name
@@ -71,5 +82,10 @@ internal class OMJMethodAdapter(
     override fun visitLineNumber(line: Int, start: Label) {
         super.visitLineNumber(line, start)
         currentLineNumber = line
+    }
+
+    companion object {
+
+        private val logger = KotlinLogging.logger { }
     }
 }

@@ -24,6 +24,12 @@ allprojects {
 
     repositories {
         mavenCentral()
+        jcenter {
+            content {
+                includeGroup("org.jetbrains.kotlinx")
+                includeGroup("org.koin")
+            }
+        }
     }
 
     // Configures the Jacoco tool version to be the same for all projects that have it applied.
@@ -69,12 +75,6 @@ subprojects {
     apply {
         plugin("java-library")
         plugin("jacoco")
-    }
-
-    dependencies {
-        // JUnit
-        testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-api", version = Versions.junit)
-        testImplementation(group = "org.junit.jupiter", name = "junit-jupiter-engine", version = Versions.junit)
     }
 
     java {
@@ -144,28 +144,20 @@ subprojects {
 }
 
 // Kotlin projects
-configure(listOf(project(":agent"), project(":ui"))) {
+configure(listOf(project(":agent"), project(":testUtil"), project(":ui"), project(":util"))) {
     apply {
         plugin("kotlin")
         plugin("org.jlleitschuh.gradle.ktlint")
         plugin("io.gitlab.arturbosch.detekt")
     }
 
-    repositories {
-        jcenter {
-            content {
-                includeGroup("org.jetbrains.kotlinx")
-            }
-        }
-    }
-
     dependencies {
         implementation(group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version = Versions.kotlin)
         implementation(group = "org.jetbrains.kotlin", name = "kotlin-reflect", version = Versions.kotlin)
 
-        testImplementation(group = "io.kotest", name = "kotest-assertions-core-jvm", version = Versions.kotest)
-        testImplementation(group = "io.kotest", name = "kotest-assertions-jvm", version = Versions.kotest)
-        testImplementation(group = "io.kotest", name = "kotest-property-jvm", version = Versions.kotest)
+        implementation(group = "io.github.microutils", name = "kotlin-logging", version = Versions.kotlinLogging)
+
+        implementation(group = "org.koin", name = "koin-core", version = Versions.koin)
     }
 
     tasks.withType<KotlinCompile> {
@@ -201,7 +193,8 @@ configure(listOf(project(":agent"), project(":ui"))) {
 
 val jacocoRootReport by tasks.creating(JacocoReport::class) {
     group = "verification"
-    val excludedProjects = listOf<Project>()
+    // The agent-tests projects are glorified strings; no point in getting coverage for them.
+    val excludedProjects = listOf(project(":agent-tests")) + project(":agent-tests").subprojects
     val includedProjects = subprojects.filter { it !in excludedProjects }
 
     dependsOn(includedProjects.flatMap { it.tasks.withType(JacocoReport::class) } - this)
@@ -223,5 +216,5 @@ val jacocoRootReport by tasks.creating(JacocoReport::class) {
 
 tasks.wrapper {
     distributionType = Wrapper.DistributionType.ALL
-    version = "6.4.1"
+    version = Versions.gradleWrapper
 }

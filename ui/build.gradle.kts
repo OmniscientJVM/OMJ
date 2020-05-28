@@ -10,10 +10,12 @@ plugins {
 description = "The UI."
 
 dependencies {
-    // Other projects
     implementation(project(":util"))
     implementation(project(":logging"))
+
     runtimeOnly(project(path = ":agent", configuration = "shadow"))
+
+    testImplementation(project(":testUtil"))
 }
 
 val agentJarName = "agent-all"
