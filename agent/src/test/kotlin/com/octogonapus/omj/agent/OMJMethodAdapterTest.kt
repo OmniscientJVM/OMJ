@@ -161,45 +161,36 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
     }
 
     @Nested
-    inner class StoreTests {
+    inner class LoadAndStoreTests {
 
         @ParameterizedTest
-        @ValueSource(ints = [ISTORE, LSTORE, FSTORE, DSTORE, ASTORE])
-        fun `visit store`(storeOpcode: Int) {
+        @ValueSource(
+            ints = [
+                ISTORE, LSTORE, FSTORE, DSTORE, ASTORE, ILOAD, LLOAD, FLOAD, DLOAD,
+                ALOAD
+            ]
+        )
+        fun `visit opcode`(opcode: Int) {
             val (methodAdapter, superVisitor, methodAdapterUtil, _) = getMethodAdapter { }
 
             // Visit a line number before the store to simulate a class file with debug info
             methodAdapter.visitLineNumber(lineNumber, Label())
 
             // Store into a local at index 1
-            methodAdapter.visitVarInsn(storeOpcode, 1)
+            methodAdapter.visitVarInsn(opcode, 1)
 
             verifySequence {
                 // Emit the line number
                 superVisitor.visitLineNumber(lineNumber, any())
 
-                // Trace it, which will emit the store on its own
                 methodAdapterUtil.visitVarInsn(
                     superVisitor,
                     className,
                     lineNumber,
-                    storeOpcode,
-                    1
+                    opcode,
+                    1,
+                    null
                 )
-            }
-        }
-
-        @ParameterizedTest
-        @ValueSource(ints = [ILOAD, LLOAD, FLOAD, DLOAD, ALOAD])
-        fun `visit load`(loadOpcode: Int) {
-            val (methodAdapter, superVisitor, _, _) = getMethodAdapter { }
-
-            // Load into local 1
-            methodAdapter.visitVarInsn(loadOpcode, 1)
-
-            verifySequence {
-                // Emit the load; nothing else to do
-                superVisitor.visitVarInsn(loadOpcode, 1)
             }
         }
     }
@@ -224,7 +215,8 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
             superVisitor,
             methodDescriptor,
             isStatic,
-            className
+            className,
+            null
         )
 
         return Tuple4(methodAdapter, superVisitor, methodAdapterUtil, dynamicClassDefiner)

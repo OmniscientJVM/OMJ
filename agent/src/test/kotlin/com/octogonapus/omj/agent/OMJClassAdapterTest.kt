@@ -111,7 +111,8 @@ internal class OMJClassAdapterTest {
                 every {
                     visitMethod(0, methodName, methodDescriptor, null, null)
                 } returns expectedMethodVisitor
-            }
+            },
+            emptyMap()
         )
         classAdapter.visit(
             ASM8,
@@ -132,7 +133,7 @@ internal class OMJClassAdapterTest {
     }
 
     private fun getClassAdapter(): OMJClassAdapter {
-        val classAdapter = OMJClassAdapter(ASM8, mockk(relaxed = true))
+        val classAdapter = OMJClassAdapter(ASM8, mockk(relaxed = true), emptyMap())
         classAdapter.visit(
             ASM8,
             0,

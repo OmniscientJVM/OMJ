@@ -27,7 +27,8 @@ internal class OMJMethodAdapter(
     private val superVisitor: MethodVisitor,
     private val methodDescriptor: String,
     private val isStatic: Boolean,
-    currentClassName: String
+    currentClassName: String,
+    private val locals: List<LocalVariable>?
 ) : MethodVisitor(api, superVisitor), KoinComponent {
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
@@ -84,7 +85,8 @@ internal class OMJMethodAdapter(
             fullyQualifiedClassName,
             currentLineNumber,
             opcode,
-            index
+            index,
+            locals
         )
     }
 

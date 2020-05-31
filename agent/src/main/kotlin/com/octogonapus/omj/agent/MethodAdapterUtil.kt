@@ -174,13 +174,16 @@ internal class MethodAdapterUtil {
      * @param lineNumber The line number of the store.
      * @param opcode The opcode being visited.
      * @param index The index of the local variable (the operand of the insn).
+     * @param locals A list of all the locals in the surrounding method, or `null` if none were
+     * visited.
      */
     internal fun visitVarInsn(
         methodVisitor: MethodVisitor,
         className: String,
         lineNumber: Int,
         opcode: Int,
-        index: Int
+        index: Int,
+        locals: List<LocalVariable>?
     ) {
         when (opcode) {
             ISTORE, LSTORE, FSTORE, DSTORE, ASTORE -> with(methodVisitor) {
@@ -188,13 +191,16 @@ internal class MethodAdapterUtil {
 
                 visitVarInsn(opcode, index)
 
+                val localDescriptor = locals?.let { it[index].descriptor }
+                    ?: OpcodeUtil.getStoreDescriptor(opcode)
+
                 visitLdcInsn(className)
                 visitLdcInsn(lineNumber)
                 visitMethodInsn(
                     INVOKESTATIC,
                     agentLibClassName,
                     "store",
-                    "(" + OpcodeUtil.getStoreDescriptor(opcode) + "Ljava/lang/String;I)V",
+                    "(${localDescriptor}Ljava/lang/String;I)V",
                     false
                 )
             }

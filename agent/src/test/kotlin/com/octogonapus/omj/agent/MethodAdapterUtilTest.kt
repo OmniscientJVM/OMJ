@@ -197,7 +197,8 @@ internal class MethodAdapterUtilTest {
                 className,
                 lineNumber,
                 ISTORE,
-                1
+                1,
+                null
             )
 
             verifySequence {
@@ -225,6 +226,42 @@ internal class MethodAdapterUtilTest {
         }
 
         @Test
+        fun `visit istore into a byte`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            MethodAdapterUtil().visitVarInsn(
+                visitor,
+                className,
+                lineNumber,
+                ISTORE,
+                1,
+                listOf(mockk(), LocalVariable("b", "B", 1)) // byte at index 1
+            )
+
+            verifySequence {
+                // Save what will be stored
+                visitor.visitInsn(DUP)
+
+                // Store it
+                visitor.visitVarInsn(ISTORE, 1)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(BLjava/lang/String;I)V", // Should have pulled the descriptor from the locals
+                    false
+                )
+            }
+        }
+
+        @Test
         fun `visit lstore`() {
             val visitor = mockk<MethodVisitor>(relaxed = true)
             MethodAdapterUtil().visitVarInsn(
@@ -232,7 +269,8 @@ internal class MethodAdapterUtilTest {
                 className,
                 lineNumber,
                 LSTORE,
-                1
+                1,
+                null
             )
 
             verifySequence {
@@ -267,7 +305,8 @@ internal class MethodAdapterUtilTest {
                 className,
                 lineNumber,
                 ALOAD,
-                1
+                1,
+                null
             )
 
             verifySequence {

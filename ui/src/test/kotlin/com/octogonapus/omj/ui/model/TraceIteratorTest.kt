@@ -356,7 +356,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeByte.jar")
 
             traces.shouldExist {
-                it.storeByte("com.agenttest.storeByte.Main", 0xFA.toByte())
+                it.storeByte("com.agenttest.storeByte.Main", "250")
             }
         }
 
@@ -365,7 +365,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeInt.jar")
 
             traces.shouldExist {
-                it.storeInt("com.agenttest.storeInt.Main", 123456)
+                it.storeInt("com.agenttest.storeInt.Main", "123456")
             }
         }
     }
@@ -465,7 +465,7 @@ internal class TraceIteratorTest {
          */
         private fun Trace.storeInt(
             containingClass: String,
-            value: Int
+            value: String
         ) = storeVar(containingClass, value, "int")
 
         /**
@@ -476,12 +476,12 @@ internal class TraceIteratorTest {
          */
         private fun Trace.storeByte(
             containingClass: String,
-            value: Byte
+            value: String
         ) = storeVar(containingClass, value, "byte")
 
-        private fun Trace.storeVar(containingClass: String, value: Number, varType: String) =
+        private fun Trace.storeVar(containingClass: String, value: String, varType: String) =
             this is StoreTrace && callerClass == containingClass &&
-                typeValuePair.type == varType && typeValuePair.value == value.toString()
+                typeValuePair.type == varType && typeValuePair.value == value
 
         private fun MethodTrace.hasArguments(args: List<Pair<String, String?>>): Boolean {
             return args.foldIndexed(true) { index, acc, (type, value) ->

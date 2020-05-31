@@ -25,9 +25,10 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 
-class OMJClassAdapter(
+internal class OMJClassAdapter(
     api: Int,
-    classVisitor: ClassVisitor
+    classVisitor: ClassVisitor,
+    private val methodAndLocals: Map<Method, List<LocalVariable>>
 ) : ClassVisitor(api, classVisitor), Opcodes, KoinComponent {
 
     private var classVersion = 0
@@ -92,28 +93,41 @@ class OMJClassAdapter(
         visitor: MethodVisitor,
         superName: String,
         access: Int
-    ): MethodVisitor = when {
-        isInstanceInitializationMethod(name, descriptor) ->
-            OMJInstanceInitializationMethodAdapter(api, visitor, descriptor, className, superName)
+    ): MethodVisitor {
+        val locals = methodAndLocals[Method(name, descriptor)]
 
-        isClassInitializationMethod(name, descriptor, access) ->
-            OMJMethodAdapter(
+        return when {
+            isInstanceInitializationMethod(name, descriptor) ->
+                OMJInstanceInitializationMethodAdapter(
+                    api,
+                    visitor,
+                    descriptor,
+                    className,
+                    superName,
+                    locals
+                )
+
+            isClassInitializationMethod(name, descriptor, access) -> OMJMethodAdapter(
                 api,
                 visitor,
                 descriptor,
                 hasAccessFlag(access, Opcodes.ACC_STATIC),
-                className
+                className,
+                locals
             )
 
-        isMainMethod(name, descriptor, access) -> OMJMainMethodAdapter(api, visitor, className)
+            isMainMethod(name, descriptor, access) ->
+                OMJMainMethodAdapter(api, visitor, className, locals)
 
-        else -> OMJMethodAdapter(
-            api,
-            visitor,
-            descriptor,
-            hasAccessFlag(access, Opcodes.ACC_STATIC),
-            className
-        )
+            else -> OMJMethodAdapter(
+                api,
+                visitor,
+                descriptor,
+                hasAccessFlag(access, Opcodes.ACC_STATIC),
+                className,
+                locals
+            )
+        }
     }
 
     /**

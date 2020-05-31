@@ -26,7 +26,8 @@ import org.objectweb.asm.MethodVisitor
 internal class OMJMainMethodAdapter(
     api: Int,
     private val superVisitor: MethodVisitor,
-    currentClassName: String
+    currentClassName: String,
+    private val locals: List<LocalVariable>?
 ) : MethodVisitor(api, superVisitor), KoinComponent {
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
@@ -91,7 +92,8 @@ internal class OMJMainMethodAdapter(
             fullyQualifiedClassName,
             currentLineNumber,
             opcode,
-            index
+            index,
+            locals
         )
     }
 

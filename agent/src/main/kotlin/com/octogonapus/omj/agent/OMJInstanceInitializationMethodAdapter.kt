@@ -28,7 +28,8 @@ internal class OMJInstanceInitializationMethodAdapter(
     private val superVisitor: MethodVisitor,
     private val methodDescriptor: String,
     currentClassName: String,
-    private val superName: String
+    private val superName: String,
+    private val locals: List<LocalVariable>?
 ) : MethodVisitor(api, superVisitor), KoinComponent {
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
@@ -90,7 +91,8 @@ internal class OMJInstanceInitializationMethodAdapter(
             fullyQualifiedClassName,
             currentLineNumber,
             opcode,
-            index
+            index,
+            locals
         )
     }
 
