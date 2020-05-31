@@ -85,3 +85,11 @@ gradle-app.setting
 
 # Cache of project
 .gradletasknamecache
+
+# VSCode Project
+.project
+
+# VSCode Project
+.classpath
+.project
+.settings

@@ -19,327 +19,346 @@ package com.octogonapus.omj.ui.model
 import com.octogonapus.omj.testutil.runAgent
 import com.octogonapus.omj.testutil.shouldHaveInOrder
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldExist
 import io.kotest.matchers.collections.shouldHaveSize
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 
 internal class TraceIteratorTest {
 
-    @Test
-    fun `parse method call with no args`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_noargs.jar")
+    @Nested
+    inner class MethodTraceTests {
 
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.noargs.Foo",
-                    callerClass = "com.agenttest.noargs.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.noargs.Foo",
-                    callerClass = "com.agenttest.noargs.Main",
-                    methodName = "with"
-                )
-            }
-        )
+        @Test
+        fun `parse method call with no args`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_noargs.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.noargs.Foo",
+                        callerClass = "com.agenttest.noargs.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.noargs.Foo",
+                        callerClass = "com.agenttest.noargs.Main",
+                        methodName = "with"
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args byte 3C`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_byte3c.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.byte3c.Foo",
+                        callerClass = "com.agenttest.byte3c.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.byte3c.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.byte3c.Main",
+                        args = listOf("byte" to "60")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args char Q`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_charQ.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.charQ.Foo",
+                        callerClass = "com.agenttest.charQ.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.charQ.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.charQ.Main",
+                        args = listOf("char" to "Q")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args double 1p2`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_double1p2.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.double1p2.Foo",
+                        callerClass = "com.agenttest.double1p2.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.double1p2.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.double1p2.Main",
+                        args = listOf("double" to "1.2")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args float 4p3`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_float4p3.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.float4p3.Foo",
+                        callerClass = "com.agenttest.float4p3.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.float4p3.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.float4p3.Main",
+                        args = listOf("float" to "4.3")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args int 42`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_int42.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.int42.Foo",
+                        callerClass = "com.agenttest.int42.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.int42.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.int42.Main",
+                        args = listOf("int" to "42")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args long 123456789123456789`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_long123456789123456789.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.long123456789123456789.Foo",
+                        callerClass = "com.agenttest.long123456789123456789.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.long123456789123456789.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.long123456789123456789.Main",
+                        args = listOf("long" to "123456789123456789")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args string hello`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_stringHello.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.stringHello.Foo",
+                        callerClass = "com.agenttest.stringHello.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.stringHello.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.stringHello.Main",
+                        args = listOf("java.lang.String" to "Hello")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args string hello with null byte`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_stringHelloNull1.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.stringHelloNull1.Foo",
+                        callerClass = "com.agenttest.stringHelloNull1.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.stringHelloNull1.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.stringHelloNull1.Main",
+                        args = listOf("java.lang.String" to "Hello\u0000 1")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args object`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_objectStringArray.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.objectStringArray.Foo",
+                        callerClass = "com.agenttest.objectStringArray.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.objectStringArray.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.objectStringArray.Main",
+                        args = listOf("[Ljava/lang/String;" to null)
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args short 12345`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_short12345.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.short12345.Foo",
+                        callerClass = "com.agenttest.short12345.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.short12345.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.short12345.Main",
+                        args = listOf("short" to "12345")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args boolean true`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_booleanTrue.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.booleanTrue.Foo",
+                        callerClass = "com.agenttest.booleanTrue.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.booleanTrue.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.booleanTrue.Main",
+                        args = listOf("boolean" to "true")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse method call with args object MyDataClass`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_objectTestDataClass.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.objectTestDataClass.Foo",
+                        callerClass = "com.agenttest.objectTestDataClass.Main"
+                    )
+                },
+                {
+                    it.virtualMethodCall(
+                        receiverType = "com.agenttest.objectTestDataClass.Foo",
+                        methodName = "with",
+                        callerClass = "com.agenttest.objectTestDataClass.Main",
+                        args = listOf("com.agenttest.objectTestDataClass.TestDataClass" to null)
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse constructor call with int 6`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_constructorInt6.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.constructorCall(
+                        receiverType = "com.agenttest.constructorInt6.Foo",
+                        callerClass = "com.agenttest.constructorInt6.Main",
+                        args = listOf("int" to "6")
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `parse a static method call in a static block`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_staticBlockCallStaticMethod.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.staticMethodCall(
+                        methodName = "callMe",
+                        callerClass = "com.agenttest.staticBlockCallStaticMethod.Foo"
+                    )
+                }
+            )
+        }
     }
 
-    @Test
-    fun `parse method call with args byte 3C`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_byte3c.jar")
+    @Nested
+    inner class StoreTraceTests {
 
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.byte3c.Foo",
-                    callerClass = "com.agenttest.byte3c.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.byte3c.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.byte3c.Main",
-                    args = listOf("byte" to "60")
-                )
+        @Test
+        fun `test int store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeInt.jar")
+
+            traces.shouldExist {
+                it.storeInt("com.agenttest.storeInt.Main", 123456)
             }
-        )
-    }
-
-    @Test
-    fun `parse method call with args char Q`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_charQ.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.charQ.Foo",
-                    callerClass = "com.agenttest.charQ.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.charQ.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.charQ.Main",
-                    args = listOf("char" to "Q")
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse method call with args double 1p2`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_double1p2.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.double1p2.Foo",
-                    callerClass = "com.agenttest.double1p2.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.double1p2.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.double1p2.Main",
-                    args = listOf("double" to "1.2")
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse method call with args float 4p3`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_float4p3.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.float4p3.Foo",
-                    callerClass = "com.agenttest.float4p3.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.float4p3.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.float4p3.Main",
-                    args = listOf("float" to "4.3")
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse method call with args int 42`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_int42.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.int42.Foo",
-                    callerClass = "com.agenttest.int42.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.int42.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.int42.Main",
-                    args = listOf("int" to "42")
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse method call with args long 123456789123456789`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_long123456789123456789.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.long123456789123456789.Foo",
-                    callerClass = "com.agenttest.long123456789123456789.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.long123456789123456789.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.long123456789123456789.Main",
-                    args = listOf("long" to "123456789123456789")
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse method call with args string hello`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_stringHello.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.stringHello.Foo",
-                    callerClass = "com.agenttest.stringHello.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.stringHello.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.stringHello.Main",
-                    args = listOf("java.lang.String" to "Hello")
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse method call with args string hello with null byte`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_stringHelloNull1.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.stringHelloNull1.Foo",
-                    callerClass = "com.agenttest.stringHelloNull1.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.stringHelloNull1.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.stringHelloNull1.Main",
-                    args = listOf("java.lang.String" to "Hello\u0000 1")
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse method call with args object`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_objectStringArray.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.objectStringArray.Foo",
-                    callerClass = "com.agenttest.objectStringArray.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.objectStringArray.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.objectStringArray.Main",
-                    args = listOf("[Ljava/lang/String;" to null)
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse method call with args short 12345`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_short12345.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.short12345.Foo",
-                    callerClass = "com.agenttest.short12345.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.short12345.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.short12345.Main",
-                    args = listOf("short" to "12345")
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse method call with args boolean true`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_booleanTrue.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.booleanTrue.Foo",
-                    callerClass = "com.agenttest.booleanTrue.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.booleanTrue.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.booleanTrue.Main",
-                    args = listOf("boolean" to "true")
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse method call with args object MyDataClass`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_objectTestDataClass.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.objectTestDataClass.Foo",
-                    callerClass = "com.agenttest.objectTestDataClass.Main"
-                )
-            },
-            {
-                it.virtualMethodCall(
-                    receiverType = "com.agenttest.objectTestDataClass.Foo",
-                    methodName = "with",
-                    callerClass = "com.agenttest.objectTestDataClass.Main",
-                    args = listOf("com.agenttest.objectTestDataClass.TestDataClass" to null)
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse constructor call with int 6`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_constructorInt6.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.constructorCall(
-                    receiverType = "com.agenttest.constructorInt6.Foo",
-                    callerClass = "com.agenttest.constructorInt6.Main",
-                    args = listOf("int" to "6")
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `parse a static method call in a static block`(@TempDir tempDir: File) {
-        val traces = generateTraces(tempDir, "agent-test_staticBlockCallStaticMethod.jar")
-
-        traces.shouldHaveInOrder(
-            {
-                it.staticMethodCall(
-                    methodName = "callMe",
-                    callerClass = "com.agenttest.staticBlockCallStaticMethod.Foo"
-                )
-            }
-        )
+        }
     }
 
     @Test
@@ -428,6 +447,18 @@ internal class TraceIteratorTest {
             args: List<Pair<String, String?>> = emptyList()
         ) = this is MethodTrace && !isStatic && hasArgumentType(0, receiverType) &&
             methodName == "<init>" && hasArguments(args) && this.callerClass == callerClass
+
+        /**
+         * Checks there is an int store with the [value].
+         *
+         * @param containingClass The class the store happens in.
+         * @param value The value that was stored.
+         */
+        private fun Trace.storeInt(
+            containingClass: String,
+            value: Int
+        ) = this is StoreTrace && callerClass == containingClass && typeValuePair.type == "int" &&
+            typeValuePair.value == value.toString()
 
         private fun MethodTrace.hasArguments(args: List<Pair<String, String?>>): Boolean {
             return args.foldIndexed(true) { index, acc, (type, value) ->

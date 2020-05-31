@@ -25,6 +25,7 @@ include(":agent-tests:objectStringArray")
 include(":agent-tests:objectTestDataClass")
 include(":agent-tests:short12345")
 include(":agent-tests:staticBlockCallStaticMethod")
+include(":agent-tests:storeInt")
 include(":agent-tests:stringHello")
 include(":agent-tests:stringHelloNull1")
 

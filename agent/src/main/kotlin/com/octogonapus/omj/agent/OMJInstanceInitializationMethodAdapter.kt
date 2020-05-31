@@ -22,6 +22,11 @@ import org.koin.core.inject
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.ASTORE
+import org.objectweb.asm.Opcodes.DSTORE
+import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LSTORE
 
 internal class OMJInstanceInitializationMethodAdapter(
     api: Int,
@@ -81,6 +86,20 @@ internal class OMJInstanceInitializationMethodAdapter(
             }
 
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
+        }
+    }
+
+    override fun visitVarInsn(opcode: Int, index: Int) {
+        when (opcode) {
+            ISTORE, LSTORE, FSTORE, DSTORE, ASTORE -> methodAdapterUtil.recordStore(
+                superVisitor,
+                fullyQualifiedClassName,
+                currentLineNumber,
+                opcode,
+                index
+            )
+
+            else -> super.visitVarInsn(opcode, index)
         }
     }
 
