@@ -22,11 +22,6 @@ import org.koin.core.inject
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Opcodes.ASTORE
-import org.objectweb.asm.Opcodes.DSTORE
-import org.objectweb.asm.Opcodes.FSTORE
-import org.objectweb.asm.Opcodes.ISTORE
-import org.objectweb.asm.Opcodes.LSTORE
 
 internal class OMJInstanceInitializationMethodAdapter(
     api: Int,
@@ -66,7 +61,7 @@ internal class OMJInstanceInitializationMethodAdapter(
             // right after the superclass is initialized instead of in `visitCode`, which would put
             // it at the start of this method before the superclass is initialized.
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-            methodAdapterUtil.recordMethodTrace(
+            methodAdapterUtil.visitMethodTrace(
                 superVisitor,
                 methodDescriptor,
                 false,
@@ -90,17 +85,13 @@ internal class OMJInstanceInitializationMethodAdapter(
     }
 
     override fun visitVarInsn(opcode: Int, index: Int) {
-        when (opcode) {
-            ISTORE, LSTORE, FSTORE, DSTORE, ASTORE -> methodAdapterUtil.recordStore(
-                superVisitor,
-                fullyQualifiedClassName,
-                currentLineNumber,
-                opcode,
-                index
-            )
-
-            else -> super.visitVarInsn(opcode, index)
-        }
+        methodAdapterUtil.visitVarInsn(
+            superVisitor,
+            fullyQualifiedClassName,
+            currentLineNumber,
+            opcode,
+            index
+        )
     }
 
     override fun visitLineNumber(line: Int, start: Label) {

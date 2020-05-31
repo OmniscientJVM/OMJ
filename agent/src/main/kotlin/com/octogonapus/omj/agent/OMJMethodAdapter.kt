@@ -21,11 +21,6 @@ import org.koin.core.KoinComponent
 import org.koin.core.inject
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes.ASTORE
-import org.objectweb.asm.Opcodes.DSTORE
-import org.objectweb.asm.Opcodes.FSTORE
-import org.objectweb.asm.Opcodes.ISTORE
-import org.objectweb.asm.Opcodes.LSTORE
 
 internal class OMJMethodAdapter(
     api: Int,
@@ -44,7 +39,7 @@ internal class OMJMethodAdapter(
 
     override fun visitCode() {
         super.visitCode()
-        methodAdapterUtil.recordMethodTrace(
+        methodAdapterUtil.visitMethodTrace(
             superVisitor,
             methodDescriptor,
             isStatic,
@@ -84,17 +79,13 @@ internal class OMJMethodAdapter(
     }
 
     override fun visitVarInsn(opcode: Int, index: Int) {
-        when (opcode) {
-            ISTORE, LSTORE, FSTORE, DSTORE, ASTORE -> methodAdapterUtil.recordStore(
-                superVisitor,
-                fullyQualifiedClassName,
-                currentLineNumber,
-                opcode,
-                index
-            )
-
-            else -> super.visitVarInsn(opcode, index)
-        }
+        methodAdapterUtil.visitVarInsn(
+            superVisitor,
+            fullyQualifiedClassName,
+            currentLineNumber,
+            opcode,
+            index
+        )
     }
 
     override fun visitLineNumber(line: Int, start: Label) {

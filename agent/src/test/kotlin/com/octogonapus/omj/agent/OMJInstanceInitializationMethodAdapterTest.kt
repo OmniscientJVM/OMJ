@@ -84,7 +84,7 @@ internal class OMJInstanceInitializationMethodAdapterTest : KoinTestFixture() {
                 )
 
                 // Then record the trace after the super ctor
-                methodAdapterUtil.recordMethodTrace(
+                methodAdapterUtil.visitMethodTrace(
                     superVisitor,
                     ctorBeingAdaptedDescriptor,
                     false,
@@ -158,7 +158,7 @@ internal class OMJInstanceInitializationMethodAdapterTest : KoinTestFixture() {
                 superVisitor.visitLineNumber(lineNumber, any())
 
                 // Trace it, which will emit the store on its own
-                methodAdapterUtil.recordStore(
+                methodAdapterUtil.visitVarInsn(
                     superVisitor,
                     className,
                     lineNumber,

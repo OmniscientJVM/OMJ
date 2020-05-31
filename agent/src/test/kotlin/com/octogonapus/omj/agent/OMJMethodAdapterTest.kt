@@ -68,7 +68,7 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
                 superVisitor.visitCode()
 
                 // Then record the arguments right after the signature, before any other bytecode
-                methodAdapterUtil.recordMethodTrace(
+                methodAdapterUtil.visitMethodTrace(
                     superVisitor,
                     methodDescriptor,
                     false,
@@ -179,7 +179,7 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
                 superVisitor.visitLineNumber(lineNumber, any())
 
                 // Trace it, which will emit the store on its own
-                methodAdapterUtil.recordStore(
+                methodAdapterUtil.visitVarInsn(
                     superVisitor,
                     className,
                     lineNumber,

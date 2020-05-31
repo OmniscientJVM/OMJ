@@ -19,10 +19,15 @@ package com.octogonapus.omj.agent
 import mu.KotlinLogging
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ALOAD
+import org.objectweb.asm.Opcodes.ASTORE
+import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
+import org.objectweb.asm.Opcodes.FSTORE
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
+import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
 import org.objectweb.asm.Type
 
@@ -35,7 +40,7 @@ internal class MethodAdapterUtil {
      * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
      * this method loads onto the stack is removed by the end of its bytecode.
      *
-     * @receiver The method visitor to delegate to.
+     * @param methodVisitor The method visitor to delegate to.
      * @param currentLineNumber The most up-to-date line number from the method visitor.
      * @param fullyQualifiedClassName The fully-qualified name of the class the method call happens
      * in.
@@ -84,13 +89,13 @@ internal class MethodAdapterUtil {
      * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
      * this method loads onto the stack is removed by the end of its bytecode.
      *
-     * @receiver The method visitor to delegate to.
+     * @param methodVisitor The method visitor to delegate to.
      * @param methodDescriptor The method's descriptor.
      * @param isStatic True if the method is static.
      * @param dynamicClassDefiner The [DynamicClassDefiner] to use to generate the method trace
      * container class.
      */
-    internal fun recordMethodTrace(
+    internal fun visitMethodTrace(
         methodVisitor: MethodVisitor,
         methodDescriptor: String,
         isStatic: Boolean,
@@ -161,27 +166,40 @@ internal class MethodAdapterUtil {
         }
     }
 
-    fun recordStore(
+    /**
+     * Visits a var insn. If it is a *STORE insn, then that store is recorded.
+     *
+     * @param methodVisitor The method visitor to delegate to.
+     * @param className The name of the class the store is in.
+     * @param lineNumber The line number of the store.
+     * @param opcode The opcode being visited.
+     * @param index The index of the local variable (the operand of the insn).
+     */
+    internal fun visitVarInsn(
         methodVisitor: MethodVisitor,
         className: String,
         lineNumber: Int,
         opcode: Int,
         index: Int
     ) {
-        with(methodVisitor) {
-            visitInsn(OpcodeUtil.getDupOpcode(opcode))
+        when (opcode) {
+            ISTORE, LSTORE, FSTORE, DSTORE, ASTORE -> with(methodVisitor) {
+                visitInsn(OpcodeUtil.getDupOpcode(opcode))
 
-            visitVarInsn(opcode, index)
+                visitVarInsn(opcode, index)
 
-            visitLdcInsn(className)
-            visitLdcInsn(lineNumber)
-            visitMethodInsn(
-                INVOKESTATIC,
-                agentLibClassName,
-                "store",
-                "(" + OpcodeUtil.getStoreDescriptor(opcode) + "Ljava/lang/String;I)V",
-                false
-            )
+                visitLdcInsn(className)
+                visitLdcInsn(lineNumber)
+                visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(" + OpcodeUtil.getStoreDescriptor(opcode) + "Ljava/lang/String;I)V",
+                    false
+                )
+            }
+
+            else -> methodVisitor.visitVarInsn(opcode, index)
         }
     }
 

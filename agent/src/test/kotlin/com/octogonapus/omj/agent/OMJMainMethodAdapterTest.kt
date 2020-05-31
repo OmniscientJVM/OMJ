@@ -74,7 +74,7 @@ internal class OMJMainMethodAdapterTest : KoinTestFixture() {
                     className,
                     "main"
                 )
-                methodAdapterUtil.recordMethodTrace(
+                methodAdapterUtil.visitMethodTrace(
                     superVisitor,
                     Util.mainMethodDescriptor,
                     true,
@@ -183,7 +183,7 @@ internal class OMJMainMethodAdapterTest : KoinTestFixture() {
                 superVisitor.visitLineNumber(lineNumber, any())
 
                 // Trace it, which will emit the store on its own
-                methodAdapterUtil.recordStore(
+                methodAdapterUtil.visitVarInsn(
                     superVisitor,
                     className,
                     lineNumber,

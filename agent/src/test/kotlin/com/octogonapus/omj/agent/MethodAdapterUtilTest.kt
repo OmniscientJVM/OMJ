@@ -101,7 +101,7 @@ internal class MethodAdapterUtilTest {
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
             val visitor = mockk<MethodVisitor>(relaxed = true)
-            MethodAdapterUtil().recordMethodTrace(
+            MethodAdapterUtil().visitMethodTrace(
                 visitor,
                 methodDescriptor,
                 isStatic,
@@ -124,7 +124,7 @@ internal class MethodAdapterUtilTest {
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
             val visitor = mockk<MethodVisitor>(relaxed = true)
-            MethodAdapterUtil().recordMethodTrace(
+            MethodAdapterUtil().visitMethodTrace(
                 visitor,
                 methodDescriptor,
                 isStatic,
@@ -146,7 +146,7 @@ internal class MethodAdapterUtilTest {
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
             val visitor = mockk<MethodVisitor>(relaxed = true)
-            MethodAdapterUtil().recordMethodTrace(
+            MethodAdapterUtil().visitMethodTrace(
                 visitor,
                 methodDescriptor,
                 isStatic,
@@ -170,7 +170,7 @@ internal class MethodAdapterUtilTest {
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
             val visitor = mockk<MethodVisitor>(relaxed = true)
-            MethodAdapterUtil().recordMethodTrace(
+            MethodAdapterUtil().visitMethodTrace(
                 visitor,
                 methodDescriptor,
                 isStatic,
@@ -192,7 +192,7 @@ internal class MethodAdapterUtilTest {
         @Test
         fun `visit istore`() {
             val visitor = mockk<MethodVisitor>(relaxed = true)
-            MethodAdapterUtil().recordStore(
+            MethodAdapterUtil().visitVarInsn(
                 visitor,
                 className,
                 lineNumber,
@@ -227,7 +227,7 @@ internal class MethodAdapterUtilTest {
         @Test
         fun `visit lstore`() {
             val visitor = mockk<MethodVisitor>(relaxed = true)
-            MethodAdapterUtil().recordStore(
+            MethodAdapterUtil().visitVarInsn(
                 visitor,
                 className,
                 lineNumber,
@@ -256,6 +256,23 @@ internal class MethodAdapterUtilTest {
                     "(JLjava/lang/String;I)V",
                     false
                 )
+            }
+        }
+
+        @Test
+        fun `visit aload`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            MethodAdapterUtil().visitVarInsn(
+                visitor,
+                className,
+                lineNumber,
+                ALOAD,
+                1
+            )
+
+            verifySequence {
+                // Nothing to do for non-store insn
+                visitor.visitVarInsn(ALOAD, 1)
             }
         }
     }

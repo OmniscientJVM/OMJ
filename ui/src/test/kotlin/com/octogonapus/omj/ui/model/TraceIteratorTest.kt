@@ -352,6 +352,15 @@ internal class TraceIteratorTest {
     inner class StoreTraceTests {
 
         @Test
+        fun `test byte store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeByte.jar")
+
+            traces.shouldExist {
+                it.storeByte("com.agenttest.storeByte.Main", 0xFA.toByte())
+            }
+        }
+
+        @Test
         fun `test int store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeInt.jar")
 
@@ -457,8 +466,22 @@ internal class TraceIteratorTest {
         private fun Trace.storeInt(
             containingClass: String,
             value: Int
-        ) = this is StoreTrace && callerClass == containingClass && typeValuePair.type == "int" &&
-            typeValuePair.value == value.toString()
+        ) = storeVar(containingClass, value, "int")
+
+        /**
+         * Checks there is an byte store with the [value].
+         *
+         * @param containingClass The class the store happens in.
+         * @param value The value that was stored.
+         */
+        private fun Trace.storeByte(
+            containingClass: String,
+            value: Byte
+        ) = storeVar(containingClass, value, "byte")
+
+        private fun Trace.storeVar(containingClass: String, value: Number, varType: String) =
+            this is StoreTrace && callerClass == containingClass &&
+                typeValuePair.type == varType && typeValuePair.value == value.toString()
 
         private fun MethodTrace.hasArguments(args: List<Pair<String, String?>>): Boolean {
             return args.foldIndexed(true) { index, acc, (type, value) ->
