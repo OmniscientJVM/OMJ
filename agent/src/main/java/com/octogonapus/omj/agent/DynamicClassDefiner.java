@@ -85,10 +85,10 @@ public final class DynamicClassDefiner {
         final File jarFile = writeToJarFile(dynamicClass);
         logger.debug("Wrote to jar file: {}", jarFile.getAbsolutePath());
         instrumentation.appendToSystemClassLoaderSearch(new JarFile(jarFile));
-      } catch (IOException e) {
+      } catch (final IOException e) {
         // This is a total system failure because the instrumented code needs this class
         // to run.
-        e.printStackTrace();
+        logger.error("Failed to write jar file", e);
         System.exit(1);
       }
 
