@@ -13,6 +13,14 @@ plugins {
     id("io.gitlab.arturbosch.detekt") version Versions.detektPlugin
 }
 
+val kotlinProjects = listOf(
+        project(":agent"),
+        project(":testUtil"),
+        project(":di"),
+        project(":ui"),
+        project(":util")
+)
+
 allprojects {
     apply {
         plugin("com.diffplug.gradle.spotless")
@@ -143,8 +151,7 @@ subprojects {
     }
 }
 
-// Kotlin projects
-configure(listOf(project(":agent"), project(":testUtil"), project(":ui"), project(":util"))) {
+configure(kotlinProjects) {
     apply {
         plugin("kotlin")
         plugin("org.jlleitschuh.gradle.ktlint")

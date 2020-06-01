@@ -6,6 +6,7 @@ rootProject.name = "OMJ"
 
 include(":agent")
 include(":agent-lib")
+include(":di")
 include(":logging")
 include(":testUtil")
 include(":ui")

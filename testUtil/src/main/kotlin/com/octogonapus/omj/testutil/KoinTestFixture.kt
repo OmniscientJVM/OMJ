@@ -16,14 +16,15 @@
  */
 package com.octogonapus.omj.testutil
 
+import com.octogonapus.omj.di.OMJKoinComponent
+import com.octogonapus.omj.di.OMJKoinContext
 import org.junit.jupiter.api.AfterEach
-import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
-import org.koin.dsl.ModuleDeclaration
+import org.koin.core.module.Module
+import org.koin.dsl.koinApplication
 import org.koin.dsl.module
-import org.koin.test.KoinTest
 
-open class KoinTestFixture : KoinTest {
+open class KoinTestFixture : OMJKoinComponent {
 
     private var additionalAfterEach: () -> Unit = {}
 
@@ -39,8 +40,10 @@ open class KoinTestFixture : KoinTest {
 
     companion object {
 
-        fun testKoin(moduleDeclaration: ModuleDeclaration) = startKoin {
-            modules(module(moduleDeclaration = moduleDeclaration))
+        fun testKoin(vararg module: Module) {
+            OMJKoinContext.koinApp = koinApplication {
+                modules(module.toList())
+            }
         }
     }
 }

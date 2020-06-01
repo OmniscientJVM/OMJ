@@ -16,19 +16,21 @@
  */
 package com.octogonapus.omj.agent
 
+import com.octogonapus.omj.di.OMJKoinComponent
 import com.octogonapus.omj.util.Util
 import mu.KotlinLogging
-import org.koin.core.KoinComponent
+import org.koin.core.get
 import org.koin.core.inject
+import org.koin.core.qualifier.named
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 
 internal class OMJMainMethodAdapter(
     api: Int,
     private val superVisitor: MethodVisitor,
-    currentClassName: String,
-    private val locals: List<LocalVariable>?
-) : MethodVisitor(api, superVisitor), KoinComponent {
+    private val method: Method,
+    currentClassName: String
+) : MethodVisitor(api, superVisitor), OMJKoinComponent {
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
     private val classFilter by inject<ClassFilter>()
@@ -93,7 +95,7 @@ internal class OMJMainMethodAdapter(
             currentLineNumber,
             opcode,
             index,
-            locals
+            get<MethodsAndLocals>(named(methodsAndLocalsName))[method]
         )
     }
 

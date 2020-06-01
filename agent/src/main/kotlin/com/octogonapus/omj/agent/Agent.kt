@@ -17,12 +17,13 @@
 package com.octogonapus.omj.agent
 
 import com.octogonapus.omj.agent.ClassFilter.Companion.createFromSystemProperties
+import com.octogonapus.omj.di.OMJKoinContext
 import com.octogonapus.omj.util.Util
 import java.io.IOException
 import java.lang.instrument.Instrumentation
 import java.util.jar.JarFile
 import kotlin.system.exitProcess
-import org.koin.core.context.startKoin
+import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
 @Suppress("unused")
@@ -30,7 +31,7 @@ object Agent {
 
     @JvmStatic
     fun premain(args: String?, instrumentation: Instrumentation) {
-        startKoin {
+        OMJKoinContext.koinApp = koinApplication {
             modules(
                 module {
                     single { DynamicClassDefiner(instrumentation, Util.cacheDir) }
