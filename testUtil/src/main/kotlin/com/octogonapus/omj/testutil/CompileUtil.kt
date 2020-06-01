@@ -94,13 +94,13 @@ object CompileUtil {
 
                 logger.debug {
                     """
-                    Finished running the agent in process ${process.pid()}
-                    Exit code = $exitCode
-                    std out:
-                    $stdOutString
-                    std err:
-                    $stdErrString
-                    """.trimIndent()
+                    |Finished running the agent in process ${process.pid()}
+                    |Exit code = $exitCode
+                    |std out:
+                    |$stdOutString
+                    |std err:
+                    |$stdErrString
+                    """.trimMargin()
                 }
 
                 return Tuple3(exitCode, stdOutString, stdErrString)
