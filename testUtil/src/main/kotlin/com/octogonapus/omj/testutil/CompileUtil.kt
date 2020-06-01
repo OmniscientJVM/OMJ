@@ -69,26 +69,26 @@ object CompileUtil {
 
         logger.debug { "Started the agent on process ${process.pid()}" }
 
+        val exitCode = try {
+            if (!process.waitFor(1, TimeUnit.MINUTES)) {
+                logger.debug { "The agent process timed out" }
+                process.destroyForcibly().also { it.waitFor() }.exitValue()
+            } else {
+                process.exitValue()
+            }
+        } catch (ex: InterruptedException) {
+            // An interruption means that the caller wants the command to be stopped
+            // immediately.
+            process.destroyForcibly()
+
+            @Suppress("TooGenericExceptionThrown")
+            throw RuntimeException(
+                    "Forcibly destroyed the agent process ${process.pid()}", ex
+            )
+        }
+
         BufferedReader(InputStreamReader(process.inputStream)).useLines { procStdOut ->
             BufferedReader(InputStreamReader(process.errorStream)).useLines { procStdErr ->
-                val exitCode = try {
-                    if (!process.waitFor(1, TimeUnit.MINUTES)) {
-                        logger.debug { "The agent process timed out" }
-                        process.destroyForcibly().also { it.waitFor() }.exitValue()
-                    } else {
-                        process.exitValue()
-                    }
-                } catch (ex: InterruptedException) {
-                    // An interruption means that the caller wants the command to be stopped
-                    // immediately.
-                    process.destroyForcibly()
-
-                    @Suppress("TooGenericExceptionThrown")
-                    throw RuntimeException(
-                        "Forcibly destroyed the agent process ${process.pid()}", ex
-                    )
-                }
-
                 val stdOutString = procStdOut.joinToString("\n")
                 val stdErrString = procStdErr.joinToString("\n")
 
