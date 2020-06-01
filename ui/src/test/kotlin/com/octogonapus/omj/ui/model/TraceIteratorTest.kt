@@ -16,7 +16,7 @@
  */
 package com.octogonapus.omj.ui.model
 
-import com.octogonapus.omj.testutil.runAgent
+import com.octogonapus.omj.testutil.CompileUtil
 import com.octogonapus.omj.testutil.shouldHaveInOrder
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldExist
@@ -473,7 +473,9 @@ internal class TraceIteratorTest {
 
     @Test
     fun `read past end of trace`(@TempDir tempDir: File) {
-        runAgent("agent-test_noargs.jar", tempDir.toPath())
+        CompileUtil.checkForAgentTestErrors(
+                CompileUtil.runAgentTest("agent-test_noargs.jar", tempDir.toPath())
+        )
 
         val traceFiles = tempDir.listFiles()!!.toList().filter { it.extension == "trace" }
         traceFiles.shouldHaveSize(1)
@@ -501,7 +503,9 @@ internal class TraceIteratorTest {
          * @return The traces.
          */
         private fun generateTraces(tempDir: File, jarFilename: String): List<Trace> {
-            runAgent(jarFilename, tempDir.toPath())
+            CompileUtil.checkForAgentTestErrors(
+                    CompileUtil.runAgentTest(jarFilename, tempDir.toPath())
+            )
 
             val traceFiles = tempDir.listFiles()!!.filter { it.extension == "trace" }
             traceFiles.shouldHaveSize(1)

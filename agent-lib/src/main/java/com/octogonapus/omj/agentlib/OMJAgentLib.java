@@ -24,10 +24,13 @@ import java.nio.file.Files;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
 public final class OMJAgentLib {
 
+  private static final Logger logger = LoggerFactory.getLogger(OMJAgentLib.class);
   private static final AtomicLong traceCounter = new AtomicLong(0);
   private static final ThreadLocal<MethodTrace> currentMethodTrace = new ThreadLocal<>();
   private static final ThreadLocal<String> currentClassName = ThreadLocal.withInitial(() -> "");
@@ -47,13 +50,15 @@ public final class OMJAgentLib {
               // TODO: This should probably use a memory-mapped file
               final var traceFile =
                   Util.getTraceDir().resolve("trace_" + System.currentTimeMillis() + ".trace");
+              logger.debug("Opening trace file {}", traceFile.toString());
               try (final var os = new BufferedOutputStream(Files.newOutputStream(traceFile))) {
                 loopWriteTraces(os);
+                logger.debug(
+                    "Number of traces left in the queue when flushing: {}", traceQueue.size());
                 os.flush();
               } catch (IOException e) {
                 e.printStackTrace();
-                System.err.println(
-                    "OMJ Agent-lib could not open the trace file " + traceFile.toString());
+                logger.error("Failed to write traces.", e);
 
                 // Need to release this here because System.exit does not return, so this is our
                 // only chance to release the semaphore for the shutdown hook that will run later.
