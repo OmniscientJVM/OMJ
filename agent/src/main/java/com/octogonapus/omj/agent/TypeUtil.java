@@ -25,12 +25,10 @@ final class TypeUtil {
   /** @return A type descriptor where all references are {@code Ljava/lang/Object;}. */
   static String getAdaptedDescriptor(final Type type) {
     final char shortDesc = Parser.parseFieldDescriptor(type.getDescriptor());
-    switch (shortDesc) {
-      case 'L':
-        return "Ljava/lang/Object;";
-      default:
-        return "" + shortDesc;
+    if (shortDesc == 'L') {
+      return "Ljava/lang/Object;";
     }
+    return "" + shortDesc;
   }
 
   /** @return A single-byte type descriptor. */
@@ -79,6 +77,8 @@ final class TypeUtil {
    *     Object}.
    */
   static String getAdaptedClassName(final Type type) {
+    // TODO: Waiting on a new google-java-format release to use enhanced switch statements
+    //noinspection EnhancedSwitchMigration
     switch (type.getSort()) {
       case Type.VOID:
         return "void";
@@ -100,6 +100,19 @@ final class TypeUtil {
         return "double";
       default:
         return "Object";
+    }
+  }
+
+  /** @return The number of stack slots the type uses. */
+  public static int getStackSize(final Type type) {
+    // TODO: Waiting on a new google-java-format release to use enhanced switch statements
+    //noinspection EnhancedSwitchMigration
+    switch (type.getSort()) {
+      case Type.LONG:
+      case Type.DOUBLE:
+        return 2;
+      default:
+        return 1;
     }
   }
 }

@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.DLOAD
+import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.DUP2
 import org.objectweb.asm.Opcodes.ILOAD
@@ -234,7 +235,7 @@ internal class MethodAdapterUtilTest {
                 lineNumber,
                 ISTORE,
                 1,
-                listOf(mockk(), LocalVariable("b", "B", 1)) // byte at index 1
+                listOf(LocalVariable("b", "B", 1)) // byte at index 1
             )
 
             verifySequence {
@@ -312,6 +313,87 @@ internal class MethodAdapterUtilTest {
             verifySequence {
                 // Nothing to do for non-store insn
                 visitor.visitVarInsn(ALOAD, 1)
+            }
+        }
+
+        @Test
+        fun `visit istore after dstore`() {
+            val secondLineNumber = lineNumber + 1
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            val util = MethodAdapterUtil()
+            val locals = listOf(
+                LocalVariable("d", "D", 1),
+                LocalVariable("i", "I", 3) // 3 instead of 2 because doubles take up two slots
+            )
+
+            util.visitVarInsn(
+                visitor,
+                className,
+                lineNumber,
+                DSTORE,
+                1,
+                locals
+            )
+
+            util.visitVarInsn(
+                visitor,
+                className,
+                secondLineNumber,
+                ISTORE,
+                3,
+                locals
+            )
+
+            verifySequence {
+                // /////////////////////////////
+                // DSTORE
+                // /////////////////////////////
+
+                // Save what will be stored
+                visitor.visitInsn(DUP2)
+
+                // Store it
+                visitor.visitVarInsn(DSTORE, 1)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(DLjava/lang/String;I)V",
+                    false
+                )
+
+                // /////////////////////////////
+                // ISTORE
+                // /////////////////////////////
+
+                // Save what will be stored
+                visitor.visitInsn(DUP)
+
+                // Store it
+                visitor.visitVarInsn(ISTORE, 3)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(secondLineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(ILjava/lang/String;I)V", // Should have pulled the descriptor from the locals
+                    false
+                )
             }
         }
     }

@@ -14,11 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.agenttest.stringHelloNull1;
+package com.agenttest.storeTwoMethodParams;
 
 public class Main {
 
   public static void main(String[] args) {
-    new Foo().with("Hello\0 1");
+    callMe("First", 6.4, 1);
+  }
+
+  private static void callMe(String s, double d, int i) {
+    s = "Second";
+    i = 2;
   }
 }

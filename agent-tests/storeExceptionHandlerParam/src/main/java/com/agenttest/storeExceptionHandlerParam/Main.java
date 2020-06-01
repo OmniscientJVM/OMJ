@@ -14,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.agenttest.stringHelloNull1;
+package com.agenttest.storeExceptionHandlerParam;
 
 public class Main {
 
-  public static void main(String[] args) {
-    new Foo().with("Hello\0 1");
-  }
+  public static void main(String[] args) {}
 }

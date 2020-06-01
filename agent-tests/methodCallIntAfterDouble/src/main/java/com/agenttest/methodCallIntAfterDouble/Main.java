@@ -14,11 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.agenttest.stringHelloNull1;
+package com.agenttest.methodCallIntAfterDouble;
 
 public class Main {
 
   public static void main(String[] args) {
-    new Foo().with("Hello\0 1");
+    callMe(4.2, 1);
   }
+
+  private static void callMe(double d, int i) {}
 }

@@ -118,8 +118,16 @@ internal class MethodAdapterUtil {
                 false
             )
 
-            val argumentTypes = Type.getArgumentTypes(methodDescriptor)
-            logger.debug { "argumentTypes = ${argumentTypes?.contentDeepToString()}" }
+            // Compute the stack index of each argument type. We can't use the list index as the
+            // stack index because some types take up two indices.
+            var stackIndex = 0
+            val argumentTypes = Type.getArgumentTypes(methodDescriptor).map { type ->
+                val oldStackIndex = stackIndex
+                stackIndex += TypeUtil.getStackSize(type)
+                type to oldStackIndex
+            }
+
+            logger.debug { "argumentTypes = ${argumentTypes.joinToString()}" }
 
             val virtualOffset = if (isStatic) 0 else 1
             if (!isStatic) {
@@ -134,7 +142,7 @@ internal class MethodAdapterUtil {
             }
 
             for (i in argumentTypes.indices) {
-                val argumentType = argumentTypes[i]
+                val (argumentType, stackIndex) = argumentTypes[i]
                 val methodName = "methodCall_argument_" + TypeUtil.getAdaptedClassName(argumentType)
                 val methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V"
 
@@ -146,7 +154,7 @@ internal class MethodAdapterUtil {
                     """.trimIndent()
                 }
 
-                visitVarInsn(argumentType.getOpcode(ILOAD), i + virtualOffset)
+                visitVarInsn(argumentType.getOpcode(ILOAD), stackIndex + virtualOffset)
                 visitMethodInsn(
                     INVOKESTATIC,
                     agentLibClassName,
@@ -216,7 +224,7 @@ internal class MethodAdapterUtil {
                 // So, if we have an object, just return the object descriptor.
                 OpcodeUtil.getStoreDescriptor(opcode)
             } else {
-                locals[index].descriptor
+                locals.first { it.index == index }.descriptor
             }
         } else {
             // No locals, so make a best guess using the opcode.

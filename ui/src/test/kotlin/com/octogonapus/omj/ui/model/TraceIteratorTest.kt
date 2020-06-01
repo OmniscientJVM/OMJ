@@ -246,7 +246,7 @@ internal class TraceIteratorTest {
                         receiverType = "com.agenttest.objectStringArray.Foo",
                         methodName = "with",
                         callerClass = "com.agenttest.objectStringArray.Main",
-                        args = listOf("[Ljava/lang/String;" to null)
+                        args = listOf("[Ljava.lang.String;" to null)
                     )
                 }
             )
@@ -346,10 +346,25 @@ internal class TraceIteratorTest {
                 }
             )
         }
+
+        @Test
+        fun `parse a static method call with an int after a double`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_methodCallIntAfterDouble.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.staticMethodCall(
+                        methodName = "callMe",
+                        callerClass = "com.agenttest.methodCallIntAfterDouble.Main",
+                        args = listOf("double" to "4.2", "int" to "1")
+                    )
+                }
+            )
+        }
     }
 
     @Nested
-    inner class StoreTraceTests {
+    inner class LocalVariableStoreTraceTests {
 
         @Test
         fun `test boolean store`(@TempDir tempDir: File) {
@@ -442,6 +457,20 @@ internal class TraceIteratorTest {
         }
     }
 
+    @Nested
+    inner class FormalMethodParameterStoreTraceTests {
+
+        @Test
+        fun `mutate both method params`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeTwoMethodParams.jar")
+
+            traces.shouldExist {
+                it.storeVar("com.agenttest.storeTwoMethodParams.Main", "java.lang.String", "Second")
+                it.storeVar("com.agenttest.storeTwoMethodParams.Main", "int", "2")
+            }
+        }
+    }
+
     @Test
     fun `read past end of trace`(@TempDir tempDir: File) {
         runAgent("agent-test_noargs.jar", tempDir.toPath())
@@ -496,9 +525,13 @@ internal class TraceIteratorTest {
             methodName: String,
             callerClass: String,
             args: List<Pair<String, String?>> = emptyList()
-        ) = this is MethodTrace && !isStatic && hasArgumentType(0, receiverType) &&
-            methodName != "<init>" && methodName != "<clinit>" && hasArguments(args) &&
-            this.methodName == methodName && this.callerClass == callerClass
+        ) = this is MethodTrace &&
+            !isStatic &&
+            methodName != "<init>" &&
+            methodName != "<clinit>" &&
+            hasArguments(listOf(receiverType to null) + args) &&
+            this.methodName == methodName &&
+            this.callerClass == callerClass
 
         /**
          * Assumes there is a static method call and asserts about its arguments. Excludes instance
@@ -512,8 +545,13 @@ internal class TraceIteratorTest {
             methodName: String,
             callerClass: String,
             args: List<Pair<String, String?>> = emptyList()
-        ) = this is MethodTrace && isStatic && methodName != "<init>" && methodName != "<clinit>" &&
-            hasArguments(args) && this.methodName == methodName && this.callerClass == callerClass
+        ) = this is MethodTrace &&
+            isStatic &&
+            methodName != "<init>" &&
+            methodName != "<clinit>" &&
+            hasArguments(args) &&
+            this.methodName == methodName &&
+            this.callerClass == callerClass
 
         /**
          * Assumes there is an instance initializer method call and asserts about its arguments.
@@ -526,8 +564,11 @@ internal class TraceIteratorTest {
             receiverType: String,
             callerClass: String,
             args: List<Pair<String, String?>> = emptyList()
-        ) = this is MethodTrace && !isStatic && hasArgumentType(0, receiverType) &&
-            methodName == "<init>" && hasArguments(args) && this.callerClass == callerClass
+        ) = this is MethodTrace &&
+            !isStatic &&
+            methodName == "<init>" &&
+            hasArguments(listOf(receiverType to null) + args) &&
+            this.callerClass == callerClass
 
         /**
          * Checks there is a store with a value of [value] into a variable of type [varType].
@@ -537,23 +578,20 @@ internal class TraceIteratorTest {
          * @param value The value that was stored. Set to null if you don't care about the value.
          */
         private fun Trace.storeVar(containingClass: String, varType: String, value: String?) =
-            this is StoreTrace && callerClass == containingClass &&
-                typeValuePair.type == varType && value?.let { typeValuePair.value == it } ?: true
+            this is StoreTrace &&
+                callerClass == containingClass &&
+                typeValuePair.type == varType &&
+                value?.let { typeValuePair.value == it } ?: true
 
-        private fun MethodTrace.hasArguments(args: List<Pair<String, String?>>): Boolean {
-            return args.foldIndexed(true) { index, acc, (type, value) ->
-                // Skip index zero because that is the receiver index, which we already checked
-                if (index == 0) true
-                else {
-                    if (value == null) {
-                        // Null means we don't care about the value
-                        acc && hasArgumentType(index, type)
-                    } else {
-                        acc && hasArgument(index, type, value)
-                    }
+        private fun MethodTrace.hasArguments(args: List<Pair<String, String?>>) =
+            args.foldIndexed(true) { index, acc, (type, value) ->
+                if (value == null) {
+                    // Null means we don't care about the value
+                    acc && hasArgumentType(index, type)
+                } else {
+                    acc && hasArgument(index, type, value)
                 }
             }
-        }
 
         private fun MethodTrace.hasArgumentType(index: Int, type: String) =
             arguments[index].type == type
