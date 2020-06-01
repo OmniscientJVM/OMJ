@@ -34,6 +34,7 @@ public final class OMJAgentLib {
   private static final ThreadLocal<Integer> currentLineNumber = ThreadLocal.withInitial(() -> 0);
   private static final ThreadLocal<String> currentMethodName = ThreadLocal.withInitial(() -> "");
   private static final ConcurrentLinkedQueue<Trace> traceQueue = new ConcurrentLinkedQueue<>();
+  private static volatile boolean finishProcessingTraces = false;
 
   static {
     final Semaphore traceProcessorRunning = new Semaphore(1);
@@ -69,7 +70,7 @@ public final class OMJAgentLib {
         .addShutdownHook(
             new Thread(
                 () -> {
-                  traceProcessorThread.interrupt();
+                  finishProcessingTraces = true;
 
                   // Wait for the trace processor to finish so data is flushed out
                   traceProcessorRunning.acquireUninterruptibly();
@@ -79,7 +80,7 @@ public final class OMJAgentLib {
   }
 
   private static void loopWriteTraces(final OutputStream os) {
-    while (!Thread.currentThread().isInterrupted()) {
+    while (!finishProcessingTraces) {
       final var trace = traceQueue.poll();
       if (trace != null) {
         try {
@@ -89,11 +90,14 @@ public final class OMJAgentLib {
         }
       }
 
-      // TODO: Don't busy-wait here
-      try {
-        Thread.sleep(1);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+      if (traceQueue.isEmpty()) {
+        // Only wait if there are no more traces to process
+        // TODO: Don't busy-wait here
+        try {
+          Thread.sleep(1);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
       }
     }
 
