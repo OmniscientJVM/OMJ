@@ -41,7 +41,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            options: '--stacktrace -PlogTests'
+            options: '--info --stacktrace -PlogTests'
             publishJUnitResults: true
             testResultsFiles: '**/TEST-*.xml'
             tasks: 'check'
@@ -51,7 +51,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            options: '--stacktrace -PlogTests'
+            options: '--info --stacktrace -PlogTests'
             publishJUnitResults: true
             testResultsFiles: '**/TEST-*.xml'
             tasks: 'jacocoRootReport'
@@ -94,7 +94,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            options: '--stacktrace -PlogTests'
+            options: '--info --stacktrace -PlogTests'
             publishJUnitResults: false
             tasks: 'check'
 
@@ -103,7 +103,7 @@ stages:
           inputs:
             workingDirectory: ''
             gradleWrapperFile: 'gradlew'
-            options: '--stacktrace -PlogTests'
+            options: '--info --stacktrace -PlogTests'
             publishJUnitResults: true
             testResultsFiles: '**/TEST-*.xml'
             tasks: 'jacocoRootReport'
