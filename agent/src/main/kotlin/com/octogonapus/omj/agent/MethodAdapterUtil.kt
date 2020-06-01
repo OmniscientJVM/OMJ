@@ -119,7 +119,8 @@ internal class MethodAdapterUtil {
             )
 
             // Compute the stack index of each argument type. We can't use the list index as the
-            // stack index because some types take up two indices.
+            // stack index because some types take up two indices. Start `stackIndex` at `0` even if
+            // the method is virtual because the virtual offset is handled later.
             var stackIndex = 0
             val argumentTypes = Type.getArgumentTypes(methodDescriptor).map { type ->
                 val oldStackIndex = stackIndex
@@ -141,8 +142,7 @@ internal class MethodAdapterUtil {
                 )
             }
 
-            for (i in argumentTypes.indices) {
-                val (argumentType, stackIndex) = argumentTypes[i]
+            argumentTypes.forEach { (argumentType, stackIndex) ->
                 val methodName = "methodCall_argument_" + TypeUtil.getAdaptedClassName(argumentType)
                 val methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V"
 
