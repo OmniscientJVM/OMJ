@@ -191,8 +191,7 @@ internal class MethodAdapterUtil {
 
                 visitVarInsn(opcode, index)
 
-                val localDescriptor = locals?.let { it[index].descriptor }
-                    ?: OpcodeUtil.getStoreDescriptor(opcode)
+                val localDescriptor = getLocalDescriptor(locals, index, opcode)
 
                 visitLdcInsn(className)
                 visitLdcInsn(lineNumber)
@@ -208,6 +207,21 @@ internal class MethodAdapterUtil {
             else -> methodVisitor.visitVarInsn(opcode, index)
         }
     }
+
+    private fun getLocalDescriptor(locals: List<LocalVariable>?, index: Int, opcode: Int) =
+        if (locals != null) {
+            // Locals were gathered earlier, so we can use them for more information, except if
+            // the local is a type of object. All objects should use the same object descriptor.
+            if (opcode == ASTORE) {
+                // So, if we have an object, just return the object descriptor.
+                OpcodeUtil.getStoreDescriptor(opcode)
+            } else {
+                locals[index].descriptor
+            }
+        } else {
+            // No locals, so make a best guess using the opcode.
+            OpcodeUtil.getStoreDescriptor(opcode)
+        }
 
     companion object {
 

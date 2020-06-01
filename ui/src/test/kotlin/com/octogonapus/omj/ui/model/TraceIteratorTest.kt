@@ -352,11 +352,47 @@ internal class TraceIteratorTest {
     inner class StoreTraceTests {
 
         @Test
+        fun `test boolean store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeBoolean.jar")
+
+            traces.shouldExist {
+                it.storeVar("com.agenttest.storeBoolean.Main", "boolean", "true")
+            }
+        }
+
+        @Test
         fun `test byte store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeByte.jar")
 
             traces.shouldExist {
-                it.storeByte("com.agenttest.storeByte.Main", "250")
+                it.storeVar("com.agenttest.storeByte.Main", "byte", "250")
+            }
+        }
+
+        @Test
+        fun `test char store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeChar.jar")
+
+            traces.shouldExist {
+                it.storeVar("com.agenttest.storeChar.Main", "char", "Q")
+            }
+        }
+
+        @Test
+        fun `test double store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeDouble.jar")
+
+            traces.shouldExist {
+                it.storeVar("com.agenttest.storeDouble.Main", "double", "4.2")
+            }
+        }
+
+        @Test
+        fun `test float store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeFloat.jar")
+
+            traces.shouldExist {
+                it.storeVar("com.agenttest.storeFloat.Main", "float", "2.3")
             }
         }
 
@@ -365,7 +401,43 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeInt.jar")
 
             traces.shouldExist {
-                it.storeInt("com.agenttest.storeInt.Main", "123456")
+                it.storeVar("com.agenttest.storeInt.Main", "int", "123456")
+            }
+        }
+
+        @Test
+        fun `test long store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeLong.jar")
+
+            traces.shouldExist {
+                it.storeVar("com.agenttest.storeLong.Main", "long", "123456789123456789")
+            }
+        }
+
+        @Test
+        fun `test ref store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeRef.jar")
+
+            traces.shouldExist {
+                it.storeVar("com.agenttest.storeRef.Main", "java.lang.Object", null)
+            }
+        }
+
+        @Test
+        fun `test short store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeShort.jar")
+
+            traces.shouldExist {
+                it.storeVar("com.agenttest.storeShort.Main", "short", "12345")
+            }
+        }
+
+        @Test
+        fun `test string store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeString.jar")
+
+            traces.shouldExist {
+                it.storeVar("com.agenttest.storeString.Main", "java.lang.String", "My String")
             }
         }
     }
@@ -458,30 +530,15 @@ internal class TraceIteratorTest {
             methodName == "<init>" && hasArguments(args) && this.callerClass == callerClass
 
         /**
-         * Checks there is an int store with the [value].
+         * Checks there is a store with a value of [value] into a variable of type [varType].
          *
          * @param containingClass The class the store happens in.
-         * @param value The value that was stored.
+         * @param varType The type of the variable the value was stored in.
+         * @param value The value that was stored. Set to null if you don't care about the value.
          */
-        private fun Trace.storeInt(
-            containingClass: String,
-            value: String
-        ) = storeVar(containingClass, value, "int")
-
-        /**
-         * Checks there is an byte store with the [value].
-         *
-         * @param containingClass The class the store happens in.
-         * @param value The value that was stored.
-         */
-        private fun Trace.storeByte(
-            containingClass: String,
-            value: String
-        ) = storeVar(containingClass, value, "byte")
-
-        private fun Trace.storeVar(containingClass: String, value: String, varType: String) =
+        private fun Trace.storeVar(containingClass: String, varType: String, value: String?) =
             this is StoreTrace && callerClass == containingClass &&
-                typeValuePair.type == varType && typeValuePair.value == value
+                typeValuePair.type == varType && value?.let { typeValuePair.value == it } ?: true
 
         private fun MethodTrace.hasArguments(args: List<Pair<String, String?>>): Boolean {
             return args.foldIndexed(true) { index, acc, (type, value) ->

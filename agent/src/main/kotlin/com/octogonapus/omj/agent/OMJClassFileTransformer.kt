@@ -34,6 +34,8 @@ class OMJClassFileTransformer(
 
     private val classFilter by inject<ClassFilter>()
 
+    // We need to catch any exception during transformation so that we can be loud about it
+    @Suppress("TooGenericExceptionCaught")
     override fun transform(
         loader: ClassLoader?,
         className: String,

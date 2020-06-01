@@ -94,6 +94,7 @@ internal class OMJClassAdapter(
         superName: String,
         access: Int
     ): MethodVisitor {
+        // TODO: Bind locals using DI
         val locals = methodAndLocals[Method(name, descriptor)]
 
         return when {
