@@ -31,11 +31,6 @@ final class TypeUtil {
     return "" + shortDesc;
   }
 
-  /** @return A single-byte type descriptor. */
-  static byte getDescriptorByte(final Type type) {
-    return (byte) Parser.parseFieldDescriptor(type.getDescriptor());
-  }
-
   /** @return A type descriptor character. */
   static char getDescriptorChar(final Type type) {
     return Parser.parseFieldDescriptor(type.getDescriptor());

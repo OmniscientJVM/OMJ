@@ -19,11 +19,6 @@ package com.octogonapus.omj.agent
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 
-internal data class Method(
-    val name: String,
-    val descriptor: String
-)
-
 internal class LocalVariableClassVisitor(
     api: Int,
     classVisitor: ClassVisitor?
