@@ -23,6 +23,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 import mu.KotlinLogging
 
 object CompileUtil {
@@ -71,14 +72,19 @@ object CompileUtil {
         BufferedReader(InputStreamReader(process.inputStream)).useLines { procStdOut ->
             BufferedReader(InputStreamReader(process.errorStream)).useLines { procStdErr ->
                 val exitCode = try {
-                    process.waitFor()
+                    if (!process.waitFor(1, TimeUnit.MINUTES)) {
+                        logger.debug { "The agent process timed out" }
+                    }
+                    process.exitValue()
                 } catch (ex: InterruptedException) {
                     // An interruption means that the caller wants the command to be stopped
                     // immediately.
                     process.destroyForcibly()
 
                     @Suppress("TooGenericExceptionThrown")
-                    throw RuntimeException("Forcibly destroyed the process ${process.pid()}.", ex)
+                    throw RuntimeException(
+                        "Forcibly destroyed the agent process ${process.pid()}", ex
+                    )
                 }
 
                 val stdOutString = procStdOut.joinToString("\n")
