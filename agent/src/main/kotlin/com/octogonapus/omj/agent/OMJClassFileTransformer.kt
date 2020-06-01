@@ -106,7 +106,7 @@ class OMJClassFileTransformer(
             }
 
             val localsModule = module {
-                single(named(methodsAndLocalsName)) { methodsAndLocals }
+                single(named(METHODS_AND_LOCALS_NAME)) { methodsAndLocals }
             }
 
             OMJKoinContext.koinApp.koin.loadModules(listOf(localsModule))

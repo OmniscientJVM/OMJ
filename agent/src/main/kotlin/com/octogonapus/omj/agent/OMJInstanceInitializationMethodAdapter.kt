@@ -93,7 +93,7 @@ internal class OMJInstanceInitializationMethodAdapter(
             currentLineNumber,
             opcode,
             index,
-            get<MethodsAndLocals>(named(methodsAndLocalsName))[method]
+            get<MethodsAndLocals>(named(METHODS_AND_LOCALS_NAME))[method]
         )
     }
 

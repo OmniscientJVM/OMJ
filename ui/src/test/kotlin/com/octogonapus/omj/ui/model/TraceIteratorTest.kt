@@ -474,7 +474,7 @@ internal class TraceIteratorTest {
     @Test
     fun `read past end of trace`(@TempDir tempDir: File) {
         CompileUtil.checkForAgentTestErrors(
-                CompileUtil.runAgentTest("agent-test_noargs.jar", tempDir.toPath())
+            CompileUtil.runAgentTest("agent-test_noargs.jar", tempDir.toPath())
         )
 
         val traceFiles = tempDir.listFiles()!!.toList().filter { it.extension == "trace" }
@@ -504,7 +504,7 @@ internal class TraceIteratorTest {
          */
         private fun generateTraces(tempDir: File, jarFilename: String): List<Trace> {
             CompileUtil.checkForAgentTestErrors(
-                    CompileUtil.runAgentTest(jarFilename, tempDir.toPath())
+                CompileUtil.runAgentTest(jarFilename, tempDir.toPath())
             )
 
             val traceFiles = tempDir.listFiles()!!.filter { it.extension == "trace" }

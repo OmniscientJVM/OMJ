@@ -29,6 +29,11 @@ object CompileUtil {
 
     private val logger = KotlinLogging.logger { }
 
+    /**
+     * Checks that the agent test did not encounter any errors.
+     *
+     * @param result The return value from [runAgentTest].
+     */
     fun checkForAgentTestErrors(result: Tuple3<Int, String, String>) {
         val (exitCode, _, stdErr) = result
         exitCode.shouldBe(0)
@@ -71,6 +76,8 @@ object CompileUtil {
                     // An interruption means that the caller wants the command to be stopped
                     // immediately.
                     process.destroyForcibly()
+
+                    @Suppress("TooGenericExceptionThrown")
                     throw RuntimeException("Forcibly destroyed the process ${process.pid()}.", ex)
                 }
 

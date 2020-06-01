@@ -182,7 +182,7 @@ internal class OMJMainMethodAdapterTest : KoinTestFixture() {
         fun `visit opcode`(opcode: Int) {
             val (methodAdapter, superVisitor, methodAdapterUtil, _) = getMethodAdapter(
                 module {
-                    single<MethodsAndLocals>(named(methodsAndLocalsName)) { mapOf() }
+                    single<MethodsAndLocals>(named(METHODS_AND_LOCALS_NAME)) { mapOf() }
                 }
             )
 

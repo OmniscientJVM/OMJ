@@ -17,4 +17,4 @@
 package com.octogonapus.omj.agent
 
 internal typealias MethodsAndLocals = Map<Method, List<LocalVariable>>
-const val methodsAndLocalsName = "methodsAndLocals"
+const val METHODS_AND_LOCALS_NAME = "methodsAndLocals"
