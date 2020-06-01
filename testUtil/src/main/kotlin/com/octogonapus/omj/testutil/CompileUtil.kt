@@ -83,7 +83,7 @@ object CompileUtil {
 
             @Suppress("TooGenericExceptionThrown")
             throw RuntimeException(
-                    "Forcibly destroyed the agent process ${process.pid()}", ex
+                "Forcibly destroyed the agent process ${process.pid()}", ex
             )
         }
 
