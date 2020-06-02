@@ -39,11 +39,16 @@ tasks.test {
 
     val agentAllJarPath = buildDir.toPath().resolve("agent-all").toAbsolutePath()
 
+    // Find the jacoco tool jar that the jacoco plugin uses
+    val jacocoJar = buildDir.walkTopDown().first { it.name == "jacocoagent.jar" }.absolutePath
+
     // The assertion is necessary according to Gradle
     @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
     jvmArgs = jvmArgs!! + listOf(
         "-Dagent-test.jar-dir=" + rootProject.buildDir.toPath().resolve("agent-test-jars"),
-        "-Dagent.jar=$agentAllJarPath"
+        "-Dagent.jar=$agentAllJarPath",
+        "-Dagent-test.jacoco-jar=$jacocoJar",
+        "-Dagent-test.jacoco-dest-file=$buildDir/jacoco/test.exec"
     )
 }
 
