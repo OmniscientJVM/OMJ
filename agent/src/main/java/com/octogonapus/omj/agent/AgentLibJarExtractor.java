@@ -21,10 +21,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class AgentLibJarExtractor {
 
   private static File agentLibAllJar = null;
+  private static final Logger logger = LoggerFactory.getLogger(AgentLibJarExtractor.class);
 
   /**
    * Extracts the agent-lib jar from our jar and into a file.
@@ -32,6 +35,7 @@ public final class AgentLibJarExtractor {
    * @return The file the agent-lib jar is extracted into.
    * @throws IOException Any IO problems along the way. All fatal.
    */
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   public static File extractJar() throws IOException {
     try (final var agentLib = ClassLoader.getSystemResourceAsStream("agent-lib-all")) {
       if (agentLib == null) {
@@ -41,9 +45,10 @@ public final class AgentLibJarExtractor {
       // Extract the Jar and save it to agentLibAllJar so that subsequent calls do not try to
       // extract the Jar again.
       if (agentLibAllJar == null) {
-        final var file =
-            Files.createTempFile(Util.getAgentLibJarDir(), "agent-lib-all_", ".jar").toFile();
-        file.deleteOnExit();
+        Util.getAgentLibJarDir().toFile().mkdirs();
+        final var file = Util.getAgentLibJarDir().resolve("agent-lib-all.jar").toFile();
+        logger.debug("Extracting agent-lib-all.jar into {}", file.getAbsolutePath());
+        file.createNewFile();
         copyStreamToFile(file, agentLib);
         agentLibAllJar = file;
       }

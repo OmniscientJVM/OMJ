@@ -22,5 +22,5 @@ data class MethodTrace(
     val callerLine: Int,
     val methodName: String,
     val isStatic: Boolean,
-    val arguments: MutableList<MethodArgument>
+    val arguments: MutableList<TypeValuePair>
 ) : Trace

@@ -16,19 +16,19 @@
  */
 package com.octogonapus.omj.agent
 
+import com.octogonapus.omj.di.OMJKoinComponent
 import com.octogonapus.omj.util.nullableSingleAssign
 import com.octogonapus.omj.util.singleAssign
 import mu.KotlinLogging
-import org.koin.core.KoinComponent
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 
-class OMJClassAdapter(
+internal class OMJClassAdapter(
     api: Int,
-    classVisitor: ClassVisitor
-) : ClassVisitor(api, classVisitor), Opcodes, KoinComponent {
+    classVisitor: ClassVisitor?
+) : ClassVisitor(api, classVisitor), OMJKoinComponent {
 
     private var classVersion = 0
     private var className by singleAssign<String>()
@@ -92,45 +92,53 @@ class OMJClassAdapter(
         visitor: MethodVisitor,
         superName: String,
         access: Int
-    ): MethodVisitor = when {
-        isInstanceInitializationMethod(name, descriptor) ->
-            OMJInstanceInitializationMethodAdapter(api, visitor, descriptor, className, superName)
+    ): MethodVisitor {
+        val method = Method(name, descriptor)
 
-        isClassInitializationMethod(name, descriptor, access) ->
-            OMJMethodAdapter(
+        return when {
+            isInstanceInitializationMethod(method) ->
+                OMJInstanceInitializationMethodAdapter(
+                    api,
+                    visitor,
+                    method,
+                    className,
+                    superName
+                )
+
+            isClassInitializationMethod(method, access) -> OMJMethodAdapter(
                 api,
                 visitor,
-                descriptor,
+                method,
                 hasAccessFlag(access, Opcodes.ACC_STATIC),
                 className
             )
 
-        isMainMethod(name, descriptor, access) -> OMJMainMethodAdapter(api, visitor, className)
+            isMainMethod(method, access) -> OMJMainMethodAdapter(api, visitor, method, className)
 
-        else -> OMJMethodAdapter(
-            api,
-            visitor,
-            descriptor,
-            hasAccessFlag(access, Opcodes.ACC_STATIC),
-            className
-        )
+            else -> OMJMethodAdapter(
+                api,
+                visitor,
+                method,
+                hasAccessFlag(access, Opcodes.ACC_STATIC),
+                className
+            )
+        }
     }
 
     /**
      * Determines whether the method is the "main method" (entry point) according to JLS Section
      * 12.1.4.
      *
-     * @param methodName The name of the method.
-     * @param descriptor The method's descriptor.
+     * @param method The method to check.
      * @param access The method's access number.
      * @return True if the method is the "main method".
      */
-    private fun isMainMethod(methodName: String, descriptor: String, access: Int): Boolean {
-        val argumentTypes = Type.getArgumentTypes(descriptor)
+    private fun isMainMethod(method: Method, access: Int): Boolean {
+        val argumentTypes = Type.getArgumentTypes(method.descriptor)
         return (
-            methodName == "main" && hasAccessFlag(access, Opcodes.ACC_PUBLIC) &&
+            method.name == "main" && hasAccessFlag(access, Opcodes.ACC_PUBLIC) &&
                 hasAccessFlag(access, Opcodes.ACC_STATIC) &&
-                Type.getReturnType(descriptor).sort == Type.VOID &&
+                Type.getReturnType(method.descriptor).sort == Type.VOID &&
                 argumentTypes.size == 1 &&
                 argumentTypes[0].descriptor == "[Ljava/lang/String;"
             )
@@ -140,36 +148,31 @@ class OMJClassAdapter(
      * Determines whether the method is an instance initialization method according to JVMS Section
      * 2.9.1.
      *
-     * @param methodName The method's name.
-     * @param descriptor The method's descriptor.
+     * @param method The method to check.
      * @return True if the method is an instance initialization method.
      */
-    private fun isInstanceInitializationMethod(methodName: String, descriptor: String) =
-        methodName == "<init>" && Type.getReturnType(descriptor).sort == Type.VOID
+    private fun isInstanceInitializationMethod(method: Method) =
+        method.name == "<init>" && Type.getReturnType(method.descriptor).sort == Type.VOID
 
     /**
      * Determines whether the method is an class initialization method according to JVMS Section
      * 2.9.2.
      *
-     * @param methodName The method's name.
-     * @param descriptor The method's descriptor.
+     * @param method The method to check.
      * @return True if the method is an class initialization method.
      */
-    private fun isClassInitializationMethod(
-        methodName: String,
-        descriptor: String,
-        access: Int
-    ): Boolean {
+    private fun isClassInitializationMethod(method: Method, access: Int): Boolean {
         val majorVersion = classVersion and 0xFFFF
 
         val versionCheck = if (majorVersion >= 51) {
-            hasAccessFlag(access, Opcodes.ACC_STATIC) && Type.getArgumentTypes(descriptor).isEmpty()
+            hasAccessFlag(access, Opcodes.ACC_STATIC) &&
+                Type.getArgumentTypes(method.descriptor).isEmpty()
         } else {
             true
         }
 
-        return methodName == "<clinit>" &&
-            Type.getReturnType(descriptor).sort == Type.VOID &&
+        return method.name == "<clinit>" &&
+            Type.getReturnType(method.descriptor).sort == Type.VOID &&
             versionCheck
     }
 

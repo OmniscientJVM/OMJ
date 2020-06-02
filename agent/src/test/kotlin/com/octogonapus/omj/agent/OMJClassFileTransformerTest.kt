@@ -22,6 +22,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Test
+import org.koin.dsl.module
 
 internal class OMJClassFileTransformerTest : KoinTestFixture() {
 
@@ -37,13 +38,15 @@ internal class OMJClassFileTransformerTest : KoinTestFixture() {
             every { transformClassBytes(inputByteArray) } returns expectedByteArray
         }
 
-        testKoin {
-            single {
-                mockk<ClassFilter> {
-                    every { shouldTransform(className) } returns true
+        testKoin(
+            module {
+                single {
+                    mockk<ClassFilter> {
+                        every { shouldTransform(className) } returns true
+                    }
                 }
             }
-        }
+        )
 
         val classFileTransformer = OMJClassFileTransformer(transformer)
         classFileTransformer.transform(
@@ -57,13 +60,15 @@ internal class OMJClassFileTransformerTest : KoinTestFixture() {
 
     @Test
     fun `visit class that does not pass the filter`() {
-        testKoin {
-            single {
-                mockk<ClassFilter> {
-                    every { shouldTransform(className) } returns false
+        testKoin(
+            module {
+                single {
+                    mockk<ClassFilter> {
+                        every { shouldTransform(className) } returns false
+                    }
                 }
             }
-        }
+        )
 
         val classFileTransformer = OMJClassFileTransformer()
 

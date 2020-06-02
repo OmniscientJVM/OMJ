@@ -14,11 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.ui.model
+package com.octogonapus.omj.di
 
-/**
- * @param type The class name of the argument, or the primitive type name.
- * @param value The value of the argument. Either the value of the primitive or the hash code of the
- * class.
- */
-data class MethodArgument(val type: String, val value: String)
+import org.koin.core.KoinApplication
+
+object OMJKoinContext {
+
+    lateinit var koinApp: KoinApplication
+}

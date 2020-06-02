@@ -17,6 +17,7 @@
 package com.octogonapus.omj.ui.view
 
 import com.octogonapus.omj.ui.model.MethodTrace
+import com.octogonapus.omj.ui.model.StoreTrace
 import com.octogonapus.omj.ui.model.Trace
 import javafx.scene.control.ListCell
 
@@ -29,16 +30,26 @@ class TraceCell : ListCell<Trace?>() {
             text = null
             graphic = null
         } else {
-            if (item is MethodTrace) {
-                val (index, callerClass, callerLine, methodName, isStatic, arguments) = item
+            when (item) {
+                is StoreTrace -> {
+                    val (index, callerClass, callerLine, typeValuePair) = item
+                    val (type, value) = typeValuePair
 
-                val argumentString = arguments.joinToString(separator = ", ") {
-                    "${it.type}: ${it.value}"
+                    text = "$index $callerClass:$callerLine STORE $type: $value"
                 }
 
-                val staticString = if (isStatic) " <static> " else " "
+                is MethodTrace -> {
+                    val (index, callerClass, callerLine, methodName, isStatic, arguments) = item
 
-                text = "$index $callerClass:$callerLine$staticString$methodName($argumentString)"
+                    val argumentString = arguments.joinToString(separator = ", ") {
+                        "${it.type}: ${it.value}"
+                    }
+
+                    val staticString = if (isStatic) " <static> " else " "
+
+                    text = "$index $callerClass:$callerLine$staticString" +
+                        "$methodName($argumentString)"
+                }
             }
         }
     }

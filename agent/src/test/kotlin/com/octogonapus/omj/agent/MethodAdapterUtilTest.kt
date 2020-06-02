@@ -26,21 +26,28 @@ import org.junit.jupiter.api.Test
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.DLOAD
+import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
+import org.objectweb.asm.Opcodes.DUP2
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
+import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
 
 @Suppress("SameParameterValue")
 internal class MethodAdapterUtilTest {
 
+    companion object {
+        private const val lineNumber = 2398
+        private const val className = "ClassName"
+        private const val methodName = "methodName"
+        private const val dynamicClassName = "DynamicClassName"
+    }
+
     @Nested
     inner class MethodCallStartPreambleTest {
-
-        private val lineNumber = 2398
-        private val className = "ClassName"
-        private val methodName = "methodName"
 
         @Test
         fun `visit a preamble`() {
@@ -87,8 +94,6 @@ internal class MethodAdapterUtilTest {
     @Nested
     inner class RecordMethodTraceTest {
 
-        private val dynamicClassName = "DynamicClassName"
-
         @Test
         fun `visit start of method with no args`() {
             val methodDescriptor = "()V"
@@ -97,7 +102,7 @@ internal class MethodAdapterUtilTest {
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
             val visitor = mockk<MethodVisitor>(relaxed = true)
-            MethodAdapterUtil().recordMethodTrace(
+            MethodAdapterUtil().visitMethodTrace(
                 visitor,
                 methodDescriptor,
                 isStatic,
@@ -106,9 +111,9 @@ internal class MethodAdapterUtilTest {
 
             // Order is important
             verifySequence {
-                startTrace(visitor, dynamicClassName)
+                startMethodTrace(visitor, dynamicClassName)
                 receiver(visitor)
-                endTrace(visitor)
+                endMethodTrace(visitor)
             }
         }
 
@@ -120,7 +125,7 @@ internal class MethodAdapterUtilTest {
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
             val visitor = mockk<MethodVisitor>(relaxed = true)
-            MethodAdapterUtil().recordMethodTrace(
+            MethodAdapterUtil().visitMethodTrace(
                 visitor,
                 methodDescriptor,
                 isStatic,
@@ -129,8 +134,8 @@ internal class MethodAdapterUtilTest {
 
             // Order is important
             verifySequence {
-                startTrace(visitor, dynamicClassName)
-                endTrace(visitor)
+                startMethodTrace(visitor, dynamicClassName)
+                endMethodTrace(visitor)
             }
         }
 
@@ -142,7 +147,7 @@ internal class MethodAdapterUtilTest {
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
             val visitor = mockk<MethodVisitor>(relaxed = true)
-            MethodAdapterUtil().recordMethodTrace(
+            MethodAdapterUtil().visitMethodTrace(
                 visitor,
                 methodDescriptor,
                 isStatic,
@@ -151,10 +156,10 @@ internal class MethodAdapterUtilTest {
 
             // Order is important
             verifySequence {
-                startTrace(visitor, dynamicClassName)
+                startMethodTrace(visitor, dynamicClassName)
                 receiver(visitor)
                 intArg(visitor, 1) // Index 1 because there is a receiver
-                endTrace(visitor)
+                endMethodTrace(visitor)
             }
         }
 
@@ -166,7 +171,7 @@ internal class MethodAdapterUtilTest {
                 dynamicClassDefiner(methodDescriptor, dynamicClassName, isStatic)
 
             val visitor = mockk<MethodVisitor>(relaxed = true)
-            MethodAdapterUtil().recordMethodTrace(
+            MethodAdapterUtil().visitMethodTrace(
                 visitor,
                 methodDescriptor,
                 isStatic,
@@ -175,9 +180,220 @@ internal class MethodAdapterUtilTest {
 
             // Order is important
             verifySequence {
-                startTrace(visitor, dynamicClassName)
+                startMethodTrace(visitor, dynamicClassName)
                 doubleArg(visitor, 0) // Index 0 because there is no receiver
-                endTrace(visitor)
+                endMethodTrace(visitor)
+            }
+        }
+    }
+
+    @Nested
+    inner class RecordStoreTest {
+
+        @Test
+        fun `visit istore`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            MethodAdapterUtil().visitVarInsn(
+                visitor,
+                className,
+                lineNumber,
+                ISTORE,
+                1,
+                null
+            )
+
+            verifySequence {
+                // Save what will be stored
+                visitor.visitInsn(DUP)
+
+                // Store it
+                visitor.visitVarInsn(ISTORE, 1)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(ILjava/lang/String;I)V",
+                    false
+                )
+            }
+        }
+
+        @Test
+        fun `visit istore into a byte`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            MethodAdapterUtil().visitVarInsn(
+                visitor,
+                className,
+                lineNumber,
+                ISTORE,
+                1,
+                listOf(LocalVariable("b", "B", 1)) // byte at index 1
+            )
+
+            verifySequence {
+                // Save what will be stored
+                visitor.visitInsn(DUP)
+
+                // Store it
+                visitor.visitVarInsn(ISTORE, 1)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(BLjava/lang/String;I)V", // Should have pulled the descriptor from the locals
+                    false
+                )
+            }
+        }
+
+        @Test
+        fun `visit lstore`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            MethodAdapterUtil().visitVarInsn(
+                visitor,
+                className,
+                lineNumber,
+                LSTORE,
+                1,
+                null
+            )
+
+            verifySequence {
+                // Save what will be stored
+                visitor.visitInsn(DUP2)
+
+                // Store it
+                visitor.visitVarInsn(LSTORE, 1)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(JLjava/lang/String;I)V",
+                    false
+                )
+            }
+        }
+
+        @Test
+        fun `visit aload`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            MethodAdapterUtil().visitVarInsn(
+                visitor,
+                className,
+                lineNumber,
+                ALOAD,
+                1,
+                null
+            )
+
+            verifySequence {
+                // Nothing to do for non-store insn
+                visitor.visitVarInsn(ALOAD, 1)
+            }
+        }
+
+        @Test
+        fun `visit istore after dstore`() {
+            val secondLineNumber = lineNumber + 1
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            val util = MethodAdapterUtil()
+            val locals = listOf(
+                LocalVariable("d", "D", 1),
+                LocalVariable("i", "I", 3) // 3 instead of 2 because doubles take up two slots
+            )
+
+            util.visitVarInsn(
+                visitor,
+                className,
+                lineNumber,
+                DSTORE,
+                1,
+                locals
+            )
+
+            util.visitVarInsn(
+                visitor,
+                className,
+                secondLineNumber,
+                ISTORE,
+                3,
+                locals
+            )
+
+            verifySequence {
+                // /////////////////////////////
+                // DSTORE
+                // /////////////////////////////
+
+                // Save what will be stored
+                visitor.visitInsn(DUP2)
+
+                // Store it
+                visitor.visitVarInsn(DSTORE, 1)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(DLjava/lang/String;I)V",
+                    false
+                )
+
+                // /////////////////////////////
+                // ISTORE
+                // /////////////////////////////
+
+                // Save what will be stored
+                visitor.visitInsn(DUP)
+
+                // Store it
+                visitor.visitVarInsn(ISTORE, 3)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(secondLineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(ILjava/lang/String;I)V", // Should have pulled the descriptor from the locals
+                    false
+                )
             }
         }
     }
@@ -190,7 +406,7 @@ internal class MethodAdapterUtilTest {
         every { defineClassForMethod(methodDescriptor, isStatic) } returns dynamicClassName
     }
 
-    private fun startTrace(visitor: MethodVisitor, dynamicClassName: String) {
+    private fun startMethodTrace(visitor: MethodVisitor, dynamicClassName: String) {
         visitor.visitTypeInsn(NEW, dynamicClassName)
         visitor.visitInsn(DUP)
         visitor.visitMethodInsn(INVOKESPECIAL, dynamicClassName, "<init>", "()V", false)
@@ -236,7 +452,7 @@ internal class MethodAdapterUtilTest {
         )
     }
 
-    private fun endTrace(visitor: MethodVisitor) {
+    private fun endMethodTrace(visitor: MethodVisitor) {
         visitor.visitMethodInsn(
             INVOKESTATIC,
             agentLibClassName,

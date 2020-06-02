@@ -19,10 +19,15 @@ package com.octogonapus.omj.agent
 import mu.KotlinLogging
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ALOAD
+import org.objectweb.asm.Opcodes.ASTORE
+import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
+import org.objectweb.asm.Opcodes.FSTORE
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
+import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
 import org.objectweb.asm.Type
 
@@ -35,7 +40,7 @@ internal class MethodAdapterUtil {
      * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
      * this method loads onto the stack is removed by the end of its bytecode.
      *
-     * @receiver The method visitor to delegate to.
+     * @param methodVisitor The method visitor to delegate to.
      * @param currentLineNumber The most up-to-date line number from the method visitor.
      * @param fullyQualifiedClassName The fully-qualified name of the class the method call happens
      * in.
@@ -84,13 +89,13 @@ internal class MethodAdapterUtil {
      * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
      * this method loads onto the stack is removed by the end of its bytecode.
      *
-     * @receiver The method visitor to delegate to.
+     * @param methodVisitor The method visitor to delegate to.
      * @param methodDescriptor The method's descriptor.
      * @param isStatic True if the method is static.
      * @param dynamicClassDefiner The [DynamicClassDefiner] to use to generate the method trace
      * container class.
      */
-    internal fun recordMethodTrace(
+    internal fun visitMethodTrace(
         methodVisitor: MethodVisitor,
         methodDescriptor: String,
         isStatic: Boolean,
@@ -113,8 +118,17 @@ internal class MethodAdapterUtil {
                 false
             )
 
-            val argumentTypes = Type.getArgumentTypes(methodDescriptor)
-            logger.debug { "argumentTypes = ${argumentTypes?.contentDeepToString()}" }
+            // Compute the stack index of each argument type. We can't use the list index as the
+            // stack index because some types take up two indices. Start `stackIndex` at `0` even if
+            // the method is virtual because the virtual offset is handled later.
+            var stackIndex = 0
+            val argumentTypes = Type.getArgumentTypes(methodDescriptor).map { type ->
+                val oldStackIndex = stackIndex
+                stackIndex += TypeUtil.getStackSize(type)
+                type to oldStackIndex
+            }
+
+            logger.debug { "argumentTypes = ${argumentTypes.joinToString()}" }
 
             val virtualOffset = if (isStatic) 0 else 1
             if (!isStatic) {
@@ -128,8 +142,7 @@ internal class MethodAdapterUtil {
                 )
             }
 
-            for (i in argumentTypes.indices) {
-                val argumentType = argumentTypes[i]
+            argumentTypes.forEach { (argumentType, stackIndex) ->
                 val methodName = "methodCall_argument_" + TypeUtil.getAdaptedClassName(argumentType)
                 val methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V"
 
@@ -141,7 +154,7 @@ internal class MethodAdapterUtil {
                     """.trimIndent()
                 }
 
-                visitVarInsn(argumentType.getOpcode(ILOAD), i + virtualOffset)
+                visitVarInsn(argumentType.getOpcode(ILOAD), stackIndex + virtualOffset)
                 visitMethodInsn(
                     INVOKESTATIC,
                     agentLibClassName,
@@ -160,6 +173,63 @@ internal class MethodAdapterUtil {
             )
         }
     }
+
+    /**
+     * Visits a var insn. If it is a *STORE insn, then that store is recorded.
+     *
+     * @param methodVisitor The method visitor to delegate to.
+     * @param className The name of the class the store is in.
+     * @param lineNumber The line number of the store.
+     * @param opcode The opcode being visited.
+     * @param index The index of the local variable (the operand of the insn).
+     * @param locals A list of all the locals in the surrounding method, or `null` if none were
+     * visited.
+     */
+    internal fun visitVarInsn(
+        methodVisitor: MethodVisitor,
+        className: String,
+        lineNumber: Int,
+        opcode: Int,
+        index: Int,
+        locals: List<LocalVariable>?
+    ) {
+        when (opcode) {
+            ISTORE, LSTORE, FSTORE, DSTORE, ASTORE -> with(methodVisitor) {
+                visitInsn(OpcodeUtil.getDupOpcode(opcode))
+
+                visitVarInsn(opcode, index)
+
+                val localDescriptor = getLocalDescriptor(locals, index, opcode)
+
+                visitLdcInsn(className)
+                visitLdcInsn(lineNumber)
+                visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(${localDescriptor}Ljava/lang/String;I)V",
+                    false
+                )
+            }
+
+            else -> methodVisitor.visitVarInsn(opcode, index)
+        }
+    }
+
+    private fun getLocalDescriptor(locals: List<LocalVariable>?, index: Int, opcode: Int) =
+        if (locals != null) {
+            // Locals were gathered earlier, so we can use them for more information, except if
+            // the local is a type of object. All objects should use the same object descriptor.
+            if (opcode == ASTORE) {
+                // So, if we have an object, just return the object descriptor.
+                OpcodeUtil.getStoreDescriptor(opcode)
+            } else {
+                locals.first { it.index == index }.descriptor
+            }
+        } else {
+            // No locals, so make a best guess using the opcode.
+            OpcodeUtil.getStoreDescriptor(opcode)
+        }
 
     companion object {
 

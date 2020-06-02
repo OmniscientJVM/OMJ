@@ -19,6 +19,6 @@ package com.agenttest.stringHelloNull1;
 public class Main {
 
   public static void main(String[] args) {
-    new Foo().with("Hello \0 1");
+    new Foo().with("Hello\0 1");
   }
 }

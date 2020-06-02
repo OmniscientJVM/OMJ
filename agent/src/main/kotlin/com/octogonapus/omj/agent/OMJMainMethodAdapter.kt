@@ -16,19 +16,21 @@
  */
 package com.octogonapus.omj.agent
 
+import com.octogonapus.omj.di.OMJKoinComponent
 import com.octogonapus.omj.util.Util
 import mu.KotlinLogging
-import org.koin.core.KoinComponent
+import org.koin.core.get
 import org.koin.core.inject
+import org.koin.core.qualifier.named
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
 
 internal class OMJMainMethodAdapter(
     api: Int,
     private val superVisitor: MethodVisitor,
+    private val method: Method,
     currentClassName: String
-) : MethodVisitor(api, superVisitor), Opcodes, KoinComponent {
+) : MethodVisitor(api, superVisitor), OMJKoinComponent {
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
     private val classFilter by inject<ClassFilter>()
@@ -48,7 +50,7 @@ internal class OMJMainMethodAdapter(
             fullyQualifiedClassName,
             "main"
         )
-        methodAdapterUtil.recordMethodTrace(
+        methodAdapterUtil.visitMethodTrace(
             superVisitor,
             Util.mainMethodDescriptor,
             true,
@@ -86,9 +88,40 @@ internal class OMJMainMethodAdapter(
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
     }
 
+    override fun visitVarInsn(opcode: Int, index: Int) {
+        methodAdapterUtil.visitVarInsn(
+            superVisitor,
+            fullyQualifiedClassName,
+            currentLineNumber,
+            opcode,
+            index,
+            get<MethodsAndLocals>(named(METHODS_AND_LOCALS_NAME))[method]
+        )
+    }
+
     override fun visitLineNumber(line: Int, start: Label) {
         super.visitLineNumber(line, start)
         currentLineNumber = line
+    }
+
+    override fun visitLocalVariable(
+        name: String?,
+        descriptor: String?,
+        signature: String?,
+        start: Label?,
+        end: Label?,
+        index: Int
+    ) {
+        super.visitLocalVariable(name, descriptor, signature, start, end, index)
+        logger.debug {
+            """
+            visitLocalVariable
+            name = $name
+            descriptor = $descriptor
+            signature = $signature
+            index = $index
+            """.trimIndent()
+        }
     }
 
     companion object {

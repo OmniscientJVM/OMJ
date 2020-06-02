@@ -13,8 +13,9 @@ dependencies {
     implementation(group = "net.bytebuddy", name = "byte-buddy", version = Versions.byteBuddy)
 
     implementation(project(":agent-lib"))
-    implementation(project(":util"))
+    implementation(project(":di"))
     implementation(project(":logging"))
+    implementation(project(":util"))
 
     // Need the agent (yes, THIS project) shadow jar at runtime to dynamically load the agent-lib
     testRuntimeOnly(project(path = ":agent", configuration = "shadow"))

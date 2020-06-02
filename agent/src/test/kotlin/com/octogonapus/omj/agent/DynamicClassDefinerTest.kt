@@ -44,7 +44,7 @@ internal class DynamicClassDefinerTest {
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
-            ${writeMethodIdentifier()}
+            $methodIdentifier
             $className
             $lineNumber
             $methodName
@@ -82,7 +82,7 @@ internal class DynamicClassDefinerTest {
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
-            ${writeMethodIdentifier()}
+            $methodIdentifier
             $className
             $lineNumber
             $methodName
@@ -131,7 +131,7 @@ internal class DynamicClassDefinerTest {
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
-            ${writeMethodIdentifier()}
+            $methodIdentifier
             $className
             $lineNumber
             $methodName
@@ -173,7 +173,7 @@ internal class DynamicClassDefinerTest {
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
-            ${writeMethodIdentifier()}
+            $methodIdentifier
             $className
             $lineNumber
             $methodName
@@ -212,7 +212,7 @@ internal class DynamicClassDefinerTest {
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
-            ${writeMethodIdentifier()}
+            $methodIdentifier
             $className
             $lineNumber
             $methodName
@@ -242,7 +242,7 @@ internal class DynamicClassDefinerTest {
             @Override
             public void serialize(final OutputStream outputStream) throws IOException {
             $appendIndex
-            ${writeMethodIdentifier()}
+            $methodIdentifier
             $className
             $lineNumber
             $methodName
@@ -309,6 +309,9 @@ internal class DynamicClassDefinerTest {
         const val isStatic =
             """outputStream.write(isStatic ? 1 : 0);"""
 
+        const val methodIdentifier =
+            """outputStream.write(0x2);"""
+
         private fun writeObjectName(name: String): String =
             """outputStream.write('L');
             outputStream.write($name.getClass().getName().getBytes());
@@ -350,9 +353,6 @@ internal class DynamicClassDefinerTest {
             outputStream.write((byte) ((${name}_l >> 40) & 0xFF));
             outputStream.write((byte) ((${name}_l >> 48) & 0xFF));
             outputStream.write((byte) ((${name}_l >> 56) & 0xFF));"""
-
-        private fun writeMethodIdentifier(): String =
-            """outputStream.write(0x2);"""
 
         private fun writeBoolean(name: String): String =
             """outputStream.write('Z');

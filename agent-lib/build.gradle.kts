@@ -5,5 +5,6 @@ plugins {
 description = "The supporting library for the Agent."
 
 dependencies {
+    implementation(project(":logging"))
     implementation(project(":util"))
 }
