@@ -99,6 +99,17 @@ internal class OMJMainMethodAdapter(
         )
     }
 
+    override fun visitIincInsn(index: Int, increment: Int) {
+        methodAdapterUtil.visitIincInsn(
+            superVisitor,
+            fullyQualifiedClassName,
+            currentLineNumber,
+            index,
+            increment,
+            get<MethodsAndLocals>(named(METHODS_AND_LOCALS_NAME))[method]
+        )
+    }
+
     override fun visitLineNumber(line: Int, start: Label) {
         super.visitLineNumber(line, start)
         currentLineNumber = line

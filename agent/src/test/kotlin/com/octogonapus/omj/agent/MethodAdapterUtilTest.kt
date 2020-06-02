@@ -17,6 +17,7 @@
 package com.octogonapus.omj.agent
 
 import com.octogonapus.omj.agent.MethodAdapterUtil.Companion.agentLibClassName
+import io.kotest.assertions.throwables.shouldThrow
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verifyAll
@@ -393,6 +394,65 @@ internal class MethodAdapterUtilTest {
                     "store",
                     "(ILjava/lang/String;I)V", // Should have pulled the descriptor from the locals
                     false
+                )
+            }
+        }
+
+        @Test
+        fun `visit iinc`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            val util = MethodAdapterUtil()
+            val locals = listOf(LocalVariable("i", "I", 1))
+
+            util.visitIincInsn(
+                visitor = visitor,
+                className = className,
+                lineNumber = lineNumber,
+                index = 1,
+                increment = 2,
+                locals = locals
+            )
+
+            verifySequence {
+                // Emit the increment
+                visitor.visitIincInsn(1, 2)
+
+                // Load the local that was incremented
+                visitor.visitVarInsn(ILOAD, 1)
+
+                // Trace it
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(ILjava/lang/String;I)V",
+                    false
+                )
+            }
+        }
+
+        @Test
+        fun `visit iinc with a byte`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            val util = MethodAdapterUtil()
+            val locals = listOf(LocalVariable("b", "B", 1))
+
+            // IINC into a byte (or anything else that isn't an int) should never be emitted
+            shouldThrow<IllegalStateException> {
+                util.visitIincInsn(
+                    visitor = visitor,
+                    className = className,
+                    lineNumber = lineNumber,
+                    index = 1,
+                    increment = 2,
+                    locals = locals
                 )
             }
         }

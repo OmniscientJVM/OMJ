@@ -206,6 +206,35 @@ internal class OMJMainMethodAdapterTest : KoinTestFixture() {
                 )
             }
         }
+
+        @Test
+        fun `visit iinc`() {
+            val (methodAdapter, superVisitor, methodAdapterUtil, _) = getMethodAdapter(
+                module {
+                    single<MethodsAndLocals>(named(METHODS_AND_LOCALS_NAME)) { mapOf() }
+                }
+            )
+
+            // Visit a line number before the store to simulate a class file with debug info
+            methodAdapter.visitLineNumber(lineNumber, Label())
+
+            // Increment a local at index 1 by 2
+            methodAdapter.visitIincInsn(1, 2)
+
+            verifySequence {
+                // Emit the line number
+                superVisitor.visitLineNumber(lineNumber, any())
+
+                methodAdapterUtil.visitIincInsn(
+                    visitor = superVisitor,
+                    className = className,
+                    lineNumber = lineNumber,
+                    index = 1,
+                    increment = 2,
+                    locals = null
+                )
+            }
+        }
     }
 
     private fun getMethodAdapter(
