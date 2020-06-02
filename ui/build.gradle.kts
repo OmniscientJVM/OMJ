@@ -9,6 +9,13 @@ plugins {
 
 description = "The UI."
 
+// A resolvable configuration to hold dependencies needed by the child JVM (running the agent during
+// integration tests) at runtime.
+val childJVMRuntimeOnly: Configuration by configurations.creating {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+}
+
 dependencies {
     implementation(project(":util"))
     implementation(project(":logging"))
@@ -16,6 +23,12 @@ dependencies {
     runtimeOnly(project(path = ":agent", configuration = "shadow"))
 
     testImplementation(project(":testUtil"))
+
+    childJVMRuntimeOnly(
+        group = "org.jacoco",
+        name = "org.jacoco.agent",
+        version = Versions.jacocoTool
+    )
 }
 
 val agentJarName = "agent-all"
@@ -33,21 +46,32 @@ tasks.named("shadowJar", ShadowJar::class.java) {
     from({ agentJarAllResource })
 }
 
+// JaCoCo stores the agent jar inside the jar they upload to maven, so we need to extract it before
+// we can use it.
+val jacocoAgentJar: Path = buildDir.toPath().resolve("jacocoagent.jar")
+val extractJacocoAgentTask = tasks.register("extractJacocoAgent", Copy::class.java) {
+    from({
+        zipTree(
+            childJVMRuntimeOnly.first {
+                it.name == "org.jacoco.agent-${Versions.jacocoTool}.jar"
+            }
+        ).filter { it.name == "jacocoagent.jar" }.singleFile
+    })
+    into({ buildDir })
+}
+
 tasks.test {
-    dependsOn(copyAgentShadowJarTask)
+    dependsOn(copyAgentShadowJarTask, extractJacocoAgentTask)
     dependsOn(project(":agent-tests").getTasksByName("copyAgentTestJar", true))
 
     val agentAllJarPath = buildDir.toPath().resolve("agent-all").toAbsolutePath()
-
-    // Find the jacoco tool jar that the jacoco plugin uses
-    val jacocoJar = buildDir.walkTopDown().first { it.name == "jacocoagent.jar" }.absolutePath
 
     // The assertion is necessary according to Gradle
     @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
     jvmArgs = jvmArgs!! + listOf(
         "-Dagent-test.jar-dir=" + rootProject.buildDir.toPath().resolve("agent-test-jars"),
         "-Dagent.jar=$agentAllJarPath",
-        "-Dagent-test.jacoco-jar=$jacocoJar",
+        "-Dagent-test.jacoco-jar=$jacocoAgentJar",
         "-Dagent-test.jacoco-dest-file=$buildDir/jacoco/test.exec"
     )
 }
