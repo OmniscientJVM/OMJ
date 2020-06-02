@@ -461,7 +461,8 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeIncrementInt.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeIncrementInt.Main", "int", "4") // Started at 3
+                // Started at 3 and was incremented to 4
+                it.storeVar("com.agenttest.storeIncrementInt.Main", "int", "4")
             }
         }
     }
