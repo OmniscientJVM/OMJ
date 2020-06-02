@@ -28,6 +28,7 @@ object Versions {
     const val detektPlugin = "1.9.0"
     const val shadowPlugin = "5.2.0"
     const val javafxPlugin = "0.0.8"
+    const val downloadPlugin = "4.0.4"
 
     const val kotlin = "1.3.72"
     const val ktlint = "0.36.0"

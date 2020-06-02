@@ -42,11 +42,13 @@ object CompileUtil {
     }
 
     /**
-     * Runs the agent on a [jarUnderTest] and saves traces into the [traceDir].
+     * Runs the agent on a [jarUnderTest] and saves traces into the [traceDir]. Adds the JaCoCo
+     * agent for coverage information.
      *
      * @param jarUnderTest The filename of the Jar to run under the agent.
      * @param traceDir The dir to save trace files into.
-     * @param debug Whether to start the subprocess JVM for remote debugging.
+     * @param debug Whether to start the subprocess JVM for remote debugging. Adds the JDWP agent
+     * on port 5006.
      */
     fun runAgentTest(
         jarUnderTest: String,
@@ -62,6 +64,16 @@ object CompileUtil {
             "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
         ) else emptyList()
 
+        val jacocoJar = System.getProperty("agent-test.jacoco-jar")
+        logger.debug { "jacocoJar=$jacocoJar" }
+
+        val destFile = System.getProperty("agent-test.jacoco-dest-file")
+        logger.debug { "destFile=$destFile" }
+
+        val jacocoArgs = "destfile=$destFile,append=true,inclnolocationclasses=false," +
+            "dumponexit=true,output=file,jmx=false"
+
+        @Suppress("SpreadOperator")
         val process = ProcessBuilder(
             Paths.get(System.getProperty("java.home"))
                 .resolve("bin")
@@ -73,6 +85,7 @@ object CompileUtil {
             "-Dagent.include-package=com/agenttest/[a-zA-Z0-9/]*",
             "-Dagent.exclude-package=",
             *debugList.toTypedArray(),
+            "-javaagent:$jacocoJar=$jacocoArgs",
             "-javaagent:${System.getProperty("agent.jar")}",
             "-jar",
             jarFile.absolutePath
