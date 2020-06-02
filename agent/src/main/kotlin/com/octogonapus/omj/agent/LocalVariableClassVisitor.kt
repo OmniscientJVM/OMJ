@@ -16,6 +16,7 @@
  */
 package com.octogonapus.omj.agent
 
+import mu.KotlinLogging
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 
@@ -37,6 +38,17 @@ internal class LocalVariableClassVisitor(
         val localVariableMethodVisitor = LocalVariableMethodVisitor(api, visitor)
         val method = Method(name, descriptor)
         localVariableVisitors[method] = localVariableMethodVisitor
+        logger.debug {
+            """
+            Visited method
+            access = $access
+            name = $name
+            """.trimIndent()
+        }
         return localVariableMethodVisitor
+    }
+
+    companion object {
+        private val logger = KotlinLogging.logger { }
     }
 }

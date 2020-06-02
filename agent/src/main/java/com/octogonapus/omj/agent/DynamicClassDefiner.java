@@ -48,6 +48,7 @@ public final class DynamicClassDefiner {
   DynamicClassDefiner(final Instrumentation instrumentation, final Path cacheDir) {
     this.instrumentation = instrumentation;
     this.cacheDir = cacheDir;
+    logger.debug("Got cache dir {}", cacheDir.toString());
   }
 
   private List<Type> getMethodSignatureTypes(

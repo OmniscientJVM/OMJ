@@ -23,6 +23,7 @@ import java.io.IOException
 import java.lang.instrument.Instrumentation
 import java.util.jar.JarFile
 import kotlin.system.exitProcess
+import mu.KotlinLogging
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
@@ -49,8 +50,10 @@ object Agent {
                 JarFile(AgentLibJarExtractor.extractJar())
             )
         } catch (e: IOException) {
-            e.printStackTrace()
+            logger.error("Failed to append the agent lib jar to the system class loader.", e)
             exitProcess(1)
         }
     }
+
+    private val logger = KotlinLogging.logger { }
 }

@@ -46,11 +46,21 @@ object CompileUtil {
      *
      * @param jarUnderTest The filename of the Jar to run under the agent.
      * @param traceDir The dir to save trace files into.
+     * @param debug Whether to start the subprocess JVM for remote debugging.
      */
-    fun runAgentTest(jarUnderTest: String, traceDir: Path): Tuple3<Int, String, String> {
+    fun runAgentTest(
+        jarUnderTest: String,
+        traceDir: Path,
+        debug: Boolean = false
+    ): Tuple3<Int, String, String> {
         val jarFile = Paths.get(System.getProperty("agent-test.jar-dir"))
             .resolve(jarUnderTest)
             .toFile()
+
+        val debugList = if (debug) listOf(
+            "-Xdebug",
+            "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
+        ) else emptyList()
 
         val process = ProcessBuilder(
             Paths.get(System.getProperty("java.home"))
@@ -62,10 +72,11 @@ object CompileUtil {
             "-Dagent-lib.trace-dir=${traceDir.toAbsolutePath()}",
             "-Dagent.include-package=com/agenttest/[a-zA-Z0-9/]*",
             "-Dagent.exclude-package=",
+            *debugList.toTypedArray(),
             "-javaagent:${System.getProperty("agent.jar")}",
             "-jar",
             jarFile.absolutePath
-        ).start()
+        ).inheritIO().start() // Inherit IO or else the JVM will hang on Windows
 
         logger.debug { "Started the agent on process ${process.pid()}" }
 
