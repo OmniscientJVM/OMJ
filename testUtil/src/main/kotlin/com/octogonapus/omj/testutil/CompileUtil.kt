@@ -73,6 +73,7 @@ object CompileUtil {
         val jacocoArgs = "destfile=$destFile,append=true,inclnolocationclasses=false," +
             "dumponexit=true,output=file,jmx=false"
 
+        @Suppress("SpreadOperator")
         val process = ProcessBuilder(
             Paths.get(System.getProperty("java.home"))
                 .resolve("bin")
