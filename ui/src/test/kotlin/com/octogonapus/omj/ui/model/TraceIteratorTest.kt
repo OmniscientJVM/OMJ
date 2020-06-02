@@ -455,6 +455,15 @@ internal class TraceIteratorTest {
                 it.storeVar("com.agenttest.storeString.Main", "java.lang.String", "My String")
             }
         }
+
+        @Test
+        fun `test int increment`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeIncrementInt.jar")
+
+            traces.shouldExist {
+                it.storeVar("com.agenttest.storeIncrementInt.Main", "int", "4") // Started at 3
+            }
+        }
     }
 
     @Nested

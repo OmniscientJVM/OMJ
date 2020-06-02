@@ -396,6 +396,46 @@ internal class MethodAdapterUtilTest {
                 )
             }
         }
+
+        @Test
+        fun `visit iinc`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            val util = MethodAdapterUtil()
+            val locals = listOf(LocalVariable("i", "I", 1))
+
+            util.visitIincInsn(
+                visitor = visitor,
+                className = className,
+                lineNumber = lineNumber,
+                index = 1,
+                increment = 2,
+                locals = locals
+            )
+
+            verifySequence {
+                // Emit the increment
+                visitor.visitIincInsn(1, 2)
+
+                // Load the local that was incremented
+                visitor.visitVarInsn(ILOAD, 1)
+
+                // Trace it
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(ILjava/lang/String;I)V",
+                    false
+                )
+            }
+        }
     }
 
     private fun dynamicClassDefiner(

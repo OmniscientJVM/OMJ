@@ -199,21 +199,68 @@ internal class MethodAdapterUtil {
 
                 visitVarInsn(opcode, index)
 
-                val localDescriptor = getLocalDescriptor(locals, index, opcode)
-
-                visitLdcInsn(className)
-                visitLdcInsn(lineNumber)
-                visitMethodInsn(
-                    INVOKESTATIC,
-                    agentLibClassName,
-                    "store",
-                    "(${localDescriptor}Ljava/lang/String;I)V",
-                    false
-                )
+                recordStore(locals, index, opcode, className, lineNumber)
             }
 
             else -> methodVisitor.visitVarInsn(opcode, index)
         }
+    }
+
+    /**
+     * Visits an IINC insn to record it.
+     *
+     * @param visitor The method visitor to delegate to.
+     * @param className The name of the class the store is in.
+     * @param lineNumber The line number of the store.
+     * @param index The index of the local variable (the operand of the insn).
+     * @param increment The amount to increment by (the second operand of the insn).
+     * @param locals A list of all the locals in the surrounding method, or `null` if none were
+     * visited.
+     */
+    fun visitIincInsn(
+        visitor: MethodVisitor,
+        className: String,
+        lineNumber: Int,
+        index: Int,
+        increment: Int,
+        locals: List<LocalVariable>?
+    ) {
+        val descriptor = locals?.firstOrNull { it.index == index }?.descriptor
+        check(descriptor == "I") {
+            """
+            The local being incremented was not an int! What is being incremented?
+            descriptor=$descriptor
+            """.trimIndent()
+        }
+
+        with(visitor) {
+            visitIincInsn(index, increment)
+
+            visitVarInsn(ILOAD, index)
+
+            // Pretend like it was an ISTORE
+            recordStore(locals, index, ISTORE, className, lineNumber)
+        }
+    }
+
+    private fun MethodVisitor.recordStore(
+        locals: List<LocalVariable>?,
+        index: Int,
+        opcode: Int,
+        className: String,
+        lineNumber: Int
+    ) {
+        val localDescriptor = getLocalDescriptor(locals, index, opcode)
+
+        visitLdcInsn(className)
+        visitLdcInsn(lineNumber)
+        visitMethodInsn(
+            INVOKESTATIC,
+            agentLibClassName,
+            "store",
+            "(${localDescriptor}Ljava/lang/String;I)V",
+            false
+        )
     }
 
     private fun getLocalDescriptor(locals: List<LocalVariable>?, index: Int, opcode: Int) =
