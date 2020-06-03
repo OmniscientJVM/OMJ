@@ -114,7 +114,11 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     final int lineNumber = parseInt();
     logger.debug("lineNumber = {}", lineNumber);
 
-    return new StoreTrace(index, className, lineNumber, parseTypeValuePair());
+    // Parse variable name
+    final String variableName = parseString();
+    logger.debug("variableName = {}", variableName);
+
+    return new StoreTrace(index, className, lineNumber, variableName, parseTypeValuePair());
   }
 
   private Trace parseMethodTrace(final long index) throws IOException {

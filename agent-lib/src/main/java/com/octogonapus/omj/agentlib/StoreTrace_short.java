@@ -24,19 +24,25 @@ public class StoreTrace_short implements Trace {
   private final long index;
   private final String className;
   private final int lineNumber;
+  private final String variableName;
   private final short value;
 
   public StoreTrace_short(
-      final long index, final String className, final int lineNumber, final short value) {
+      final long index,
+      final String className,
+      final int lineNumber,
+      final String variableName,
+      final short value) {
     this.index = index;
     this.className = className;
     this.lineNumber = lineNumber;
+    this.variableName = variableName;
     this.value = value;
   }
 
   @Override
   public void serialize(final OutputStream outputStream) throws IOException {
-    TraceUtil.writeStoreTraceHeader(outputStream, className, index, lineNumber);
+    TraceUtil.writeStoreTraceHeader(outputStream, className, index, lineNumber, variableName);
     outputStream.write('S');
     outputStream.write(value & 0xFF);
     outputStream.write((value >> 8) & 0xFF);

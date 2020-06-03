@@ -20,13 +20,19 @@ import org.objectweb.asm.Opcodes.ASTORE
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.DUP2
+import org.objectweb.asm.Opcodes.DUP2_X1
+import org.objectweb.asm.Opcodes.DUP_X1
 import org.objectweb.asm.Opcodes.FSTORE
 import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LSTORE
+import org.objectweb.asm.Opcodes.PUTFIELD
+import org.objectweb.asm.Opcodes.PUTSTATIC
 
 object OpcodeUtil {
 
     /**
+     * Picks a [DUP] or [DUP2] opcode for a *STORE opcode.
+     *
      * @return The corresponding [DUP] or [DUP2] opcode based on the store [opcode].
      */
     fun getDupOpcode(opcode: Int): Int {
@@ -36,6 +42,38 @@ object OpcodeUtil {
             else -> throw UnsupportedOperationException(
                 "Cannot get the DUP opcode for a non-store opcode: $opcode"
             )
+        }
+    }
+
+    /**
+     * Picks a dup opcode for a [PUTFIELD] or [PUTSTATIC] opcode.
+     *
+     * @return The corresponding [DUP] or [DUP2] opcode based on the store [opcode] and
+     * [fieldDescriptor].
+     */
+    fun getDupOpcode(opcode: Int, fieldDescriptor: String): Int {
+        check(opcode == PUTFIELD || opcode == PUTSTATIC)
+
+        // Simplify the descriptor because references and arrays are just size L
+        val adaptedDescriptor = when {
+            fieldDescriptor.startsWith('L') || fieldDescriptor.startsWith('[') -> "L"
+            else -> fieldDescriptor
+        }
+
+        return when (adaptedDescriptor) {
+            "B", "C", "I", "F", "L", "S", "Z" -> when (opcode) {
+                PUTFIELD -> DUP_X1
+                PUTSTATIC -> DUP
+                else -> error("Illegal opcode: $opcode")
+            }
+
+            "J", "D" -> when (opcode) {
+                PUTFIELD -> DUP2_X1
+                PUTSTATIC -> DUP2
+                else -> error("Illegal opcode: $opcode")
+            }
+
+            else -> throw UnsupportedOperationException("Unknown field descriptor $fieldDescriptor")
         }
     }
 

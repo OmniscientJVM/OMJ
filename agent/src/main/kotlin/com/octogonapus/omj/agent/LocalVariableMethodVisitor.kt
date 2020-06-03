@@ -19,6 +19,7 @@ package com.octogonapus.omj.agent
 import mu.KotlinLogging
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Type
 
 internal class LocalVariableMethodVisitor(
     api: Int,
@@ -36,12 +37,18 @@ internal class LocalVariableMethodVisitor(
         index: Int
     ) {
         super.visitLocalVariable(name, descriptor, signature, start, end, index)
-        locals.add(LocalVariable(name, descriptor, index))
+
+        // Adapt the descriptor for consumers that don't care about what type of reference (if it
+        // is a reference).
+        val adaptedDescriptor = TypeUtil.getAdaptedDescriptor(Type.getType(descriptor))
+        locals.add(LocalVariable(name, descriptor, adaptedDescriptor, index))
+
         logger.debug {
             """
             Visited local variable
             name = $name
             descriptor = $descriptor
+            adaptedDescriptor = $adaptedDescriptor
             index = $index
             """.trimIndent()
         }

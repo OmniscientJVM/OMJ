@@ -13,7 +13,7 @@ include(":ui")
 include(":util")
 
 apply {
-    from("settings_agentTest.gradle.kts")
+    from("settings_agentTest.txt")
 }
 
 gradleEnterprise {

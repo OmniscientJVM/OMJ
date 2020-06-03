@@ -38,11 +38,15 @@ import org.objectweb.asm.Opcodes.DLOAD
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.FLOAD
 import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.GETFIELD
+import org.objectweb.asm.Opcodes.GETSTATIC
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKEVIRTUAL
 import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LLOAD
 import org.objectweb.asm.Opcodes.LSTORE
+import org.objectweb.asm.Opcodes.PUTFIELD
+import org.objectweb.asm.Opcodes.PUTSTATIC
 
 internal class OMJMethodAdapterTest : KoinTestFixture() {
 
@@ -54,6 +58,9 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
         private const val methodName = "methodName"
         private const val anotherMethodDescriptor = "(BZ)J"
         private const val lineNumber = 23498
+        private const val fieldOwner = "fieldOwnerClass"
+        private const val fieldName = "fieldName"
+        private const val fieldDescriptor = "fieldDesc"
     }
 
     @Nested
@@ -229,6 +236,51 @@ internal class OMJMethodAdapterTest : KoinTestFixture() {
                     increment = 2,
                     locals = null
                 )
+            }
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = [PUTFIELD, PUTSTATIC])
+        fun `visit puts`(opcode: Int) {
+            val (methodAdapter, superVisitor, methodAdapterUtil, _) = getMethodAdapter()
+
+            // Visit a line number before the store to simulate a class file with debug info
+            methodAdapter.visitLineNumber(lineNumber, Label())
+
+            methodAdapter.visitFieldInsn(opcode, fieldOwner, fieldName, fieldDescriptor)
+
+            verifySequence {
+                // Emit the line number
+                superVisitor.visitLineNumber(lineNumber, any())
+
+                methodAdapterUtil.visitFieldInsn(
+                    superVisitor,
+                    className,
+                    lineNumber,
+                    opcode,
+                    fieldOwner,
+                    fieldName,
+                    fieldDescriptor
+                )
+            }
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = [GETFIELD, GETSTATIC])
+        fun `visit gets`(opcode: Int) {
+            val (methodAdapter, superVisitor, _, _) = getMethodAdapter()
+
+            // Visit a line number before the store to simulate a class file with debug info
+            methodAdapter.visitLineNumber(lineNumber, Label())
+
+            methodAdapter.visitFieldInsn(opcode, fieldOwner, fieldName, fieldDescriptor)
+
+            verifySequence {
+                // Emit the line number
+                superVisitor.visitLineNumber(lineNumber, any())
+
+                // Nothing else to do so just emit the get insn
+                superVisitor.visitFieldInsn(opcode, fieldOwner, fieldName, fieldDescriptor)
             }
         }
     }

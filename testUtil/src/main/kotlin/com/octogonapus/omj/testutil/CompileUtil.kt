@@ -49,11 +49,13 @@ object CompileUtil {
      * @param traceDir The dir to save trace files into.
      * @param debug Whether to start the subprocess JVM for remote debugging. Adds the JDWP agent
      * on port 5006.
+     * @param coverage Whether to collect code coverage using JaCoCo.
      */
     fun runAgentTest(
         jarUnderTest: String,
         traceDir: Path,
-        debug: Boolean = false
+        debug: Boolean = false,
+        coverage: Boolean = true
     ): Tuple3<Int, String, String> {
         val jarFile = Paths.get(System.getProperty("agent-test.jar-dir"))
             .resolve(jarUnderTest)
@@ -64,14 +66,18 @@ object CompileUtil {
             "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
         ) else emptyList()
 
-        val jacocoJar = System.getProperty("agent-test.jacoco-jar")
-        logger.debug { "jacocoJar=$jacocoJar" }
+        val jacocoList = if (coverage) {
+            val jacocoJar = System.getProperty("agent-test.jacoco-jar")
+            logger.debug { "jacocoJar=$jacocoJar" }
 
-        val destFile = System.getProperty("agent-test.jacoco-dest-file")
-        logger.debug { "destFile=$destFile" }
+            val destFile = System.getProperty("agent-test.jacoco-dest-file")
+            logger.debug { "destFile=$destFile" }
 
-        val jacocoArgs = "destfile=$destFile,append=true,inclnolocationclasses=false," +
-            "dumponexit=true,output=file,jmx=false"
+            val jacocoArgs = "destfile=$destFile,append=true,inclnolocationclasses=false," +
+                "dumponexit=true,output=file,jmx=false"
+
+            listOf("-javaagent:$jacocoJar=$jacocoArgs")
+        } else emptyList()
 
         @Suppress("SpreadOperator")
         val process = ProcessBuilder(
@@ -84,9 +90,10 @@ object CompileUtil {
             "-Dagent-lib.trace-dir=${traceDir.toAbsolutePath()}",
             "-Dagent.include-package=com/agenttest/[a-zA-Z0-9/]*",
             "-Dagent.exclude-package=",
-            *debugList.toTypedArray(),
-            "-javaagent:$jacocoJar=$jacocoArgs",
             "-javaagent:${System.getProperty("agent.jar")}",
+            // Run debug/JaCoCo after the agent, otherwise it will instrument their instrumentation
+            *debugList.toTypedArray(),
+            *jacocoList.toTypedArray(),
             "-jar",
             jarFile.absolutePath
         ).inheritIO().start() // Inherit IO or else the JVM will hang on Windows

@@ -23,12 +23,15 @@ import org.objectweb.asm.Opcodes.ASTORE
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.IINC
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
+import org.objectweb.asm.Opcodes.PUTFIELD
+import org.objectweb.asm.Opcodes.PUTSTATIC
 import org.objectweb.asm.Type
 
 internal class MethodAdapterUtil {
@@ -177,6 +180,9 @@ internal class MethodAdapterUtil {
     /**
      * Visits a var insn. If it is a *STORE insn, then that store is recorded.
      *
+     * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
+     * this method loads onto the stack is removed by the end of its bytecode.
+     *
      * @param methodVisitor The method visitor to delegate to.
      * @param className The name of the class the store is in.
      * @param lineNumber The line number of the store.
@@ -199,7 +205,13 @@ internal class MethodAdapterUtil {
 
                 visitVarInsn(opcode, index)
 
-                recordStore(locals, index, opcode, className, lineNumber)
+                val localVariable = getLocalVariable(locals, index, opcode)
+                recordStore(
+                    className,
+                    lineNumber,
+                    localVariable.name,
+                    localVariable.adaptedDescriptor
+                )
             }
 
             else -> methodVisitor.visitVarInsn(opcode, index)
@@ -207,7 +219,10 @@ internal class MethodAdapterUtil {
     }
 
     /**
-     * Visits an IINC insn to record it.
+     * Visits an [IINC] insn to record it.
+     *
+     * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
+     * this method loads onto the stack is removed by the end of its bytecode.
      *
      * @param visitor The method visitor to delegate to.
      * @param className The name of the class the store is in.
@@ -225,11 +240,11 @@ internal class MethodAdapterUtil {
         increment: Int,
         locals: List<LocalVariable>?
     ) {
-        val descriptor = locals?.firstOrNull { it.index == index }?.descriptor
-        check(descriptor == "I") {
+        val localVariable = getLocalVariable(locals, index, IINC)
+        check(localVariable.descriptor == "I") {
             """
             The local being incremented was not an int! What is being incremented?
-            descriptor=$descriptor
+            localVariable=$localVariable
             """.trimIndent()
         }
 
@@ -238,44 +253,107 @@ internal class MethodAdapterUtil {
 
             visitVarInsn(ILOAD, index)
 
-            // Pretend like it was an ISTORE
-            recordStore(locals, index, ISTORE, className, lineNumber)
+            recordStore(className, lineNumber, localVariable.name, localVariable.adaptedDescriptor)
         }
     }
 
-    private fun MethodVisitor.recordStore(
-        locals: List<LocalVariable>?,
-        index: Int,
-        opcode: Int,
+    /**
+     * Visits a [PUTFIELD] or [PUTSTATIC] insn to record it.
+     *
+     * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
+     * this method loads onto the stack is removed by the end of its bytecode.
+     *
+     * @param visitor The method visitor to delegate to.
+     * @param className The name of the class the store is in.
+     * @param lineNumber The line number of the store.
+     * @param opcode Either [PUTFIELD] or [PUTSTATIC].
+     * @param fieldOwnerClass The class that owns the field.
+     * @param fieldName The name of the field.
+     * @param fieldDescriptor The field's type descriptor.
+     */
+    fun visitFieldInsn(
+        visitor: MethodVisitor,
         className: String,
-        lineNumber: Int
+        lineNumber: Int,
+        opcode: Int,
+        fieldOwnerClass: String,
+        fieldName: String,
+        fieldDescriptor: String
     ) {
-        val localDescriptor = getLocalDescriptor(locals, index, opcode)
+        when (opcode) {
+            PUTFIELD, PUTSTATIC -> {
+                with(visitor) {
+                    visitInsn(OpcodeUtil.getDupOpcode(opcode, fieldDescriptor))
 
+                    visitFieldInsn(opcode, fieldOwnerClass, fieldName, fieldDescriptor)
+
+                    recordStore(
+                        className,
+                        lineNumber,
+                        generateFullyQualifiedFieldVariableName(fieldOwnerClass, fieldName),
+                        // The descriptor is automatically adapted for local variables, so we need
+                        // to adapt it manually here.
+                        TypeUtil.getAdaptedDescriptor(Type.getType(fieldDescriptor))
+                    )
+                }
+            }
+
+            else -> throw UnsupportedOperationException(
+                "Cannot visit opcode $opcode using visitFieldInsn."
+            )
+        }
+    }
+
+    /**
+     * Records any type of store.
+     *
+     * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
+     * this method loads onto the stack is removed by the end of its bytecode.
+     *
+     * @param className The class the store is written in.
+     * @param lineNumber The line number in the [className] that the store happens on.
+     * @param name The name of the variable being stored into.
+     * @param descriptor The type descriptor of the variable. This needs to be the "adapted"
+     * descriptor.
+     */
+    private fun MethodVisitor.recordStore(
+        className: String,
+        lineNumber: Int,
+        name: String,
+        descriptor: String
+    ) {
         visitLdcInsn(className)
         visitLdcInsn(lineNumber)
+        visitLdcInsn(name)
         visitMethodInsn(
             INVOKESTATIC,
             agentLibClassName,
             "store",
-            "(${localDescriptor}Ljava/lang/String;I)V",
+            "(${descriptor}Ljava/lang/String;ILjava/lang/String;)V",
             false
         )
     }
 
-    private fun getLocalDescriptor(locals: List<LocalVariable>?, index: Int, opcode: Int) =
+    /**
+     * Gets the [LocalVariable] with a matching [index]. Creates a "best guess" [LocalVariable] if
+     * there are none.
+     *
+     * @param locals The local variables recorded earlier in the pipeline.
+     * @param index The index of the local variable from the bytecode.
+     * @param opcode The *STORE (or similar) opcode.
+     */
+    private fun getLocalVariable(locals: List<LocalVariable>?, index: Int, opcode: Int) =
         if (locals != null) {
-            // Locals were gathered earlier, so we can use them for more information, except if
-            // the local is a type of object. All objects should use the same object descriptor.
-            if (opcode == ASTORE) {
-                // So, if we have an object, just return the object descriptor.
-                OpcodeUtil.getStoreDescriptor(opcode)
-            } else {
-                locals.first { it.index == index }.descriptor
-            }
+            locals.first { it.index == index }
         } else {
             // No locals, so make a best guess using the opcode.
-            OpcodeUtil.getStoreDescriptor(opcode)
+            val descriptor = OpcodeUtil.getStoreDescriptor(opcode)
+            LocalVariable(
+                name = "UNKNOWN",
+                descriptor = descriptor,
+                adaptedDescriptor = descriptor, // getStoreDescriptor is already "adapted"
+                index = index
+            )
         }
 
     companion object {
@@ -296,5 +374,10 @@ internal class MethodAdapterUtil {
             val className = currentClassName.substring(indexOfLastSeparator)
             return packagePrefix.replace('/', '.') + className
         }
+
+        internal fun generateFullyQualifiedFieldVariableName(
+            fieldOwnerClass: String,
+            fieldName: String
+        ) = "${convertPathTypeToPackageType(fieldOwnerClass)}.$fieldName"
     }
 }

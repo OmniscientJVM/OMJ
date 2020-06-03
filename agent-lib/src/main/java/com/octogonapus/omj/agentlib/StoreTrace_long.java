@@ -24,19 +24,25 @@ public class StoreTrace_long implements Trace {
   private final long index;
   private final String className;
   private final int lineNumber;
+  private final String variableName;
   private final long value;
 
   public StoreTrace_long(
-      final long index, final String className, final int lineNumber, final long value) {
+      final long index,
+      final String className,
+      final int lineNumber,
+      final String variableName,
+      final long value) {
     this.index = index;
     this.className = className;
     this.lineNumber = lineNumber;
+    this.variableName = variableName;
     this.value = value;
   }
 
   @Override
   public void serialize(final OutputStream outputStream) throws IOException {
-    TraceUtil.writeStoreTraceHeader(outputStream, className, index, lineNumber);
+    TraceUtil.writeStoreTraceHeader(outputStream, className, index, lineNumber, variableName);
     outputStream.write('J');
     TraceUtil.write8Bytes(outputStream, value);
   }

@@ -32,10 +32,10 @@ class TraceCell : ListCell<Trace?>() {
         } else {
             when (item) {
                 is StoreTrace -> {
-                    val (index, callerClass, callerLine, typeValuePair) = item
+                    val (index, callerClass, callerLine, variableName, typeValuePair) = item
                     val (type, value) = typeValuePair
 
-                    text = "$index $callerClass:$callerLine STORE $type: $value"
+                    text = "$index $callerClass:$callerLine $variableName:$type=$value"
                 }
 
                 is MethodTrace -> {
