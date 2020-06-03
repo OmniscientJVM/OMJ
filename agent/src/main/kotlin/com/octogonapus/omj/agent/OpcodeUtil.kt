@@ -20,6 +20,8 @@ import org.objectweb.asm.Opcodes.ASTORE
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.DUP2
+import org.objectweb.asm.Opcodes.DUP2_X1
+import org.objectweb.asm.Opcodes.DUP_X1
 import org.objectweb.asm.Opcodes.FSTORE
 import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LSTORE
@@ -44,16 +46,23 @@ object OpcodeUtil {
     }
 
     /**
-     * Picks a [DUP] or [DUP2] opcode for a [PUTFIELD] or [PUTSTATIC] opcode.
+     * Picks a dup opcode for a [PUTFIELD] or [PUTSTATIC] opcode.
      *
      * @return The corresponding [DUP] or [DUP2] opcode based on the store [opcode] and
      * [fieldDescriptor].
      */
     fun getDupOpcode(opcode: Int, fieldDescriptor: String): Int {
         check(opcode == PUTFIELD || opcode == PUTSTATIC)
-        return when (fieldDescriptor) {
-            "I", "F", "L" -> DUP
-            "J", "D" -> DUP2
+
+        // Simplify the descriptor because references and arrays are just size L
+        val adaptedDescriptor = when {
+            fieldDescriptor.startsWith('L') || fieldDescriptor.startsWith('[') -> "L"
+            else -> fieldDescriptor
+        }
+
+        return when (adaptedDescriptor) {
+            "B", "C", "I", "F", "L", "S", "Z" -> DUP_X1
+            "J", "D" -> DUP2_X1
             else -> throw UnsupportedOperationException("Unknown field descriptor $fieldDescriptor")
         }
     }

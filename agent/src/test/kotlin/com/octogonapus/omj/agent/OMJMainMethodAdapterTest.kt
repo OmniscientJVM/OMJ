@@ -240,15 +240,15 @@ internal class OMJMainMethodAdapterTest : KoinTestFixture() {
             }
         }
 
-        @Test
-        fun `visit put field`() {
+        @ParameterizedTest
+        @ValueSource(ints = [Opcodes.PUTFIELD, Opcodes.PUTSTATIC])
+        fun `visit puts`(opcode: Int) {
             val (methodAdapter, superVisitor, methodAdapterUtil, _) = getMethodAdapter()
 
             // Visit a line number before the store to simulate a class file with debug info
             methodAdapter.visitLineNumber(lineNumber, Label())
 
-            // Visit the PUTFIELD
-            methodAdapter.visitFieldInsn(Opcodes.PUTFIELD, fieldOwner, fieldName, fieldDescriptor)
+            methodAdapter.visitFieldInsn(opcode, fieldOwner, fieldName, fieldDescriptor)
 
             verifySequence {
                 // Emit the line number
@@ -258,11 +258,30 @@ internal class OMJMainMethodAdapterTest : KoinTestFixture() {
                     superVisitor,
                     className,
                     lineNumber,
-                    Opcodes.PUTFIELD,
+                    opcode,
                     fieldOwner,
                     fieldName,
                     fieldDescriptor
                 )
+            }
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = [Opcodes.GETFIELD, Opcodes.GETSTATIC])
+        fun `visit gets`(opcode: Int) {
+            val (methodAdapter, superVisitor, _, _) = getMethodAdapter()
+
+            // Visit a line number before the store to simulate a class file with debug info
+            methodAdapter.visitLineNumber(lineNumber, Label())
+
+            methodAdapter.visitFieldInsn(opcode, fieldOwner, fieldName, fieldDescriptor)
+
+            verifySequence {
+                // Emit the line number
+                superVisitor.visitLineNumber(lineNumber, any())
+
+                // Nothing else to do so just emit the get insn
+                superVisitor.visitFieldInsn(opcode, fieldOwner, fieldName, fieldDescriptor)
             }
         }
     }

@@ -206,7 +206,12 @@ internal class MethodAdapterUtil {
                 visitVarInsn(opcode, index)
 
                 val localVariable = getLocalVariable(locals, index, opcode)
-                recordStore(className, lineNumber, localVariable.name, localVariable.descriptor)
+                recordStore(
+                    className,
+                    lineNumber,
+                    localVariable.name,
+                    localVariable.adaptedDescriptor
+                )
             }
 
             else -> methodVisitor.visitVarInsn(opcode, index)
@@ -248,7 +253,7 @@ internal class MethodAdapterUtil {
 
             visitVarInsn(ILOAD, index)
 
-            recordStore(className, lineNumber, localVariable.name, localVariable.descriptor)
+            recordStore(className, lineNumber, localVariable.name, localVariable.adaptedDescriptor)
         }
     }
 
@@ -286,7 +291,9 @@ internal class MethodAdapterUtil {
                         className,
                         lineNumber,
                         generateFullyQualifiedFieldVariableName(fieldOwnerClass, fieldName),
-                        fieldDescriptor
+                        // The descriptor is automatically adapted for local variables, so we need
+                        // to adapt it manually here.
+                        TypeUtil.getAdaptedDescriptor(Type.getType(fieldDescriptor))
                     )
                 }
             }
@@ -306,7 +313,8 @@ internal class MethodAdapterUtil {
      * @param className The class the store is written in.
      * @param lineNumber The line number in the [className] that the store happens on.
      * @param name The name of the variable being stored into.
-     * @param descriptor The type descriptor of the variable.
+     * @param descriptor The type descriptor of the variable. This needs to be the "adapted"
+     * descriptor.
      */
     private fun MethodVisitor.recordStore(
         className: String,
@@ -336,21 +344,14 @@ internal class MethodAdapterUtil {
      */
     private fun getLocalVariable(locals: List<LocalVariable>?, index: Int, opcode: Int) =
         if (locals != null) {
-            val localVariable = locals.first { it.index == index }
-
-            // Locals were gathered earlier, so we can use them for more information, except if
-            // the local is a type of object. All objects should use the same object descriptor.
-            if (opcode == ASTORE) {
-                // So, if we have an object, enforce the object descriptor.
-                localVariable.copy(descriptor = OpcodeUtil.getStoreDescriptor(opcode))
-            } else {
-                localVariable
-            }
+            locals.first { it.index == index }
         } else {
             // No locals, so make a best guess using the opcode.
+            val descriptor = OpcodeUtil.getStoreDescriptor(opcode)
             LocalVariable(
                 name = "UNKNOWN",
-                descriptor = OpcodeUtil.getStoreDescriptor(opcode),
+                descriptor = descriptor,
+                adaptedDescriptor = descriptor, // getStoreDescriptor is already "adapted"
                 index = index
             )
         }
@@ -377,6 +378,6 @@ internal class MethodAdapterUtil {
         internal fun generateFullyQualifiedFieldVariableName(
             fieldOwnerClass: String,
             fieldName: String
-        ) = "$fieldOwnerClass.$fieldName"
+        ) = "${convertPathTypeToPackageType(fieldOwnerClass)}.$fieldName"
     }
 }

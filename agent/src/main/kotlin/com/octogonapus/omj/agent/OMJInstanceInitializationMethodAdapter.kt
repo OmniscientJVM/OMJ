@@ -24,6 +24,10 @@ import org.koin.core.qualifier.named
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.GETFIELD
+import org.objectweb.asm.Opcodes.GETSTATIC
+import org.objectweb.asm.Opcodes.PUTFIELD
+import org.objectweb.asm.Opcodes.PUTSTATIC
 
 internal class OMJInstanceInitializationMethodAdapter(
     api: Int,
@@ -109,15 +113,19 @@ internal class OMJInstanceInitializationMethodAdapter(
     }
 
     override fun visitFieldInsn(opcode: Int, owner: String, name: String, descriptor: String) {
-        methodAdapterUtil.visitFieldInsn(
-            superVisitor,
-            fullyQualifiedClassName,
-            currentLineNumber,
-            opcode,
-            owner,
-            name,
-            descriptor
-        )
+        when (opcode) {
+            PUTFIELD, PUTSTATIC -> methodAdapterUtil.visitFieldInsn(
+                superVisitor,
+                fullyQualifiedClassName,
+                currentLineNumber,
+                opcode,
+                owner,
+                name,
+                descriptor
+            )
+
+            GETFIELD, GETSTATIC -> super.visitFieldInsn(opcode, owner, name, descriptor)
+        }
     }
 
     override fun visitLineNumber(line: Int, start: Label) {

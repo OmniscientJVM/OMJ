@@ -36,7 +36,7 @@ internal class LocalVariableMethodVisitorTest {
             1
         )
 
-        visitor.locals.shouldContainExactly(LocalVariable("i", "I", 1))
+        visitor.locals.shouldContainExactly(LocalVariable("i", "I", "I", 1))
     }
 
     @Test
@@ -52,7 +52,7 @@ internal class LocalVariableMethodVisitorTest {
             1
         )
 
-        visitor.locals.shouldContainExactly(LocalVariable("d", "D", 1))
+        visitor.locals.shouldContainExactly(LocalVariable("d", "D", "D", 1))
     }
 
     @Test
@@ -77,6 +77,27 @@ internal class LocalVariableMethodVisitorTest {
             3 // 3 instead of 2 because doubles take up two slots
         )
 
-        visitor.locals.shouldContainExactly(LocalVariable("d", "D", 1), LocalVariable("i", "I", 3))
+        visitor.locals.shouldContainExactly(
+            LocalVariable("d", "D", "D", 1),
+            LocalVariable("i", "I", "I", 3)
+        )
+    }
+
+    @Test
+    fun `visit string`() {
+        val visitor = LocalVariableMethodVisitor(ASM8, null)
+
+        visitor.visitLocalVariable(
+            "myString",
+            "Ljava/lang/String;",
+            null,
+            mockk(),
+            mockk(),
+            1
+        )
+
+        visitor.locals.shouldContainExactly(
+            LocalVariable("myString", "Ljava/lang/String;", "Ljava/lang/Object;", 1)
+        )
     }
 }

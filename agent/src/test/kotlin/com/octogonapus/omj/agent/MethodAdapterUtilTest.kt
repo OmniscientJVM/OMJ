@@ -26,10 +26,13 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ALOAD
+import org.objectweb.asm.Opcodes.ASTORE
 import org.objectweb.asm.Opcodes.DLOAD
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.DUP2
+import org.objectweb.asm.Opcodes.DUP2_X1
+import org.objectweb.asm.Opcodes.DUP_X1
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
@@ -47,8 +50,9 @@ internal class MethodAdapterUtilTest {
         private const val className = "ClassName"
         private const val methodName = "methodName"
         private const val dynamicClassName = "DynamicClassName"
-        private const val fieldOwnerClass = "ownerClass"
+        private const val fieldOwnerClass = "com/ownerClass"
         private const val fieldName = "fieldName"
+        private const val qualifiedFieldName = "com.ownerClass.fieldName"
     }
 
     @Nested
@@ -204,7 +208,7 @@ internal class MethodAdapterUtilTest {
                 lineNumber,
                 ISTORE,
                 1,
-                listOf(LocalVariable("i", "I", 1))
+                listOf(LocalVariable("i", "I", "I", 1))
             )
 
             verifySequence {
@@ -243,7 +247,7 @@ internal class MethodAdapterUtilTest {
                 lineNumber,
                 ISTORE,
                 1,
-                listOf(LocalVariable("b", "B", 1)) // byte at index 1
+                listOf(LocalVariable("b", "B", "B", 1)) // byte at index 1
             )
 
             verifySequence {
@@ -283,7 +287,7 @@ internal class MethodAdapterUtilTest {
                 lineNumber,
                 LSTORE,
                 1,
-                listOf(LocalVariable("l", "J", 1))
+                listOf(LocalVariable("l", "J", "J", 1))
             )
 
             verifySequence {
@@ -314,6 +318,45 @@ internal class MethodAdapterUtilTest {
         }
 
         @Test
+        fun `visit string store`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            MethodAdapterUtil().visitVarInsn(
+                visitor,
+                className,
+                lineNumber,
+                ASTORE,
+                1,
+                listOf(LocalVariable("myString", "Ljava/lang/String;", "Ljava/lang/Object;", 1))
+            )
+
+            verifySequence {
+                // Save what will be stored
+                visitor.visitInsn(DUP)
+
+                // Store it
+                visitor.visitVarInsn(ASTORE, 1)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Variable name
+                visitor.visitLdcInsn("myString")
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(Ljava/lang/Object;Ljava/lang/String;ILjava/lang/String;)V",
+                    false
+                )
+            }
+        }
+
+        @Test
         fun `visit aload`() {
             val visitor = mockk<MethodVisitor>(relaxed = true)
             MethodAdapterUtil().visitVarInsn(
@@ -337,8 +380,8 @@ internal class MethodAdapterUtilTest {
             val visitor = mockk<MethodVisitor>(relaxed = true)
             val util = MethodAdapterUtil()
             val locals = listOf(
-                LocalVariable("d", "D", 1),
-                LocalVariable("i", "I", 3) // 3 instead of 2 because doubles take up two slots
+                LocalVariable("d", "D", "D", 1),
+                LocalVariable("i", "I", "I", 3) // 3 instead of 2 because doubles take up two slots
             )
 
             util.visitVarInsn(
@@ -423,7 +466,7 @@ internal class MethodAdapterUtilTest {
         fun `visit iinc`() {
             val visitor = mockk<MethodVisitor>(relaxed = true)
             val util = MethodAdapterUtil()
-            val locals = listOf(LocalVariable("i", "I", 1))
+            val locals = listOf(LocalVariable("i", "I", "I", 1))
 
             util.visitIincInsn(
                 visitor = visitor,
@@ -466,7 +509,7 @@ internal class MethodAdapterUtilTest {
         fun `visit iinc with a byte`() {
             val visitor = mockk<MethodVisitor>(relaxed = true)
             val util = MethodAdapterUtil()
-            val locals = listOf(LocalVariable("b", "B", 1))
+            val locals = listOf(LocalVariable("b", "B", "B", 1))
 
             // IINC into a byte (or anything else that isn't an int) should never be emitted
             shouldThrow<IllegalStateException> {
@@ -497,8 +540,8 @@ internal class MethodAdapterUtilTest {
             )
 
             verifySequence {
-                // Dup what is on the stack
-                visitor.visitInsn(DUP)
+                // Dup what is on the stack and put it below both values for PUTFIELD
+                visitor.visitInsn(DUP_X1)
 
                 // Do the put field
                 visitor.visitFieldInsn(PUTFIELD, fieldOwnerClass, fieldName, "I")
@@ -510,12 +553,7 @@ internal class MethodAdapterUtilTest {
                 visitor.visitLdcInsn(lineNumber)
 
                 // Variable name
-                visitor.visitLdcInsn(
-                    MethodAdapterUtil.generateFullyQualifiedFieldVariableName(
-                        fieldOwnerClass,
-                        fieldName
-                    )
-                )
+                visitor.visitLdcInsn(qualifiedFieldName)
 
                 // Record the store
                 visitor.visitMethodInsn(
@@ -544,8 +582,8 @@ internal class MethodAdapterUtilTest {
             )
 
             verifySequence {
-                // Dup what is on the stack
-                visitor.visitInsn(DUP2)
+                // Dup what is on the stack and put it below both values for PUTFIELD
+                visitor.visitInsn(DUP2_X1)
 
                 // Do the put field
                 visitor.visitFieldInsn(PUTFIELD, fieldOwnerClass, fieldName, "J")
@@ -557,12 +595,7 @@ internal class MethodAdapterUtilTest {
                 visitor.visitLdcInsn(lineNumber)
 
                 // Variable name
-                visitor.visitLdcInsn(
-                    MethodAdapterUtil.generateFullyQualifiedFieldVariableName(
-                        fieldOwnerClass,
-                        fieldName
-                    )
-                )
+                visitor.visitLdcInsn(qualifiedFieldName)
 
                 // Record the store
                 visitor.visitMethodInsn(
@@ -591,8 +624,8 @@ internal class MethodAdapterUtilTest {
             )
 
             verifySequence {
-                // Dup what is on the stack
-                visitor.visitInsn(DUP)
+                // Dup what is on the stack and put it below both values for PUTSTATIC
+                visitor.visitInsn(DUP_X1)
 
                 // Do the put field
                 visitor.visitFieldInsn(PUTSTATIC, fieldOwnerClass, fieldName, "I")
@@ -604,12 +637,7 @@ internal class MethodAdapterUtilTest {
                 visitor.visitLdcInsn(lineNumber)
 
                 // Variable name
-                visitor.visitLdcInsn(
-                    MethodAdapterUtil.generateFullyQualifiedFieldVariableName(
-                        fieldOwnerClass,
-                        fieldName
-                    )
-                )
+                visitor.visitLdcInsn(qualifiedFieldName)
 
                 // Record the store
                 visitor.visitMethodInsn(
@@ -638,8 +666,8 @@ internal class MethodAdapterUtilTest {
             )
 
             verifySequence {
-                // Dup what is on the stack
-                visitor.visitInsn(DUP2)
+                // Dup what is on the stack and put it below both values for PUTSTATIC
+                visitor.visitInsn(DUP2_X1)
 
                 // Do the put field
                 visitor.visitFieldInsn(PUTSTATIC, fieldOwnerClass, fieldName, "J")
@@ -651,12 +679,7 @@ internal class MethodAdapterUtilTest {
                 visitor.visitLdcInsn(lineNumber)
 
                 // Variable name
-                visitor.visitLdcInsn(
-                    MethodAdapterUtil.generateFullyQualifiedFieldVariableName(
-                        fieldOwnerClass,
-                        fieldName
-                    )
-                )
+                visitor.visitLdcInsn(qualifiedFieldName)
 
                 // Record the store
                 visitor.visitMethodInsn(
@@ -664,6 +687,49 @@ internal class MethodAdapterUtilTest {
                     agentLibClassName,
                     "store",
                     "(JLjava/lang/String;ILjava/lang/String;)V",
+                    false
+                )
+            }
+        }
+
+        @Test
+        fun `visit put string field`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            val util = MethodAdapterUtil()
+            val fieldDescriptor = "Ljava/lang/String;"
+
+            util.visitFieldInsn(
+                visitor,
+                className,
+                lineNumber,
+                PUTFIELD,
+                fieldOwnerClass,
+                fieldName,
+                fieldDescriptor
+            )
+
+            verifySequence {
+                // Dup what is on the stack and put it below both values for PUTFIELD
+                visitor.visitInsn(DUP_X1)
+
+                // Do the put field
+                visitor.visitFieldInsn(PUTFIELD, fieldOwnerClass, fieldName, fieldDescriptor)
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Variable name
+                visitor.visitLdcInsn(qualifiedFieldName)
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(Ljava/lang/Object;Ljava/lang/String;ILjava/lang/String;)V",
                     false
                 )
             }

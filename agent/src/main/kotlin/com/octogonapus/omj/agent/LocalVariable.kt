@@ -19,5 +19,6 @@ package com.octogonapus.omj.agent
 internal data class LocalVariable(
     val name: String,
     val descriptor: String,
+    val adaptedDescriptor: String,
     val index: Int
 )
