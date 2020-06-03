@@ -625,7 +625,7 @@ internal class MethodAdapterUtilTest {
 
             verifySequence {
                 // Dup what is on the stack and put it below both values for PUTSTATIC
-                visitor.visitInsn(DUP_X1)
+                visitor.visitInsn(DUP)
 
                 // Do the put field
                 visitor.visitFieldInsn(PUTSTATIC, fieldOwnerClass, fieldName, "I")
@@ -667,7 +667,7 @@ internal class MethodAdapterUtilTest {
 
             verifySequence {
                 // Dup what is on the stack and put it below both values for PUTSTATIC
-                visitor.visitInsn(DUP2_X1)
+                visitor.visitInsn(DUP2)
 
                 // Do the put field
                 visitor.visitFieldInsn(PUTSTATIC, fieldOwnerClass, fieldName, "J")
