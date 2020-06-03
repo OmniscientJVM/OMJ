@@ -61,8 +61,18 @@ object OpcodeUtil {
         }
 
         return when (adaptedDescriptor) {
-            "B", "C", "I", "F", "L", "S", "Z" -> DUP_X1
-            "J", "D" -> DUP2_X1
+            "B", "C", "I", "F", "L", "S", "Z" -> when (opcode) {
+                PUTFIELD -> DUP_X1
+                PUTSTATIC -> DUP
+                else -> error("Illegal opcode: $opcode")
+            }
+
+            "J", "D" -> when (opcode) {
+                PUTFIELD -> DUP2_X1
+                PUTSTATIC -> DUP2
+                else -> error("Illegal opcode: $opcode")
+            }
+
             else -> throw UnsupportedOperationException("Unknown field descriptor $fieldDescriptor")
         }
     }

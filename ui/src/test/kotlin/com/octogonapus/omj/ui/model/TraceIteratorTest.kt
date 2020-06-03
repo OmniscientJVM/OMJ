@@ -630,6 +630,150 @@ internal class TraceIteratorTest {
         }
     }
 
+    @Nested
+    inner class PutStaticFieldTraceTests {
+
+        @Test
+        fun `test put boolean`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_putBooleanStaticField.jar")
+
+            traces.shouldExist {
+                it.storeVar(
+                    "com.agenttest.putBooleanStaticField.Main",
+                    "boolean",
+                    "com.agenttest.putBooleanStaticField.Main.b",
+                    "true"
+                )
+            }
+        }
+
+        @Test
+        fun `test put byte`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_putByteStaticField.jar")
+
+            traces.shouldExist {
+                it.storeVar(
+                    "com.agenttest.putByteStaticField.Main",
+                    "byte",
+                    "com.agenttest.putByteStaticField.Main.b",
+                    "250"
+                )
+            }
+        }
+
+        @Test
+        fun `test put char`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_putCharStaticField.jar")
+
+            traces.shouldExist {
+                it.storeVar(
+                    "com.agenttest.putCharStaticField.Main",
+                    "char",
+                    "com.agenttest.putCharStaticField.Main.c",
+                    "Q"
+                )
+            }
+        }
+
+        @Test
+        fun `test put double`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_putDoubleStaticField.jar")
+
+            traces.shouldExist {
+                it.storeVar(
+                    "com.agenttest.putDoubleStaticField.Main",
+                    "double",
+                    "com.agenttest.putDoubleStaticField.Main.d",
+                    "4.2"
+                )
+            }
+        }
+
+        @Test
+        fun `test put float`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_putFloatStaticField.jar")
+
+            traces.shouldExist {
+                it.storeVar(
+                    "com.agenttest.putFloatStaticField.Main",
+                    "float",
+                    "com.agenttest.putFloatStaticField.Main.f",
+                    "2.3"
+                )
+            }
+        }
+
+        @Test
+        fun `test put int`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_putIntStaticField.jar")
+
+            traces.shouldExist {
+                it.storeVar(
+                    "com.agenttest.putIntStaticField.Main",
+                    "int",
+                    "com.agenttest.putIntStaticField.Main.i",
+                    "7"
+                )
+            }
+        }
+
+        @Test
+        fun `test put long`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_putLongStaticField.jar")
+
+            traces.shouldExist {
+                it.storeVar(
+                    "com.agenttest.putLongStaticField.Main",
+                    "long",
+                    "com.agenttest.putLongStaticField.Main.l",
+                    "123456789123456789"
+                )
+            }
+        }
+
+        @Test
+        fun `test put object`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_putObjectStaticField.jar")
+
+            traces.shouldExist {
+                it.storeVar(
+                    "com.agenttest.putObjectStaticField.Main",
+                    "java.lang.Object",
+                    "com.agenttest.putObjectStaticField.Main.o",
+                    null
+                )
+            }
+        }
+
+        @Test
+        fun `test put short`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_putShortStaticField.jar")
+
+            traces.shouldExist {
+                it.storeVar(
+                    "com.agenttest.putShortStaticField.Main",
+                    "short",
+                    "com.agenttest.putShortStaticField.Main.s",
+                    "12345"
+                )
+            }
+        }
+
+        @Test
+        fun `test put string`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_putStringStaticField.jar")
+
+            traces.shouldExist {
+                it.storeVar(
+                    "com.agenttest.putStringStaticField.Main",
+                    "java.lang.String",
+                    "com.agenttest.putStringStaticField.Main.s",
+                    "Hello"
+                )
+            }
+        }
+    }
+
     @Test
     fun `read past end of trace`(@TempDir tempDir: File) {
         CompileUtil.checkForAgentTestErrors(
