@@ -200,7 +200,7 @@ internal class MethodAdapterUtilTest {
                 lineNumber,
                 ISTORE,
                 1,
-                null
+                listOf(LocalVariable("i", "I", 1))
             )
 
             verifySequence {
@@ -216,12 +216,15 @@ internal class MethodAdapterUtilTest {
                 // Line number
                 visitor.visitLdcInsn(lineNumber)
 
+                // Variable name
+                visitor.visitLdcInsn("i")
+
                 // Record the store
                 visitor.visitMethodInsn(
                     INVOKESTATIC,
                     agentLibClassName,
                     "store",
-                    "(ILjava/lang/String;I)V",
+                    "(ILjava/lang/String;ILjava/lang/String;)V",
                     false
                 )
             }
@@ -252,12 +255,16 @@ internal class MethodAdapterUtilTest {
                 // Line number
                 visitor.visitLdcInsn(lineNumber)
 
+                // Variable name
+                visitor.visitLdcInsn("b")
+
                 // Record the store
                 visitor.visitMethodInsn(
                     INVOKESTATIC,
                     agentLibClassName,
                     "store",
-                    "(BLjava/lang/String;I)V", // Should have pulled the descriptor from the locals
+                    // Should have pulled the descriptor from the locals
+                    "(BLjava/lang/String;ILjava/lang/String;)V",
                     false
                 )
             }
@@ -272,7 +279,7 @@ internal class MethodAdapterUtilTest {
                 lineNumber,
                 LSTORE,
                 1,
-                null
+                listOf(LocalVariable("l", "J", 1))
             )
 
             verifySequence {
@@ -288,12 +295,15 @@ internal class MethodAdapterUtilTest {
                 // Line number
                 visitor.visitLdcInsn(lineNumber)
 
+                // Variable name
+                visitor.visitLdcInsn("l")
+
                 // Record the store
                 visitor.visitMethodInsn(
                     INVOKESTATIC,
                     agentLibClassName,
                     "store",
-                    "(JLjava/lang/String;I)V",
+                    "(JLjava/lang/String;ILjava/lang/String;)V",
                     false
                 )
             }
@@ -362,12 +372,15 @@ internal class MethodAdapterUtilTest {
                 // Line number
                 visitor.visitLdcInsn(lineNumber)
 
+                // Variable name
+                visitor.visitLdcInsn("d")
+
                 // Record the store
                 visitor.visitMethodInsn(
                     INVOKESTATIC,
                     agentLibClassName,
                     "store",
-                    "(DLjava/lang/String;I)V",
+                    "(DLjava/lang/String;ILjava/lang/String;)V",
                     false
                 )
 
@@ -387,12 +400,16 @@ internal class MethodAdapterUtilTest {
                 // Line number
                 visitor.visitLdcInsn(secondLineNumber)
 
+                // Variable name
+                visitor.visitLdcInsn("i")
+
                 // Record the store
                 visitor.visitMethodInsn(
                     INVOKESTATIC,
                     agentLibClassName,
                     "store",
-                    "(ILjava/lang/String;I)V", // Should have pulled the descriptor from the locals
+                    // Should have pulled the descriptor from the locals
+                    "(ILjava/lang/String;ILjava/lang/String;)V",
                     false
                 )
             }
@@ -427,12 +444,15 @@ internal class MethodAdapterUtilTest {
                 // Line number
                 visitor.visitLdcInsn(lineNumber)
 
+                // Variable name
+                visitor.visitLdcInsn("i")
+
                 // Record the store
                 visitor.visitMethodInsn(
                     INVOKESTATIC,
                     agentLibClassName,
                     "store",
-                    "(ILjava/lang/String;I)V",
+                    "(ILjava/lang/String;ILjava/lang/String;)V",
                     false
                 )
             }

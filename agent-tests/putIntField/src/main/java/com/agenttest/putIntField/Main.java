@@ -14,12 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.octogonapus.omj.ui.model
+package com.agenttest.putIntField;
 
-data class StoreTrace(
-    val index: Long,
-    val callerClass: String,
-    val callerLine: Int,
-    val variableName: String,
-    val typeValuePair: TypeValuePair
-) : Trace
+public class Main {
+
+  int i;
+
+  public static void main(String[] args) {
+    Main main = new Main();
+    main.i = 7;
+  }
+}

@@ -25,16 +25,16 @@ public class TraceUtil {
       final OutputStream outputStream,
       final String className,
       final long index,
-      final int lineNumber)
+      final int lineNumber,
+      final String variableName)
       throws IOException {
     write8Bytes(outputStream, index);
 
     outputStream.write(0x1);
 
-    outputStream.write(className.getBytes());
-    outputStream.write(0);
-
+    writeNullTerminatedString(outputStream, className);
     write4Bytes(outputStream, lineNumber);
+    writeNullTerminatedString(outputStream, variableName);
   }
 
   static void write4Bytes(final OutputStream outputStream, final int lineNumber)
@@ -54,5 +54,11 @@ public class TraceUtil {
     outputStream.write((byte) ((index >> 40) & 0xFF));
     outputStream.write((byte) ((index >> 48) & 0xFF));
     outputStream.write((byte) ((index >> 56) & 0xFF));
+  }
+
+  public static void writeNullTerminatedString(final OutputStream outputStream, final String string)
+      throws IOException {
+    outputStream.write(string.getBytes());
+    outputStream.write(0);
   }
 }

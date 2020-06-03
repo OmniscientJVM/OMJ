@@ -23,6 +23,7 @@ import org.objectweb.asm.Opcodes.ASTORE
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.IINC
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
@@ -225,11 +226,11 @@ internal class MethodAdapterUtil {
         increment: Int,
         locals: List<LocalVariable>?
     ) {
-        val descriptor = locals?.firstOrNull { it.index == index }?.descriptor
-        check(descriptor == "I") {
+        val localVariable = getLocalVariable(locals, index, IINC)
+        check(localVariable.descriptor == "I") {
             """
             The local being incremented was not an int! What is being incremented?
-            descriptor=$descriptor
+            localVariable=$localVariable
             """.trimIndent()
         }
 
@@ -250,32 +251,39 @@ internal class MethodAdapterUtil {
         className: String,
         lineNumber: Int
     ) {
-        val localDescriptor = getLocalDescriptor(locals, index, opcode)
+        val localVariable = getLocalVariable(locals, index, opcode)
 
         visitLdcInsn(className)
         visitLdcInsn(lineNumber)
+        visitLdcInsn(localVariable.name)
         visitMethodInsn(
             INVOKESTATIC,
             agentLibClassName,
             "store",
-            "(${localDescriptor}Ljava/lang/String;I)V",
+            "(${localVariable.descriptor}Ljava/lang/String;ILjava/lang/String;)V",
             false
         )
     }
 
-    private fun getLocalDescriptor(locals: List<LocalVariable>?, index: Int, opcode: Int) =
+    private fun getLocalVariable(locals: List<LocalVariable>?, index: Int, opcode: Int) =
         if (locals != null) {
+            val localVariable = locals.first { it.index == index }
+
             // Locals were gathered earlier, so we can use them for more information, except if
             // the local is a type of object. All objects should use the same object descriptor.
             if (opcode == ASTORE) {
-                // So, if we have an object, just return the object descriptor.
-                OpcodeUtil.getStoreDescriptor(opcode)
+                // So, if we have an object, enforce the object descriptor.
+                localVariable.copy(descriptor = OpcodeUtil.getStoreDescriptor(opcode))
             } else {
-                locals.first { it.index == index }.descriptor
+                localVariable
             }
         } else {
             // No locals, so make a best guess using the opcode.
-            OpcodeUtil.getStoreDescriptor(opcode)
+            LocalVariable(
+                name = "UNKNOWN",
+                descriptor = OpcodeUtil.getStoreDescriptor(opcode),
+                index = index
+            )
         }
 
     companion object {

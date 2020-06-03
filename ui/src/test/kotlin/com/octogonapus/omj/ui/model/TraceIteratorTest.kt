@@ -371,7 +371,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeBoolean.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeBoolean.Main", "boolean", "true")
+                it.storeVar("com.agenttest.storeBoolean.Main", "boolean", "b", "true")
             }
         }
 
@@ -380,7 +380,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeByte.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeByte.Main", "byte", "250")
+                it.storeVar("com.agenttest.storeByte.Main", "byte", "b", "250")
             }
         }
 
@@ -389,7 +389,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeChar.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeChar.Main", "char", "Q")
+                it.storeVar("com.agenttest.storeChar.Main", "char", "c", "Q")
             }
         }
 
@@ -398,7 +398,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeDouble.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeDouble.Main", "double", "4.2")
+                it.storeVar("com.agenttest.storeDouble.Main", "double", "d", "4.2")
             }
         }
 
@@ -407,7 +407,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeFloat.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeFloat.Main", "float", "2.3")
+                it.storeVar("com.agenttest.storeFloat.Main", "float", "f", "2.3")
             }
         }
 
@@ -416,7 +416,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeInt.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeInt.Main", "int", "123456")
+                it.storeVar("com.agenttest.storeInt.Main", "int", "i", "123456")
             }
         }
 
@@ -425,7 +425,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeLong.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeLong.Main", "long", "123456789123456789")
+                it.storeVar("com.agenttest.storeLong.Main", "long", "l", "123456789123456789")
             }
         }
 
@@ -434,7 +434,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeRef.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeRef.Main", "java.lang.Object", null)
+                it.storeVar("com.agenttest.storeRef.Main", "java.lang.Object", "o", null)
             }
         }
 
@@ -443,7 +443,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeShort.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeShort.Main", "short", "12345")
+                it.storeVar("com.agenttest.storeShort.Main", "short", "s", "12345")
             }
         }
 
@@ -452,7 +452,7 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeString.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeString.Main", "java.lang.String", "My String")
+                it.storeVar("com.agenttest.storeString.Main", "java.lang.String", "s", "My String")
             }
         }
 
@@ -462,7 +462,7 @@ internal class TraceIteratorTest {
 
             traces.shouldExist {
                 // Started at 3 and was incremented to 4
-                it.storeVar("com.agenttest.storeIncrementInt.Main", "int", "4")
+                it.storeVar("com.agenttest.storeIncrementInt.Main", "int", "i", "4")
             }
         }
     }
@@ -475,8 +475,13 @@ internal class TraceIteratorTest {
             val traces = generateTraces(tempDir, "agent-test_storeTwoMethodParams.jar")
 
             traces.shouldExist {
-                it.storeVar("com.agenttest.storeTwoMethodParams.Main", "java.lang.String", "Second")
-                it.storeVar("com.agenttest.storeTwoMethodParams.Main", "int", "2")
+                it.storeVar(
+                    "com.agenttest.storeTwoMethodParams.Main",
+                    "java.lang.String",
+                    "s",
+                    "Second"
+                )
+                it.storeVar("com.agenttest.storeTwoMethodParams.Main", "int", "i", "2")
             }
         }
     }
@@ -589,12 +594,19 @@ internal class TraceIteratorTest {
          *
          * @param containingClass The class the store happens in.
          * @param varType The type of the variable the value was stored in.
+         * @param name The name of the variable.
          * @param value The value that was stored. Set to null if you don't care about the value.
          */
-        private fun Trace.storeVar(containingClass: String, varType: String, value: String?) =
+        private fun Trace.storeVar(
+            containingClass: String,
+            varType: String,
+            name: String,
+            value: String?
+        ) =
             this is StoreTrace &&
                 callerClass == containingClass &&
                 typeValuePair.type == varType &&
+                variableName == name &&
                 value?.let { typeValuePair.value == it } ?: true
 
         private fun MethodTrace.hasArguments(args: List<Pair<String, String?>>) =
