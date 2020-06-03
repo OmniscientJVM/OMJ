@@ -108,6 +108,18 @@ internal class OMJInstanceInitializationMethodAdapter(
         )
     }
 
+    override fun visitFieldInsn(opcode: Int, owner: String, name: String, descriptor: String) {
+        methodAdapterUtil.visitFieldInsn(
+            superVisitor,
+            fullyQualifiedClassName,
+            currentLineNumber,
+            opcode,
+            owner,
+            name,
+            descriptor
+        )
+    }
+
     override fun visitLineNumber(line: Int, start: Label) {
         super.visitLineNumber(line, start)
         currentLineNumber = line

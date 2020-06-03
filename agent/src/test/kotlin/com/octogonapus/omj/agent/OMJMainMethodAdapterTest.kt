@@ -32,6 +32,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ASM8
 import org.objectweb.asm.Opcodes.ASTORE
@@ -53,6 +54,9 @@ internal class OMJMainMethodAdapterTest : KoinTestFixture() {
         private const val anotherMethodName = "someMethod"
         private const val anotherMethodDescriptor = "(BZ)J"
         private const val lineNumber = 1294
+        private const val fieldOwner = "fieldOwnerClass"
+        private const val fieldName = "fieldName"
+        private const val fieldDescriptor = "fieldDesc"
     }
 
     @Nested
@@ -232,6 +236,32 @@ internal class OMJMainMethodAdapterTest : KoinTestFixture() {
                     index = 1,
                     increment = 2,
                     locals = null
+                )
+            }
+        }
+
+        @Test
+        fun `visit put field`() {
+            val (methodAdapter, superVisitor, methodAdapterUtil, _) = getMethodAdapter()
+
+            // Visit a line number before the store to simulate a class file with debug info
+            methodAdapter.visitLineNumber(lineNumber, Label())
+
+            // Visit the PUTFIELD
+            methodAdapter.visitFieldInsn(Opcodes.PUTFIELD, fieldOwner, fieldName, fieldDescriptor)
+
+            verifySequence {
+                // Emit the line number
+                superVisitor.visitLineNumber(lineNumber, any())
+
+                methodAdapterUtil.visitFieldInsn(
+                    superVisitor,
+                    className,
+                    lineNumber,
+                    Opcodes.PUTFIELD,
+                    fieldOwner,
+                    fieldName,
+                    fieldDescriptor
                 )
             }
         }
