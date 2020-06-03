@@ -23,10 +23,14 @@ import org.objectweb.asm.Opcodes.DUP2
 import org.objectweb.asm.Opcodes.FSTORE
 import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LSTORE
+import org.objectweb.asm.Opcodes.PUTFIELD
+import org.objectweb.asm.Opcodes.PUTSTATIC
 
 object OpcodeUtil {
 
     /**
+     * Picks a [DUP] or [DUP2] opcode for a *STORE opcode.
+     *
      * @return The corresponding [DUP] or [DUP2] opcode based on the store [opcode].
      */
     fun getDupOpcode(opcode: Int): Int {
@@ -36,6 +40,21 @@ object OpcodeUtil {
             else -> throw UnsupportedOperationException(
                 "Cannot get the DUP opcode for a non-store opcode: $opcode"
             )
+        }
+    }
+
+    /**
+     * Picks a [DUP] or [DUP2] opcode for a [PUTFIELD] or [PUTSTATIC] opcode.
+     *
+     * @return The corresponding [DUP] or [DUP2] opcode based on the store [opcode] and
+     * [fieldDescriptor].
+     */
+    fun getDupOpcode(opcode: Int, fieldDescriptor: String): Int {
+        check(opcode == PUTFIELD || opcode == PUTSTATIC)
+        return when (fieldDescriptor) {
+            "I", "F", "L" -> DUP
+            "J", "D" -> DUP2
+            else -> throw UnsupportedOperationException("Unknown field descriptor $fieldDescriptor")
         }
     }
 

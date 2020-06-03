@@ -30,6 +30,8 @@ import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
+import org.objectweb.asm.Opcodes.PUTFIELD
+import org.objectweb.asm.Opcodes.PUTSTATIC
 import org.objectweb.asm.Type
 
 internal class MethodAdapterUtil {
@@ -178,6 +180,9 @@ internal class MethodAdapterUtil {
     /**
      * Visits a var insn. If it is a *STORE insn, then that store is recorded.
      *
+     * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
+     * this method loads onto the stack is removed by the end of its bytecode.
+     *
      * @param methodVisitor The method visitor to delegate to.
      * @param className The name of the class the store is in.
      * @param lineNumber The line number of the store.
@@ -200,7 +205,8 @@ internal class MethodAdapterUtil {
 
                 visitVarInsn(opcode, index)
 
-                recordStore(locals, index, opcode, className, lineNumber)
+                val localVariable = getLocalVariable(locals, index, opcode)
+                recordStore(className, lineNumber, localVariable.name, localVariable.descriptor)
             }
 
             else -> methodVisitor.visitVarInsn(opcode, index)
@@ -208,7 +214,10 @@ internal class MethodAdapterUtil {
     }
 
     /**
-     * Visits an IINC insn to record it.
+     * Visits an [IINC] insn to record it.
+     *
+     * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
+     * this method loads onto the stack is removed by the end of its bytecode.
      *
      * @param visitor The method visitor to delegate to.
      * @param className The name of the class the store is in.
@@ -239,32 +248,92 @@ internal class MethodAdapterUtil {
 
             visitVarInsn(ILOAD, index)
 
-            // Pretend like it was an ISTORE
-            recordStore(locals, index, ISTORE, className, lineNumber)
+            recordStore(className, lineNumber, localVariable.name, localVariable.descriptor)
         }
     }
 
-    private fun MethodVisitor.recordStore(
-        locals: List<LocalVariable>?,
-        index: Int,
-        opcode: Int,
+    /**
+     * Visits a [PUTFIELD] or [PUTSTATIC] insn to record it.
+     *
+     * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
+     * this method loads onto the stack is removed by the end of its bytecode.
+     *
+     * @param visitor The method visitor to delegate to.
+     * @param className The name of the class the store is in.
+     * @param lineNumber The line number of the store.
+     * @param opcode Either [PUTFIELD] or [PUTSTATIC].
+     * @param fieldOwnerClass The class that owns the field.
+     * @param fieldName The name of the field.
+     * @param fieldDescriptor The field's type descriptor.
+     */
+    fun visitFieldInsn(
+        visitor: MethodVisitor,
         className: String,
-        lineNumber: Int
+        lineNumber: Int,
+        opcode: Int,
+        fieldOwnerClass: String,
+        fieldName: String,
+        fieldDescriptor: String
     ) {
-        val localVariable = getLocalVariable(locals, index, opcode)
+        when (opcode) {
+            PUTFIELD, PUTSTATIC -> {
+                with(visitor) {
+                    visitInsn(OpcodeUtil.getDupOpcode(opcode, fieldDescriptor))
 
+                    visitFieldInsn(opcode, fieldOwnerClass, fieldName, fieldDescriptor)
+
+                    recordStore(
+                        className,
+                        lineNumber,
+                        generateFullyQualifiedFieldVariableName(fieldOwnerClass, fieldName),
+                        fieldDescriptor
+                    )
+                }
+            }
+
+            else -> throw UnsupportedOperationException(
+                "Cannot visit opcode $opcode using visitFieldInsn."
+            )
+        }
+    }
+
+    /**
+     * Records any type of store.
+     *
+     * CRITICAL METHOD CONTRACT: THIS METHOD DOES NOT LEAVE A LASTING EFFECT ON THE STACK. All data
+     * this method loads onto the stack is removed by the end of its bytecode.
+     *
+     * @param className The class the store is written in.
+     * @param lineNumber The line number in the [className] that the store happens on.
+     * @param name The name of the variable being stored into.
+     * @param descriptor The type descriptor of the variable.
+     */
+    private fun MethodVisitor.recordStore(
+        className: String,
+        lineNumber: Int,
+        name: String,
+        descriptor: String
+    ) {
         visitLdcInsn(className)
         visitLdcInsn(lineNumber)
-        visitLdcInsn(localVariable.name)
+        visitLdcInsn(name)
         visitMethodInsn(
             INVOKESTATIC,
             agentLibClassName,
             "store",
-            "(${localVariable.descriptor}Ljava/lang/String;ILjava/lang/String;)V",
+            "(${descriptor}Ljava/lang/String;ILjava/lang/String;)V",
             false
         )
     }
 
+    /**
+     * Gets the [LocalVariable] with a matching [index]. Creates a "best guess" [LocalVariable] if
+     * there are none.
+     *
+     * @param locals The local variables recorded earlier in the pipeline.
+     * @param index The index of the local variable from the bytecode.
+     * @param opcode The *STORE (or similar) opcode.
+     */
     private fun getLocalVariable(locals: List<LocalVariable>?, index: Int, opcode: Int) =
         if (locals != null) {
             val localVariable = locals.first { it.index == index }
@@ -304,5 +373,10 @@ internal class MethodAdapterUtil {
             val className = currentClassName.substring(indexOfLastSeparator)
             return packagePrefix.replace('/', '.') + className
         }
+
+        internal fun generateFullyQualifiedFieldVariableName(
+            fieldOwnerClass: String,
+            fieldName: String
+        ) = "$fieldOwnerClass.$fieldName"
     }
 }

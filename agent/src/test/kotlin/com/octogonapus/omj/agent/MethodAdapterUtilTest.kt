@@ -36,6 +36,8 @@ import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
+import org.objectweb.asm.Opcodes.PUTFIELD
+import org.objectweb.asm.Opcodes.PUTSTATIC
 
 @Suppress("SameParameterValue")
 internal class MethodAdapterUtilTest {
@@ -45,6 +47,8 @@ internal class MethodAdapterUtilTest {
         private const val className = "ClassName"
         private const val methodName = "methodName"
         private const val dynamicClassName = "DynamicClassName"
+        private const val fieldOwnerClass = "ownerClass"
+        private const val fieldName = "fieldName"
     }
 
     @Nested
@@ -473,6 +477,194 @@ internal class MethodAdapterUtilTest {
                     index = 1,
                     increment = 2,
                     locals = locals
+                )
+            }
+        }
+
+        @Test
+        fun `visit put int field`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            val util = MethodAdapterUtil()
+
+            util.visitFieldInsn(
+                visitor,
+                className,
+                lineNumber,
+                PUTFIELD,
+                fieldOwnerClass,
+                fieldName,
+                "I"
+            )
+
+            verifySequence {
+                // Dup what is on the stack
+                visitor.visitInsn(DUP)
+
+                // Do the put field
+                visitor.visitFieldInsn(PUTFIELD, fieldOwnerClass, fieldName, "I")
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Variable name
+                visitor.visitLdcInsn(
+                    MethodAdapterUtil.generateFullyQualifiedFieldVariableName(
+                        fieldOwnerClass,
+                        fieldName
+                    )
+                )
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(ILjava/lang/String;ILjava/lang/String;)V",
+                    false
+                )
+            }
+        }
+
+        @Test
+        fun `visit put long field`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            val util = MethodAdapterUtil()
+
+            util.visitFieldInsn(
+                visitor,
+                className,
+                lineNumber,
+                PUTFIELD,
+                fieldOwnerClass,
+                fieldName,
+                "J"
+            )
+
+            verifySequence {
+                // Dup what is on the stack
+                visitor.visitInsn(DUP2)
+
+                // Do the put field
+                visitor.visitFieldInsn(PUTFIELD, fieldOwnerClass, fieldName, "J")
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Variable name
+                visitor.visitLdcInsn(
+                    MethodAdapterUtil.generateFullyQualifiedFieldVariableName(
+                        fieldOwnerClass,
+                        fieldName
+                    )
+                )
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(JLjava/lang/String;ILjava/lang/String;)V",
+                    false
+                )
+            }
+        }
+
+        @Test
+        fun `visit put static int field`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            val util = MethodAdapterUtil()
+
+            util.visitFieldInsn(
+                visitor,
+                className,
+                lineNumber,
+                PUTSTATIC,
+                fieldOwnerClass,
+                fieldName,
+                "I"
+            )
+
+            verifySequence {
+                // Dup what is on the stack
+                visitor.visitInsn(DUP)
+
+                // Do the put field
+                visitor.visitFieldInsn(PUTSTATIC, fieldOwnerClass, fieldName, "I")
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Variable name
+                visitor.visitLdcInsn(
+                    MethodAdapterUtil.generateFullyQualifiedFieldVariableName(
+                        fieldOwnerClass,
+                        fieldName
+                    )
+                )
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(ILjava/lang/String;ILjava/lang/String;)V",
+                    false
+                )
+            }
+        }
+
+        @Test
+        fun `visit put static long field`() {
+            val visitor = mockk<MethodVisitor>(relaxed = true)
+            val util = MethodAdapterUtil()
+
+            util.visitFieldInsn(
+                visitor,
+                className,
+                lineNumber,
+                PUTSTATIC,
+                fieldOwnerClass,
+                fieldName,
+                "J"
+            )
+
+            verifySequence {
+                // Dup what is on the stack
+                visitor.visitInsn(DUP2)
+
+                // Do the put field
+                visitor.visitFieldInsn(PUTSTATIC, fieldOwnerClass, fieldName, "J")
+
+                // Class name
+                visitor.visitLdcInsn(className)
+
+                // Line number
+                visitor.visitLdcInsn(lineNumber)
+
+                // Variable name
+                visitor.visitLdcInsn(
+                    MethodAdapterUtil.generateFullyQualifiedFieldVariableName(
+                        fieldOwnerClass,
+                        fieldName
+                    )
+                )
+
+                // Record the store
+                visitor.visitMethodInsn(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(JLjava/lang/String;ILjava/lang/String;)V",
+                    false
                 )
             }
         }
