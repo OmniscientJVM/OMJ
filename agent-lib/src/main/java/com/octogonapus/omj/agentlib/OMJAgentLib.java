@@ -227,6 +227,177 @@ public final class OMJAgentLib {
     traceQueue.add(trace);
   }
 
+  public static void store(
+      final boolean[] array,
+      final int arrayIndex,
+      final boolean value,
+      final String className,
+      final int lineNumber,
+      final String variableName) {
+    final var trace =
+        new StoreTrace_array_boolean(
+            traceCounter.getAndIncrement(),
+            array,
+            arrayIndex,
+            value,
+            className,
+            lineNumber,
+            variableName);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final char[] array,
+      final int arrayIndex,
+      final char value,
+      final String className,
+      final int lineNumber,
+      final String variableName) {
+    final var trace =
+        new StoreTrace_array_char(
+            traceCounter.getAndIncrement(),
+            array,
+            arrayIndex,
+            value,
+            className,
+            lineNumber,
+            variableName);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final byte[] array,
+      final int arrayIndex,
+      final byte value,
+      final String className,
+      final int lineNumber,
+      final String variableName) {
+    final var trace =
+        new StoreTrace_array_byte(
+            traceCounter.getAndIncrement(),
+            array,
+            arrayIndex,
+            value,
+            className,
+            lineNumber,
+            variableName);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final short[] array,
+      final int arrayIndex,
+      final short value,
+      final String className,
+      final int lineNumber,
+      final String variableName) {
+    final var trace =
+        new StoreTrace_array_short(
+            traceCounter.getAndIncrement(),
+            array,
+            arrayIndex,
+            value,
+            className,
+            lineNumber,
+            variableName);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final int[] array,
+      final int arrayIndex,
+      final int value,
+      final String className,
+      final int lineNumber,
+      final String variableName) {
+    final var trace =
+        new StoreTrace_array_int(
+            traceCounter.getAndIncrement(),
+            array,
+            arrayIndex,
+            value,
+            className,
+            lineNumber,
+            variableName);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final float[] array,
+      final int arrayIndex,
+      final float value,
+      final String className,
+      final int lineNumber,
+      final String variableName) {
+    final var trace =
+        new StoreTrace_array_float(
+            traceCounter.getAndIncrement(),
+            array,
+            arrayIndex,
+            value,
+            className,
+            lineNumber,
+            variableName);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final long[] array,
+      final int arrayIndex,
+      final long value,
+      final String className,
+      final int lineNumber,
+      final String variableName) {
+    final var trace =
+        new StoreTrace_array_long(
+            traceCounter.getAndIncrement(),
+            array,
+            arrayIndex,
+            value,
+            className,
+            lineNumber,
+            variableName);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final double[] array,
+      final int arrayIndex,
+      final double value,
+      final String className,
+      final int lineNumber,
+      final String variableName) {
+    final var trace =
+        new StoreTrace_array_double(
+            traceCounter.getAndIncrement(),
+            array,
+            arrayIndex,
+            value,
+            className,
+            lineNumber,
+            variableName);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final Object[] array,
+      final int arrayIndex,
+      final Object value,
+      final String className,
+      final int lineNumber,
+      final String variableName) {
+    final var trace =
+        new StoreTrace_array_Object(
+            traceCounter.getAndIncrement(),
+            array,
+            arrayIndex,
+            value,
+            className,
+            lineNumber,
+            variableName);
+    traceQueue.add(trace);
+  }
+
   public static void methodCall_argument_boolean(boolean value) {
     currentMethodTrace.get().set_argument_boolean(value);
   }

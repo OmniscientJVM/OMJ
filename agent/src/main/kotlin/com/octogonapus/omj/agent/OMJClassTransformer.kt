@@ -17,30 +17,41 @@
 package com.octogonapus.omj.agent
 
 import com.octogonapus.omj.di.OMJKoinComponent
+import java.util.concurrent.ThreadLocalRandom
 import mu.KotlinLogging
 import org.koin.core.inject
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.AASTORE
 import org.objectweb.asm.Opcodes.ACC_PUBLIC
 import org.objectweb.asm.Opcodes.ACC_STATIC
 import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ASTORE
+import org.objectweb.asm.Opcodes.BASTORE
+import org.objectweb.asm.Opcodes.CASTORE
+import org.objectweb.asm.Opcodes.DASTORE
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
+import org.objectweb.asm.Opcodes.FASTORE
 import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.IASTORE
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LASTORE
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
+import org.objectweb.asm.Opcodes.NEWARRAY
 import org.objectweb.asm.Opcodes.PUTFIELD
 import org.objectweb.asm.Opcodes.PUTSTATIC
+import org.objectweb.asm.Opcodes.SASTORE
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
+import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
@@ -169,6 +180,12 @@ internal class OMJClassTransformer(
                     else -> emptyList()
                 }
 
+                is InsnNode -> when (it.opcode) {
+                    IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, BASTORE, CASTORE, SASTORE ->
+                        instrumentArrayStore(methodNode, it, currentLineNumber.line)
+                    else -> emptyList()
+                }
+
                 else -> emptyList()
             }
         }
@@ -178,6 +195,102 @@ internal class OMJClassTransformer(
             else emptyList()
 
         return bodyInstrumentation + insertions
+    }
+
+    private fun instrumentArrayStore(
+        methodNode: MethodNode,
+        insnNode: InsnNode,
+        lineNumber: Int
+    ): List<InsnListInsertion> {
+        // Try to find the local variable that contains the array being stored into by looking for
+        // an ALOAD that loads from that variable.
+        val possibleArrayLoad = insnNode.previous.previous.previous
+        var localVariable = if (possibleArrayLoad is VarInsnNode &&
+            possibleArrayLoad.opcode == ALOAD
+        ) {
+            methodNode.localVariables.first { it.index == possibleArrayLoad.`var` }
+        } else null
+
+        localVariable?.let {
+            logger.debug {
+                """
+                Found local variable ${it.name}: ${it.desc} by looking for ALOAD.
+                """.trimIndent()
+            }
+        }
+
+        // If looking for an ALOAD failed, try looking for a NEWARRAY.
+        if (localVariable == null) {
+            localVariable = lookForNewArrayLocalVariable(insnNode, methodNode)
+        }
+
+        localVariable?.let {
+            logger.debug {
+                """
+                Found local variable ${it.name}: ${it.desc} by looking for NEWARRAY.
+                """.trimIndent()
+            }
+        } ?: logger.error {
+            """
+            Did not find a local variable for the array store.
+            className = $fullyQualifiedClassName
+            methodName = ${methodNode.name}
+            lineNumber = $lineNumber
+            """.trimIndent()
+        }
+
+        val variableName = localVariable?.name
+            ?: "UNKNOWN_ARRAY_LOCAL_${ThreadLocalRandom.current().nextInt()}"
+
+        // Recover the array and element types from the local variable. If we couldn't find a local
+        // variable, then guess using the *ASTORE insn.
+        val (arrayDescriptor, elementDescriptor) = localVariable?.let {
+            it.desc to Type.getType(it.desc).elementType.descriptor
+        } ?: (
+            OpcodeUtil.getArrayDescriptor(insnNode.opcode) to
+                OpcodeUtil.getArrayElementDescriptor(insnNode.opcode)
+            )
+
+        // <array ref desc> <index desc (always an int)> <element desc>
+        val descPrefix = "${arrayDescriptor}I$elementDescriptor"
+
+        return listOf(
+            methodNode.instructions.replace(insnNode) {
+                recordStore(lineNumber, variableName, descPrefix)
+            }
+        )
+    }
+
+    private fun lookForNewArrayLocalVariable(
+        insnNode: InsnNode,
+        methodNode: MethodNode
+    ): LocalVariableNode? {
+        // We might not find the array by looking for an ALOAD, though, if the user wrote something
+        // like `int[] i = {6};`, which generates this:
+        //
+        //    NEWARRAY T_INT
+        //    DUP
+        //    ICONST_0
+        //    BIPUSH 6
+        //    IASTORE
+        //    ASTORE 1
+        //
+        // In that case, we need to see if the 3rd previous insn puts two array refs on the stack
+        // (so a NEWARRAY and a DUP). One of the refs will be used by *ASTORE. Then we need to check
+        // if the other is used by ASTORE to put it into a local variable, which we can then search
+        // for.
+        val possibleDup = insnNode.previous.previous.previous
+        val possibleNewArray = insnNode.previous.previous.previous.previous
+        return if (possibleDup is InsnNode && possibleDup.opcode == DUP &&
+            possibleNewArray is IntInsnNode && possibleNewArray.opcode == NEWARRAY
+        ) {
+            // We found the two array refs. Now look for the store.
+            val possibleStore = insnNode.next
+            if (possibleStore is VarInsnNode && possibleStore.opcode == ASTORE) {
+                // We found the store.
+                methodNode.localVariables.first { it.index == possibleStore.`var` }
+            } else null
+        } else null
     }
 
     private fun instrumentPutInsn(

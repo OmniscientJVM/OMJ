@@ -19,31 +19,38 @@ package com.octogonapus.omj.agentlib;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class StoreTrace_Object implements Trace {
+public class StoreTrace_array_float implements Trace {
 
   private final long index;
+  private final float[] array;
+  private final int arrayIndex;
+  private final float value;
   private final String className;
   private final int lineNumber;
   private final String variableName;
-  private final Object value;
 
-  public StoreTrace_Object(
+  public StoreTrace_array_float(
       final long index,
+      final float[] array,
+      final int arrayIndex,
+      final float value,
       final String className,
       final int lineNumber,
-      final String variableName,
-      final Object value) {
+      final String variableName) {
     this.index = index;
+    this.array = array;
+    this.arrayIndex = arrayIndex;
+    this.value = value;
     this.className = className;
     this.lineNumber = lineNumber;
     this.variableName = variableName;
-    this.value = value;
   }
 
   @Override
   public void serialize(final OutputStream outputStream) throws IOException {
-    TraceUtil.writeStoreTraceHeader(outputStream, className, index, lineNumber, variableName);
-    outputStream.write('L');
-    TraceUtil.writeObject(outputStream, value);
+    TraceUtil.writeArrayStoreTraceHeader(
+        outputStream, className, index, lineNumber, variableName, array, arrayIndex);
+    outputStream.write('F');
+    TraceUtil.write4Bytes(outputStream, Float.floatToRawIntBits(value));
   }
 }

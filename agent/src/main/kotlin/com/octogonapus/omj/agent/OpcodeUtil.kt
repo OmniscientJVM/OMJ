@@ -16,22 +16,38 @@
  */
 package com.octogonapus.omj.agent
 
+import org.objectweb.asm.Opcodes.AALOAD
+import org.objectweb.asm.Opcodes.AASTORE
 import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ASTORE
+import org.objectweb.asm.Opcodes.BALOAD
+import org.objectweb.asm.Opcodes.BASTORE
+import org.objectweb.asm.Opcodes.CALOAD
+import org.objectweb.asm.Opcodes.CASTORE
+import org.objectweb.asm.Opcodes.DALOAD
+import org.objectweb.asm.Opcodes.DASTORE
 import org.objectweb.asm.Opcodes.DLOAD
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.DUP2
 import org.objectweb.asm.Opcodes.DUP2_X1
 import org.objectweb.asm.Opcodes.DUP_X1
+import org.objectweb.asm.Opcodes.FALOAD
+import org.objectweb.asm.Opcodes.FASTORE
 import org.objectweb.asm.Opcodes.FLOAD
 import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.IALOAD
+import org.objectweb.asm.Opcodes.IASTORE
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LALOAD
+import org.objectweb.asm.Opcodes.LASTORE
 import org.objectweb.asm.Opcodes.LLOAD
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.PUTFIELD
 import org.objectweb.asm.Opcodes.PUTSTATIC
+import org.objectweb.asm.Opcodes.SALOAD
+import org.objectweb.asm.Opcodes.SASTORE
 
 object OpcodeUtil {
 
@@ -93,6 +109,22 @@ object OpcodeUtil {
         ASTORE, ALOAD -> "Ljava/lang/Object;"
         else -> throw UnsupportedOperationException(
             "Cannot get the load or store descriptor for a non-load or non-store opcode: $opcode"
+        )
+    }
+
+    fun getArrayDescriptor(opcode: Int) = "[" + getArrayElementDescriptor(opcode)
+
+    fun getArrayElementDescriptor(opcode: Int) = when (opcode) {
+        IASTORE, IALOAD -> "I"
+        LASTORE, LALOAD -> "J"
+        FASTORE, FALOAD -> "F"
+        DASTORE, DALOAD -> "D"
+        AASTORE, AALOAD -> "Ljava/lang/Object;"
+        BASTORE, BALOAD -> "B" // These two insns are used for byte and boolean arrays
+        CASTORE, CALOAD -> "C"
+        SASTORE, SALOAD -> "S"
+        else -> throw UnsupportedOperationException(
+            "Cannot get the array descriptor for a non-array opcode: $opcode"
         )
     }
 }

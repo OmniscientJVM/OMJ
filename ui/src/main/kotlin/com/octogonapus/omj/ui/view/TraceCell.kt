@@ -16,6 +16,7 @@
  */
 package com.octogonapus.omj.ui.view
 
+import com.octogonapus.omj.ui.model.ArrayStoreTrace
 import com.octogonapus.omj.ui.model.MethodTrace
 import com.octogonapus.omj.ui.model.StoreTrace
 import com.octogonapus.omj.ui.model.Trace
@@ -36,6 +37,17 @@ class TraceCell : ListCell<Trace?>() {
                     val (type, value) = typeValuePair
 
                     text = "$index $callerClass:$callerLine $variableName:$type=$value"
+                }
+
+                is ArrayStoreTrace -> {
+                    val (
+                        index, callerClass, callerLine, variableName, arrayRef, arrayIndex,
+                        typeValuePair
+                    ) = item
+                    val (type, value) = typeValuePair
+
+                    text = "$index $callerClass:$callerLine " +
+                        "$variableName@$arrayRef[$arrayIndex]:$type=$value"
                 }
 
                 is MethodTrace -> {

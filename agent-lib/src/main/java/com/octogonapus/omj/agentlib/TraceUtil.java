@@ -37,6 +37,26 @@ public class TraceUtil {
     writeNullTerminatedString(outputStream, variableName);
   }
 
+  static void writeArrayStoreTraceHeader(
+      final OutputStream outputStream,
+      final String className,
+      final long index,
+      final int lineNumber,
+      final String variableName,
+      final Object array,
+      final int arrayIndex)
+      throws IOException {
+    write8Bytes(outputStream, index);
+
+    outputStream.write(0x3);
+
+    writeNullTerminatedString(outputStream, className);
+    write4Bytes(outputStream, lineNumber);
+    writeNullTerminatedString(outputStream, variableName);
+    write4Bytes(outputStream, System.identityHashCode(array));
+    write4Bytes(outputStream, arrayIndex);
+  }
+
   static void write4Bytes(final OutputStream outputStream, final int lineNumber)
       throws IOException {
     outputStream.write((byte) (lineNumber & 0xFF));
@@ -56,9 +76,20 @@ public class TraceUtil {
     outputStream.write((byte) ((index >> 56) & 0xFF));
   }
 
-  public static void writeNullTerminatedString(final OutputStream outputStream, final String string)
+  static void writeNullTerminatedString(final OutputStream outputStream, final String string)
       throws IOException {
     outputStream.write(string.getBytes());
     outputStream.write(0);
+  }
+
+  static void writeObject(final OutputStream outputStream, final Object value) throws IOException {
+    writeNullTerminatedString(outputStream, value.getClass().getName());
+    if (value instanceof String) {
+      final byte[] value_string_bytes = ((String) value).getBytes();
+      write4Bytes(outputStream, value_string_bytes.length);
+      outputStream.write(value_string_bytes);
+    } else {
+      write4Bytes(outputStream, System.identityHashCode(value));
+    }
   }
 }

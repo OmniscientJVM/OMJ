@@ -466,6 +466,98 @@ internal class TraceIteratorTest {
                 it.storeVar("com.agenttest.storeIncrementInt.Main", "int", "i", "4")
             }
         }
+
+        @Test
+        fun `test int array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeIntArray.jar")
+
+            traces.shouldExist {
+                it.storeArray(
+                    containingClass = "com.agenttest.storeIntArray.Main",
+                    varType = "int",
+                    varName = "i",
+                    arrayIndex = 0,
+                    value = "6"
+                )
+            }
+        }
+
+        @Test
+        fun `test int array store one-liner`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeIntArrayOneLiner.jar")
+
+            traces.shouldExist {
+                it.storeArray(
+                    containingClass = "com.agenttest.storeIntArrayOneLiner.Main",
+                    varType = "int",
+                    varName = "i",
+                    arrayIndex = 0,
+                    value = "6"
+                )
+            }
+        }
+
+        @Test
+        fun `test double array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeDoubleArray.jar")
+
+            traces.shouldExist {
+                it.storeArray(
+                    containingClass = "com.agenttest.storeDoubleArray.Main",
+                    varType = "double",
+                    varName = "d",
+                    arrayIndex = 0,
+                    value = "4.2"
+                )
+            }
+        }
+
+        @Test
+        fun `test double array store one-liner`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeDoubleArrayOneLiner.jar")
+
+            traces.shouldExist {
+                it.storeArray(
+                    containingClass = "com.agenttest.storeDoubleArrayOneLiner.Main",
+                    varType = "double",
+                    varName = "d",
+                    arrayIndex = 0,
+                    value = "4.2"
+                )
+            }
+        }
+
+        // TODO: Add tests for object and string array stores (not one-liner)
+
+        @Test
+        fun `test object array store one-liner`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeObjectArrayOneLiner.jar")
+
+            traces.shouldExist {
+                it.storeArray(
+                    containingClass = "com.agenttest.storeObjectArrayOneLiner.Main",
+                    varType = "java.lang.Object",
+                    varName = "o",
+                    arrayIndex = 0,
+                    value = null
+                )
+            }
+        }
+
+        @Test
+        fun `test string array store one-liner`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeStringArrayOneLiner.jar")
+
+            traces.shouldExist {
+                it.storeArray(
+                    containingClass = "com.agenttest.storeStringArrayOneLiner.Main",
+                    varType = "java.lang.String",
+                    varName = "o",
+                    arrayIndex = 0,
+                    value = "Hello"
+                )
+            }
+        }
     }
 
     @Nested
@@ -900,12 +992,34 @@ internal class TraceIteratorTest {
             varType: String,
             name: String,
             value: String?
-        ) =
-            this is StoreTrace &&
-                callerClass == containingClass &&
-                typeValuePair.type == varType &&
-                variableName == name &&
-                value?.let { typeValuePair.value == it } ?: true
+        ) = this is StoreTrace &&
+            callerClass == containingClass &&
+            typeValuePair.type == varType &&
+            variableName == name &&
+            value?.let { typeValuePair.value == it } ?: true
+
+        /**
+         * Checks there is a store with a value of [value] into an array of type [varType] at index
+         * [arrayIndex].
+         *
+         * @param containingClass The class the store happens in.
+         * @param varType The type of the variable the value was stored in.
+         * @param varName The name of the variable.
+         * @param arrayIndex The index in the array the value was stored in.
+         * @param value The value that was stored. Set to null if you don't care about the value.
+         */
+        private fun Trace.storeArray(
+            containingClass: String,
+            varType: String,
+            varName: String,
+            arrayIndex: Int,
+            value: String?
+        ) = this is ArrayStoreTrace &&
+            callerClass == containingClass &&
+            variableName == varName &&
+            this.arrayIndex == arrayIndex &&
+            typeValuePair.type == varType &&
+            value?.let { typeValuePair.value == it } ?: true
 
         private fun MethodTrace.hasArguments(args: List<Pair<String, String?>>) =
             args.foldIndexed(true) { index, acc, (type, value) ->
