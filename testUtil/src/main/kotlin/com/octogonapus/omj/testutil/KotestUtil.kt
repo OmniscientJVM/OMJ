@@ -103,8 +103,11 @@ fun <T> hasExactlyInOrder(predicates: List<(T) -> Boolean>): Matcher<Collection<
         val actualIterator = actual.iterator()
 
         while (actualIterator.hasNext() && subsequenceIndex < predicates.size) {
-            if (predicates[subsequenceIndex](actualIterator.next())) subsequenceIndex += 1
+            val predicate = predicates[subsequenceIndex]
+            val next = actualIterator.next()
+            if (predicate(next)) subsequenceIndex += 1
             else {
+                println("$next did not match the $predicate.")
                 return@neverNullMatcher MatcherResult(
                     false,
                     { "$actual did not match the predicates $predicates in order" },

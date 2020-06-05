@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.koin.dsl.module
+import org.objectweb.asm.Opcodes.ACC_PUBLIC
 import org.objectweb.asm.Opcodes.ACC_STATIC
 import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ASM8
@@ -101,18 +102,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 lineNumber(lineNumber)
 
                 // Load the preamble
-                ldc(className)
-                method(INVOKESTATIC, agentLibClassName, "className", "(Ljava/lang/String;)V", false)
-                ldc(lineNumber)
-                method(INVOKESTATIC, agentLibClassName, "lineNumber", "(I)V", false)
-                ldc(methodName)
-                method(
-                    INVOKESTATIC,
-                    agentLibClassName,
-                    "methodName",
-                    "(Ljava/lang/String;)V",
-                    false
-                )
+                methodPreamble(className, lineNumber, methodName)
 
                 // Emit the method call
                 method(INVOKEVIRTUAL, methodOwner, methodName, "()V", false)
@@ -315,6 +305,53 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 lineNumber(lineNumber)
             }
         }
+
+        @Test
+        fun `visit main method`() {
+            testKoin(
+                module {
+                    single {
+                        mockk<DynamicClassDefiner> {
+                            every { defineClassForMethod("([Ljava/lang/String;)V", true) } returns
+                                dynamicClassName
+                        }
+                    }
+                }
+            )
+
+            val methodNode = makeMethodNode(
+                ACC_PUBLIC + ACC_STATIC,
+                "main",
+                "([Ljava/lang/String;)V",
+                listOf(makeLocalVariable("args", "[Ljava/lang/String;", 0)),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(classNode)
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                // Emit a preamble right before recording the trace because the main method is the
+                // entry point, so it might not have a preamble otherwise.
+                methodPreamble(className, lineNumber, "main")
+
+                startMethodTrace(dynamicClassName)
+                local(ALOAD, 0)
+                method(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "methodCall_argument_Object",
+                    "(Ljava/lang/Object;)V",
+                    false
+                )
+                endMethodTrace()
+                lineNumber(lineNumber)
+            }
+        }
     }
 
     @Nested
@@ -443,6 +480,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
             it.name = name
             it.superName = superName
             it.methods.add(method)
+            it.version = 51
         }
 
     private fun makeMethodNode(
@@ -458,6 +496,21 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
     private fun makeLocalVariable(name: String, desc: String, index: Int) =
         LocalVariableNode(name, desc, null, LabelNode(), LabelNode(), index)
+
+    private fun CheckInsns.methodPreamble(className: String, lineNumber: Int, methodName: String) {
+        ldc(className)
+        method(INVOKESTATIC, agentLibClassName, "className", "(Ljava/lang/String;)V", false)
+        ldc(lineNumber)
+        method(INVOKESTATIC, agentLibClassName, "lineNumber", "(I)V", false)
+        ldc(methodName)
+        method(
+            INVOKESTATIC,
+            agentLibClassName,
+            "methodName",
+            "(Ljava/lang/String;)V",
+            false
+        )
+    }
 
     private fun CheckInsns.startMethodTrace(dynamicClassName: String) {
         type(NEW, dynamicClassName)
@@ -494,6 +547,6 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
         private const val methodOwner = "methodOwner"
         private const val varName = "varName"
         private const val lineNumber = 3495
-        private const val dynamicClassName = "dynamicClassname"
+        private const val dynamicClassName = "dynamicClassName"
     }
 }

@@ -90,7 +90,7 @@ internal class OMJClassTransformer(
     }
 
     private fun instrumentMethod(methodNode: MethodNode) {
-        when {
+        val insertions = when {
             methodNode.isInstanceInitializationMethod() ->
                 instrumentInstanceInitializationMethod(methodNode)
 
@@ -101,21 +101,33 @@ internal class OMJClassTransformer(
 
             else -> instrumentNormalMethod(methodNode)
         }
+
+        insertions.forEach { it.insert() }
     }
 
-    private fun instrumentInstanceInitializationMethod(methodNode: MethodNode) {
+    private fun instrumentInstanceInitializationMethod(methodNode: MethodNode): List<InsnListInsertion> {
         TODO("Not yet implemented")
     }
 
-    private fun instrumentClassInitializationMethod(methodNode: MethodNode) {
+    private fun instrumentClassInitializationMethod(methodNode: MethodNode): List<InsnListInsertion> {
         TODO("Not yet implemented")
     }
 
-    private fun instrumentMainMethod(methodNode: MethodNode) {
-        TODO("Not yet implemented")
+    private fun instrumentMainMethod(methodNode: MethodNode): List<InsnListInsertion> {
+        val firstLineNumber = methodNode.instructions
+                .mapNotNull { it as? LineNumberNode }
+                .firstOrNull()
+                ?.line
+                ?: 0
+
+        return listOf(
+                methodNode.instructions.insertBefore(methodNode.instructions.first) {
+                    emitPreamble(firstLineNumber, methodNode.name)
+                }
+        ) + instrumentNormalMethod(methodNode)
     }
 
-    private fun instrumentNormalMethod(methodNode: MethodNode) {
+    private fun instrumentNormalMethod(methodNode: MethodNode): List<InsnListInsertion> {
         var currentLineNumber = LineNumberNode(0, LabelNode())
 
         val insertions = methodNode.instructions.flatMap {
@@ -150,9 +162,7 @@ internal class OMJClassTransformer(
             if (options.instrumentMethodBody) instrumentMethodBody(methodNode)
             else emptyList()
 
-        (bodyInstrumentation + insertions).forEach { insertion ->
-            insertion.insert()
-        }
+        return bodyInstrumentation + insertions
     }
 
     private fun instrumentMethodBody(methodNode: MethodNode): List<InsnListInsertion> {
@@ -248,39 +258,43 @@ internal class OMJClassTransformer(
     ): List<InsnListInsertion> {
         return listOf(
             methodNode.instructions.insertBefore(methodInsnNode) {
-                add(LdcInsnNode(fullyQualifiedClassName))
-                add(
-                    MethodInsnNode(
+                emitPreamble(lineNumber, methodInsnNode.name)
+            }
+        )
+    }
+
+    private fun InsnList.emitPreamble(lineNumber: Int, methodName: String) {
+        add(LdcInsnNode(fullyQualifiedClassName))
+        add(
+                MethodInsnNode(
                         INVOKESTATIC,
                         agentLibClassName,
                         "className",
                         "(Ljava/lang/String;)V",
                         false
-                    )
                 )
+        )
 
-                add(LdcInsnNode(lineNumber))
-                add(
-                    MethodInsnNode(
+        add(LdcInsnNode(lineNumber))
+        add(
+                MethodInsnNode(
                         INVOKESTATIC,
                         agentLibClassName,
                         "lineNumber",
                         "(I)V",
                         false
-                    )
                 )
+        )
 
-                add(LdcInsnNode(methodInsnNode.name))
-                add(
-                    MethodInsnNode(
+        add(LdcInsnNode(methodName))
+        add(
+                MethodInsnNode(
                         INVOKESTATIC,
                         agentLibClassName,
                         "methodName",
                         "(Ljava/lang/String;)V",
                         false
-                    )
                 )
-            }
         )
     }
 
