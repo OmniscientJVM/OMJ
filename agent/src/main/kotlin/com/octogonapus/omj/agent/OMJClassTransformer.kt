@@ -134,9 +134,7 @@ internal class OMJClassTransformer(
 
     private fun instrumentClassInitializationMethod(
         methodNode: MethodNode
-    ): List<InsnListInsertion> {
-        TODO("Not yet implemented")
-    }
+    ) = instrumentNormalMethod(methodNode, options)
 
     private fun instrumentMainMethod(methodNode: MethodNode): List<InsnListInsertion> {
         val firstLineNumber = methodNode.instructions
@@ -193,13 +191,11 @@ internal class OMJClassTransformer(
         return bodyInstrumentation + insertions
     }
 
-    private fun instrumentMethodBody(methodNode: MethodNode): List<InsnListInsertion> {
-        return listOf(
-            methodNode.instructions.insertBefore(methodNode.instructions.first) {
-                recordMethodCall(methodNode)
-            }
-        )
-    }
+    private fun instrumentMethodBody(methodNode: MethodNode) = listOf(
+        methodNode.instructions.insertBefore(methodNode.instructions.first) {
+            recordMethodCall(methodNode)
+        }
+    )
 
     private fun InsnList.recordMethodCall(methodNode: MethodNode) {
         val isStatic = hasAccessFlag(methodNode.access, ACC_STATIC)
@@ -287,13 +283,11 @@ internal class OMJClassTransformer(
         methodNode: MethodNode,
         methodInsnNode: MethodInsnNode,
         lineNumber: Int
-    ): List<InsnListInsertion> {
-        return listOf(
-            methodNode.instructions.insertBefore(methodInsnNode) {
-                emitPreamble(lineNumber, methodInsnNode.name)
-            }
-        )
-    }
+    ) = listOf(
+        methodNode.instructions.insertBefore(methodInsnNode) {
+            emitPreamble(lineNumber, methodInsnNode.name)
+        }
+    )
 
     private fun InsnList.emitPreamble(lineNumber: Int, methodName: String) {
         add(LdcInsnNode(fullyQualifiedClassName))

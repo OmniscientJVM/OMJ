@@ -195,6 +195,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 startMethodTrace(dynamicClassName)
                 receiver()
                 endMethodTrace()
+
                 lineNumber(lineNumber)
             }
         }
@@ -229,6 +230,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
             checkInsns(methodNode.instructions) {
                 startMethodTrace(dynamicClassName)
                 endMethodTrace()
+
                 lineNumber(lineNumber)
             }
         }
@@ -266,6 +268,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 local(ILOAD, 1)
                 method(INVOKESTATIC, agentLibClassName, "methodCall_argument_int", "(I)V", false)
                 endMethodTrace()
+
                 lineNumber(lineNumber)
             }
         }
@@ -302,6 +305,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 local(DLOAD, 0)
                 method(INVOKESTATIC, agentLibClassName, "methodCall_argument_double", "(D)V", false)
                 endMethodTrace()
+
                 lineNumber(lineNumber)
             }
         }
@@ -349,6 +353,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                     false
                 )
                 endMethodTrace()
+
                 lineNumber(lineNumber)
             }
         }
@@ -409,6 +414,49 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
                 // Preamble for the next method like normal
                 methodPreamble(className, lineNumber2, "someMethod")
+            }
+        }
+
+        @Test
+        fun `visit class initialization method`() {
+            // A class initialization method is just like a static method with no args
+
+            testKoin(
+                module {
+                    single {
+                        mockk<ClassFilter> {
+                            every { shouldTransform(className) } returns true
+                        }
+                    }
+
+                    single {
+                        mockk<DynamicClassDefiner> {
+                            every { defineClassForMethod("()V", true) } returns dynamicClassName
+                        }
+                    }
+                }
+            )
+
+            val methodNode = makeMethodNode(
+                ACC_STATIC,
+                "<clinit>",
+                "()V",
+                listOf(),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(classNode)
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                startMethodTrace(dynamicClassName)
+                endMethodTrace()
+
+                lineNumber(lineNumber)
             }
         }
     }
