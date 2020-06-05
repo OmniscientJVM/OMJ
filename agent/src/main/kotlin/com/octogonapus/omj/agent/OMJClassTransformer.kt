@@ -16,8 +16,6 @@
  */
 package com.octogonapus.omj.agent
 
-import com.octogonapus.omj.agent.MethodAdapterUtil.Companion.agentLibClassName
-import com.octogonapus.omj.agent.MethodAdapterUtil.Companion.convertPathTypeToPackageType
 import com.octogonapus.omj.di.OMJKoinComponent
 import mu.KotlinLogging
 import org.koin.core.inject
@@ -53,14 +51,6 @@ import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
 /**
- * @param recordMethodCall If true, then the body of methods will be instrumented to record
- * method calls.
- */
-data class ClassTransformerOptions(
-    val recordMethodCall: Boolean = true
-)
-
-/**
  * Instruments a class.
  *
  * @param classNode The class to instrument.
@@ -73,10 +63,9 @@ internal class OMJClassTransformer(
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
     private val classFilter by inject<ClassFilter>()
-    private val fullyQualifiedClassName =
-        MethodAdapterUtil.convertPathTypeToPackageType(classNode.name)
+    private val fullyQualifiedClassName = convertPathTypeToPackageType(classNode.name)
 
-    fun transform() {
+    internal fun transform() {
         // If superName is null, we are visiting the Object class, so there is nothing for us to
         // instrument. Otherwise, instrument the class.
         if (classNode.superName != null) {
@@ -391,7 +380,7 @@ internal class OMJClassTransformer(
     private fun InsnList.recordStore(lineNumber: Int, field: FieldInsnNode) =
         recordStore(
             lineNumber,
-            "${convertPathTypeToPackageType(field.owner)}.${field.name}",
+            generateFullyQualifiedFieldVariableName(field.owner, field.name),
             TypeUtil.getAdaptedDescriptor(Type.getType(field.desc))
         )
 
@@ -469,6 +458,7 @@ internal class OMJClassTransformer(
     companion object {
 
         private val logger = KotlinLogging.logger { }
+        const val agentLibClassName = "com/octogonapus/omj/agentlib/OMJAgentLib"
 
         /**
          * Checks if an access flag is present. See [Opcodes] for the flags.
@@ -478,5 +468,24 @@ internal class OMJClassTransformer(
          * @return True if the flag is present.
          */
         private fun hasAccessFlag(access: Int, flag: Int) = (access and flag) == flag
+
+        /**
+         * Converts a "path-type" class name (e.g., `com/octogonapus/omj/MyClass`) to a
+         * "package-type" class name (e.g., `com.octogonapus.omj.MyClass`).
+         *
+         * @param currentClassName The path-type class name to convert.
+         * @return The package-type version of the [currentClassName].
+         */
+        private fun convertPathTypeToPackageType(currentClassName: String): String {
+            val indexOfLastSeparator = currentClassName.lastIndexOf('/') + 1
+            val packagePrefix = currentClassName.substring(0, indexOfLastSeparator)
+            val className = currentClassName.substring(indexOfLastSeparator)
+            return packagePrefix.replace('/', '.') + className
+        }
+
+        private fun generateFullyQualifiedFieldVariableName(
+            fieldOwnerClass: String,
+            fieldName: String
+        ) = "${convertPathTypeToPackageType(fieldOwnerClass)}.$fieldName"
     }
 }

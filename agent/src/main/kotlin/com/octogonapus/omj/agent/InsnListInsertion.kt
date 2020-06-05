@@ -24,7 +24,7 @@ internal sealed class InsnListInsertion {
     /**
      * Perform the insertion and modify the [InsnList].
      */
-    abstract fun insert()
+    internal abstract fun insert()
 
     /**
      * Places [toInsert] immediately before [nextInsn] so the list becomes:

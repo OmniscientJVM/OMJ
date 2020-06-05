@@ -29,7 +29,7 @@ import org.objectweb.asm.Opcodes.ASM8
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.util.TraceClassVisitor
 
-class OMJClassFileTransformer(
+internal class OMJClassFileTransformer(
     private val transformer: Transformer = Transformer()
 ) : ClassFileTransformer, OMJKoinComponent {
 
@@ -81,7 +81,7 @@ class OMJClassFileTransformer(
      * Transforms the class byte array. This method is pulled into another class so that it can be
      * mocked for testing.
      */
-    class Transformer {
+    internal class Transformer {
 
         internal fun transformClassBytes(classfileBuffer: ByteArray): ByteArray {
             val classReader = ClassReader(classfileBuffer)

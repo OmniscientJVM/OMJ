@@ -19,7 +19,7 @@ package com.octogonapus.omj.agent
 import java.util.regex.Pattern
 import mu.KotlinLogging
 
-class ClassFilter private constructor(
+internal class ClassFilter private constructor(
     private val includeFilter: Pattern,
     private val excludeFilter: Pattern
 ) {
@@ -27,7 +27,7 @@ class ClassFilter private constructor(
     /**
      * @return True if the class with name [className] should be transformed.
      */
-    fun shouldTransform(className: String) =
+    internal fun shouldTransform(className: String) =
         includeFilter.matcher(className).matches() &&
             !excludeFilter.matcher(className).matches()
 
@@ -39,7 +39,7 @@ class ClassFilter private constructor(
          * Creates a [ClassFilter] by loading the include and exclude filters from the system
          * properties `agent.include-package` and `agent.exclude-package`.
          */
-        fun createFromSystemProperties(): ClassFilter {
+        internal fun createFromSystemProperties(): ClassFilter {
             val includeFilterString = System.getProperty("agent.include-package")
             val excludeFilterString = System.getProperty("agent.exclude-package")
             logger.debug {

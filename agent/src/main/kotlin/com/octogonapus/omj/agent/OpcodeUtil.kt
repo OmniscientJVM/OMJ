@@ -83,20 +83,6 @@ object OpcodeUtil {
     }
 
     /**
-     * @return The corresponding descriptor based on the store [opcode].
-     */
-    fun getStoreDescriptor(opcode: Int) = when (opcode) {
-        ISTORE -> "I"
-        LSTORE -> "J"
-        FSTORE -> "F"
-        DSTORE -> "D"
-        ASTORE -> "Ljava/lang/Object;"
-        else -> throw UnsupportedOperationException(
-            "Cannot get the store descriptor for a non-store opcode: $opcode"
-        )
-    }
-
-    /**
      * @return The corresponding descriptor based on the load or store [opcode].
      */
     fun getLoadStoreDescriptor(opcode: Int) = when (opcode) {

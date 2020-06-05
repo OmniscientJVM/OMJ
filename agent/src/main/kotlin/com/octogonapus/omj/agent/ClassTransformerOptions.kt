@@ -16,5 +16,12 @@
  */
 package com.octogonapus.omj.agent
 
-internal typealias MethodsAndLocals = Map<Method, List<LocalVariable>>
-const val METHODS_AND_LOCALS_NAME = "methodsAndLocals"
+/**
+ * Configuration options for [OMJClassTransformer].
+ *
+ * @param recordMethodCall If true, then the body of methods will be instrumented to record
+ * method calls.
+ */
+internal data class ClassTransformerOptions(
+    val recordMethodCall: Boolean = true
+)
