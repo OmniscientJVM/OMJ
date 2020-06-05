@@ -41,16 +41,24 @@ public final class OMJAgentLib {
 
   static {
     final Semaphore traceProcessorRunning = new Semaphore(1);
+    final var traceFile =
+        Util.getTraceDir().resolve("trace_" + System.currentTimeMillis() + ".trace");
 
     final var traceProcessorThread =
         new Thread(
             () -> {
               traceProcessorRunning.acquireUninterruptibly();
 
-              // TODO: This should probably use a memory-mapped file
-              final var traceFile =
-                  Util.getTraceDir().resolve("trace_" + System.currentTimeMillis() + ".trace");
               logger.debug("Opening trace file {}", traceFile.toString());
+
+              try {
+                //noinspection ResultOfMethodCallIgnored
+                traceFile.toFile().createNewFile();
+              } catch (IOException e) {
+                logger.error("Failed to create trace file.", e);
+              }
+
+              // TODO: This should probably use a memory-mapped file
               try (final var os = new BufferedOutputStream(Files.newOutputStream(traceFile))) {
                 loopWriteTraces(os);
                 logger.debug(
@@ -79,6 +87,8 @@ public final class OMJAgentLib {
 
                   // Wait for the trace processor to finish so data is flushed out
                   traceProcessorRunning.acquireUninterruptibly();
+
+                  logger.debug("Trace file exists: {}", traceFile.toFile().exists());
                 }));
 
     traceProcessorThread.start();
