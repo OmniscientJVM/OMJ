@@ -16,14 +16,19 @@
  */
 package com.octogonapus.omj.agent
 
+import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ASTORE
+import org.objectweb.asm.Opcodes.DLOAD
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.DUP2
 import org.objectweb.asm.Opcodes.DUP2_X1
 import org.objectweb.asm.Opcodes.DUP_X1
+import org.objectweb.asm.Opcodes.FLOAD
 import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LLOAD
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.PUTFIELD
 import org.objectweb.asm.Opcodes.PUTSTATIC
@@ -78,16 +83,16 @@ object OpcodeUtil {
     }
 
     /**
-     * @return The corresponding descriptor based on the store [opcode].
+     * @return The corresponding descriptor based on the load or store [opcode].
      */
-    fun getStoreDescriptor(opcode: Int) = when (opcode) {
-        ISTORE -> "I"
-        LSTORE -> "J"
-        FSTORE -> "F"
-        DSTORE -> "D"
-        ASTORE -> "Ljava/lang/Object;"
+    fun getLoadStoreDescriptor(opcode: Int) = when (opcode) {
+        ISTORE, ILOAD -> "I"
+        LSTORE, LLOAD -> "J"
+        FSTORE, FLOAD -> "F"
+        DSTORE, DLOAD -> "D"
+        ASTORE, ALOAD -> "Ljava/lang/Object;"
         else -> throw UnsupportedOperationException(
-            "Cannot get the store descriptor for a non-store opcode: $opcode"
+            "Cannot get the load or store descriptor for a non-load or non-store opcode: $opcode"
         )
     }
 }

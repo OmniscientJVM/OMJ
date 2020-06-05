@@ -45,6 +45,30 @@ infix fun <T> List<T>.shouldNotHaveInOrder(expected: List<(T) -> Boolean>) =
 
 fun <T> hasInOrder(vararg ps: (T) -> Boolean): Matcher<Collection<T>?> = hasInOrder(ps.asList())
 
+fun <T> Array<T>.shouldHaveExactlyInOrder(vararg ps: (T) -> Boolean) =
+    asList().shouldHaveExactlyInOrder(ps.toList())
+
+fun <T> List<T>.shouldHaveExactlyInOrder(vararg ps: (T) -> Boolean) =
+    this.shouldHaveExactlyInOrder(ps.toList())
+
+infix fun <T> Array<T>.shouldHaveExactlyInOrder(expected: List<(T) -> Boolean>) =
+    asList().shouldHaveExactlyInOrder(expected)
+
+infix fun <T> List<T>.shouldHaveExactlyInOrder(expected: List<(T) -> Boolean>) =
+    this should hasExactlyInOrder(expected)
+
+infix fun <T> Array<T>.shouldNotHaveExactlyInOrder(expected: Array<(T) -> Boolean>) =
+    asList().shouldNotHaveExactlyInOrder(expected.asList())
+
+infix fun <T> Array<T>.shouldNotHaveExactlyInOrder(expected: List<(T) -> Boolean>) =
+    asList().shouldNotHaveExactlyInOrder(expected)
+
+infix fun <T> List<T>.shouldNotHaveExactlyInOrder(expected: List<(T) -> Boolean>) =
+    this shouldNot hasExactlyInOrder(expected)
+
+fun <T> hasExactlyInOrder(vararg ps: (T) -> Boolean): Matcher<Collection<T>?> =
+    hasExactlyInOrder(ps.asList())
+
 /**
  * Assert that a collection has a subsequence matching the sequence of predicates, possibly with
  * values in between.
@@ -58,6 +82,38 @@ fun <T> hasInOrder(predicates: List<(T) -> Boolean>): Matcher<Collection<T>?> =
 
         while (actualIterator.hasNext() && subsequenceIndex < predicates.size) {
             if (predicates[subsequenceIndex](actualIterator.next())) subsequenceIndex += 1
+        }
+
+        MatcherResult(
+            subsequenceIndex == predicates.size,
+            { "$actual did not match the predicates $predicates in order" },
+            { "$actual should not match the predicates $predicates in order" }
+        )
+    }
+
+/**
+ * Assert that a collection has a subsequence matching the sequence of predicates with no values in
+ * between.
+ */
+fun <T> hasExactlyInOrder(predicates: List<(T) -> Boolean>): Matcher<Collection<T>?> =
+    neverNullMatcher { actual ->
+        require(predicates.isNotEmpty()) { "predicates must not be empty" }
+
+        var subsequenceIndex = 0
+        val actualIterator = actual.iterator()
+
+        while (actualIterator.hasNext() && subsequenceIndex < predicates.size) {
+            val predicate = predicates[subsequenceIndex]
+            val next = actualIterator.next()
+            if (predicate(next)) subsequenceIndex += 1
+            else {
+                println("$next did not match the $predicate.")
+                return@neverNullMatcher MatcherResult(
+                    false,
+                    { "$actual did not match the predicates $predicates in order" },
+                    { "$actual should not match the predicates $predicates in order" }
+                )
+            }
         }
 
         MatcherResult(

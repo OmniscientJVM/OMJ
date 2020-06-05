@@ -16,7 +16,6 @@
  */
 package com.octogonapus.omj.agent
 
-import com.octogonapus.omj.agent.ClassFilter.Companion.createFromSystemProperties
 import com.octogonapus.omj.di.OMJKoinContext
 import com.octogonapus.omj.util.Util
 import java.io.IOException
@@ -36,8 +35,7 @@ object Agent {
             modules(
                 module {
                     single { DynamicClassDefiner(instrumentation, Util.cacheDir) }
-                    single { createFromSystemProperties() }
-                    single { MethodAdapterUtil() }
+                    single { ClassFilter.createFromSystemProperties() }
                 }
             )
         }
