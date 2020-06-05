@@ -17,64 +17,127 @@
 package com.octogonapus.omj.agent
 
 import com.octogonapus.omj.agent.MethodAdapterUtil.Companion.agentLibClassName
-import io.kotest.matchers.collections.shouldContainExactly
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ASM8
-import org.objectweb.asm.Opcodes.DUP
+import org.objectweb.asm.Opcodes.ASTORE
+import org.objectweb.asm.Opcodes.DLOAD
+import org.objectweb.asm.Opcodes.DSTORE
+import org.objectweb.asm.Opcodes.FLOAD
+import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LLOAD
+import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.InsnNode
+import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.LabelNode
-import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.LocalVariableNode
-import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 import org.objectweb.asm.tree.VarInsnNode
 
 internal class OMJClassTransformerTest {
 
-    @Test
-    fun fdshdsjfhskd() {
-        val methodNode = MethodNode(
-            ASM8,
-            0,
-            "methodName",
-            "()V",
-            null,
-            null
-        ).apply {
-            localVariables.add(LocalVariableNode("varName", "I", null, LabelNode(), LabelNode(), 1))
-            instructions.apply {
-                add(LineNumberNode(10, LabelNode()))
-                add(VarInsnNode(ISTORE, 1))
+    @Nested
+    inner class LocalVariableTracing {
+
+        @ParameterizedTest
+        @ValueSource(ints = [ISTORE, LSTORE, FSTORE, DSTORE, ASTORE])
+        fun `all store insns for a local variable`(opcode: Int) {
+            val localVariableDesc = OpcodeUtil.getLoadStoreDescriptor(opcode)
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(makeLocalVariable(varName, localVariableDesc, 1)),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(VarInsnNode(opcode, 1))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(classNode)
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+                // Dup what's on the stack that will be stored
+                insn(OpcodeUtil.getDupOpcode(opcode))
+                variable(opcode, 1)
+                // Load the context and trace the store
+                ldc(className)
+                ldc(lineNumber)
+                ldc(varName)
+                method(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "store",
+                    "(${localVariableDesc}Ljava/lang/String;ILjava/lang/String;)V",
+                    false
+                )
             }
         }
 
-        val classNode = ClassNode(ASM8).apply {
-            name = "className"
-            superName = "superClassName"
-            methods.add(methodNode)
+        @ParameterizedTest
+        @ValueSource(ints = [ILOAD, LLOAD, FLOAD, DLOAD, ALOAD])
+        fun `all load insns for a local variable`(opcode: Int) {
+            val localVariableDesc = OpcodeUtil.getLoadStoreDescriptor(opcode)
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(makeLocalVariable(varName, localVariableDesc, 1)),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(VarInsnNode(opcode, 1))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(classNode)
+            transformer.transform()
+
+            // No instrumentation for loads
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+                variable(opcode, 1)
+            }
+        }
+    }
+
+    private fun makeClassNode(name: String, superName: String, method: MethodNode) =
+        ClassNode(ASM8).also {
+            it.name = name
+            it.superName = superName
+            it.methods.add(method)
         }
 
-        val transformer = OMJClassTransformer(classNode)
-        transformer.transform()
+    private fun makeMethodNode(
+        access: Int,
+        name: String,
+        desc: String,
+        localVariables: List<LocalVariableNode>,
+        insnList: InsnList
+    ) = MethodNode(ASM8, access, name, desc, null, null).also {
+        it.localVariables = localVariables
+        it.instructions = insnList
+    }
 
-        methodNode.instructions.toList().shouldContainExactly(
-            LineNumberNode(10, LabelNode()),
-            InsnNode(DUP),
-            VarInsnNode(ISTORE, 1),
-            LdcInsnNode("className"),
-            LdcInsnNode(10),
-            LdcInsnNode("varName"),
-            MethodInsnNode(
-                INVOKESTATIC,
-                agentLibClassName,
-                "store",
-                "(ILjava/lang/String;ILjava/lang/String;",
-                false
-            )
-        )
+    private fun makeLocalVariable(name: String, desc: String, index: Int) =
+        LocalVariableNode(name, desc, null, LabelNode(), LabelNode(), index)
+
+    companion object {
+        private const val className = "className"
+        private const val superClassName = "superClassName"
+        private const val methodName = "methodName"
+        private const val varName = "varName"
+        private const val lineNumber = 3495
     }
 }
