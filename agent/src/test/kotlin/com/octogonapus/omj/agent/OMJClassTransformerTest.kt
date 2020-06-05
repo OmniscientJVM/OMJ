@@ -16,7 +16,7 @@
  */
 package com.octogonapus.omj.agent
 
-import com.octogonapus.omj.agent.MethodAdapterUtil.Companion.agentLibClassName
+import com.octogonapus.omj.agent.OMJClassTransformer.Companion.agentLibClassName
 import com.octogonapus.omj.testutil.KoinTestFixture
 import io.mockk.every
 import io.mockk.mockk
