@@ -24,6 +24,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
+import mu.KotlinLogging
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -796,6 +797,8 @@ internal class TraceIteratorTest {
 
     companion object {
 
+        private val logger = KotlinLogging.logger { }
+
         /**
          * Generate traces by running the Jar under the agent. Asserts that there is only one trace
          * file.
@@ -809,6 +812,13 @@ internal class TraceIteratorTest {
             CompileUtil.checkForAgentTestErrors(
                 CompileUtil.runAgentTest(jarFilename, tempDir.toPath())
             )
+
+            logger.debug {
+                """
+                |Files in temp dir:
+                |${tempDir.walkTopDown().joinToString("\n")}
+                """.trimMargin()
+            }
 
             val traceFiles = tempDir.listFiles()!!.filter { it.extension == "trace" }
             traceFiles.shouldHaveSize(1)
