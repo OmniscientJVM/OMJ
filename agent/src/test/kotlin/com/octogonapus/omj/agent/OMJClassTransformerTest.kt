@@ -18,6 +18,7 @@ package com.octogonapus.omj.agent
 
 import com.octogonapus.omj.agent.MethodAdapterUtil.Companion.agentLibClassName
 import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.objectweb.asm.Opcodes.ALOAD
@@ -33,6 +34,7 @@ import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LLOAD
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LineNumberNode
@@ -69,7 +71,7 @@ internal class OMJClassTransformerTest {
                 lineNumber(lineNumber)
                 // Dup what's on the stack that will be stored
                 insn(OpcodeUtil.getDupOpcode(opcode))
-                variable(opcode, 1)
+                local(opcode, 1)
                 // Load the context and trace the store
                 ldc(className)
                 ldc(lineNumber)
@@ -107,7 +109,44 @@ internal class OMJClassTransformerTest {
             // No instrumentation for loads
             checkInsns(methodNode.instructions) {
                 lineNumber(lineNumber)
-                variable(opcode, 1)
+                local(opcode, 1)
+            }
+        }
+
+        @Test
+        fun `iinc insn`() {
+            val methodNode = makeMethodNode(
+                    0,
+                    methodName,
+                    "()V",
+                    listOf(makeLocalVariable(varName, "I", 1)),
+                    InsnList().apply {
+                        add(LineNumberNode(lineNumber, LabelNode()))
+                        add(IincInsnNode(1, 2)) // Increment doesn't matter
+                    }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(classNode)
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+                iinc(1)
+                // Load the value of the local after the increment
+                local(ILOAD, 1)
+                // Load the context and trace the store
+                ldc(className)
+                ldc(lineNumber)
+                ldc(varName)
+                method(
+                        INVOKESTATIC,
+                        agentLibClassName,
+                        "store",
+                        "(ILjava/lang/String;ILjava/lang/String;)V",
+                        false
+                )
             }
         }
     }

@@ -26,6 +26,7 @@ import org.objectweb.asm.Opcodes.ACC_STATIC
 import org.objectweb.asm.Opcodes.ASTORE
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LSTORE
@@ -35,10 +36,12 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.IincInsnNode
+import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
+import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 import org.objectweb.asm.tree.VarInsnNode
@@ -112,7 +115,7 @@ internal class OMJClassTransformer(
                     else -> emptyList()
                 }
 
-                is IincInsnNode -> TODO("Record IINC")
+                is IincInsnNode -> instrumentIincInsn(methodNode, it, currentLineNumber.line)
 
                 is FieldInsnNode -> when (it.opcode) {
                     PUTFIELD, PUTSTATIC -> TODO("Record store")
@@ -138,19 +141,44 @@ internal class OMJClassTransformer(
                 add(InsnNode(OpcodeUtil.getDupOpcode(varInsnNode.opcode)))
             },
             methodNode.instructions.insertAfter(varInsnNode) {
-                add(LdcInsnNode(fullyQualifiedClassName))
-                add(LdcInsnNode(lineNumber))
-                add(LdcInsnNode(localVariable.name))
-                add(
-                    MethodInsnNode(
-                        INVOKESTATIC,
-                        agentLibClassName,
-                        "store",
-                        "(${localVariable.desc}Ljava/lang/String;ILjava/lang/String;)V",
-                        false
-                    )
-                )
+                recordStore(lineNumber, localVariable)
             }
+        )
+    }
+
+    private fun instrumentIincInsn(
+        methodNode: MethodNode,
+        iincInsnNode: IincInsnNode,
+        lineNumber: Int
+    ): List<InsnListInsertion> {
+        val localVariable = methodNode.localVariables.first { it.index == iincInsnNode.`var` }
+
+        return listOf(
+            methodNode.instructions.insertAfter(iincInsnNode) {
+                add(VarInsnNode(ILOAD, iincInsnNode.`var`))
+                recordStore(lineNumber, localVariable)
+            }
+        )
+    }
+
+    /**
+     * Records a store into a local variable.
+     *
+     * @param lineNumber The closest line number of the store.
+     * @param localVariable The local variable being stored into.
+     */
+    private fun InsnList.recordStore(lineNumber: Int, localVariable: LocalVariableNode) {
+        add(LdcInsnNode(fullyQualifiedClassName))
+        add(LdcInsnNode(lineNumber))
+        add(LdcInsnNode(localVariable.name))
+        add(
+            MethodInsnNode(
+                INVOKESTATIC,
+                agentLibClassName,
+                "store",
+                "(${localVariable.desc}Ljava/lang/String;ILjava/lang/String;)V",
+                false
+            )
         )
     }
 

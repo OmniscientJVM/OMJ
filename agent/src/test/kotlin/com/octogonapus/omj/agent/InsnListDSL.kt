@@ -18,6 +18,7 @@ package com.octogonapus.omj.agent
 
 import com.octogonapus.omj.testutil.shouldHaveInOrder
 import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.LdcInsnNode
@@ -41,6 +42,13 @@ class CheckInsns(private val insnList: InsnList) {
     }
 
     @InsnListDSL
+    fun iinc(index: Int) {
+        checks.add {
+            it is IincInsnNode && it.`var` == index
+        }
+    }
+
+    @InsnListDSL
     fun insn(opcode: Int) {
         checks.add {
             it is InsnNode && it.opcode == opcode
@@ -48,7 +56,7 @@ class CheckInsns(private val insnList: InsnList) {
     }
 
     @InsnListDSL
-    fun variable(opcode: Int, index: Int) {
+    fun local(opcode: Int, index: Int) {
         checks.add {
             it is VarInsnNode && it.opcode == opcode && it.`var` == index
         }
