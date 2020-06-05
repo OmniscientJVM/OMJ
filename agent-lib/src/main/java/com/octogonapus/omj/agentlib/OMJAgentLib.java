@@ -50,7 +50,16 @@ public final class OMJAgentLib {
               // TODO: This should probably use a memory-mapped file
               final var traceFile =
                   Util.getTraceDir().resolve("trace_" + System.currentTimeMillis() + ".trace");
+
               logger.debug("Opening trace file {}", traceFile.toString());
+
+              try {
+                //noinspection ResultOfMethodCallIgnored
+                traceFile.toFile().createNewFile();
+              } catch (IOException e) {
+                logger.error("Failed to create trace file.", e);
+              }
+
               try (final var os = new BufferedOutputStream(Files.newOutputStream(traceFile))) {
                 loopWriteTraces(os);
                 logger.debug(
