@@ -16,7 +16,7 @@
  */
 package com.octogonapus.omj.agent
 
-import com.octogonapus.omj.testutil.shouldHaveInOrder
+import com.octogonapus.omj.testutil.shouldHaveExactlyInOrder
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
@@ -24,6 +24,7 @@ import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
 @DslMarker
@@ -81,7 +82,14 @@ class CheckInsns(private val insnList: InsnList) {
         }
     }
 
-    fun check() = insnList.toList().shouldHaveInOrder(checks)
+    @InsnListDSL
+    fun type(opcode: Int, descriptor: String) {
+        checks.add {
+            it is TypeInsnNode && it.opcode == opcode && it.desc == descriptor
+        }
+    }
+
+    fun check() = insnList.toList().shouldHaveExactlyInOrder(checks)
 }
 
 @InsnListDSL

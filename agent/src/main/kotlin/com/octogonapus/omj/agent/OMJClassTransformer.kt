@@ -23,13 +23,17 @@ import org.koin.core.inject
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.ACC_PUBLIC
 import org.objectweb.asm.Opcodes.ACC_STATIC
+import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ASTORE
 import org.objectweb.asm.Opcodes.DSTORE
+import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.FSTORE
 import org.objectweb.asm.Opcodes.ILOAD
+import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LSTORE
+import org.objectweb.asm.Opcodes.NEW
 import org.objectweb.asm.Opcodes.PUTFIELD
 import org.objectweb.asm.Opcodes.PUTSTATIC
 import org.objectweb.asm.Type
@@ -44,10 +48,26 @@ import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
+/**
+ * @param instrumentMethodBody If true, then the body of methods will be instrumented to record
+ * method calls.
+ */
+data class ClassTransformerOptions(
+    val instrumentMethodBody: Boolean = true
+)
+
+/**
+ * Instruments a class.
+ *
+ * @param classNode The class to instrument.
+ * @param options Various options to control what parts of the class get instrumented.
+ */
 internal class OMJClassTransformer(
-    private val classNode: ClassNode
+    private val classNode: ClassNode,
+    private val options: ClassTransformerOptions = ClassTransformerOptions()
 ) : OMJKoinComponent {
 
     private val dynamicClassDefiner by inject<DynamicClassDefiner>()
@@ -98,7 +118,7 @@ internal class OMJClassTransformer(
     private fun instrumentNormalMethod(methodNode: MethodNode) {
         var currentLineNumber = LineNumberNode(0, LabelNode())
 
-        methodNode.instructions.flatMap {
+        val insertions = methodNode.instructions.flatMap {
             when (it) {
                 is LineNumberNode -> {
                     currentLineNumber = it
@@ -124,9 +144,101 @@ internal class OMJClassTransformer(
 
                 else -> emptyList()
             }
-        }.forEach { insertion ->
+        }
+
+        val bodyInstrumentation =
+            if (options.instrumentMethodBody) instrumentMethodBody(methodNode)
+            else emptyList()
+
+        (bodyInstrumentation + insertions).forEach { insertion ->
             insertion.insert()
         }
+    }
+
+    private fun instrumentMethodBody(methodNode: MethodNode): List<InsnListInsertion> {
+        val isStatic = hasAccessFlag(methodNode.access, ACC_STATIC)
+        val dynamicClassName = dynamicClassDefiner.defineClassForMethod(methodNode.desc, isStatic)
+
+        return listOf(
+            methodNode.instructions.insertBefore(methodNode.instructions.first) {
+                // Generate a method trace container class and make a new instance of it.
+                // Contextual information about this method is passed to the agent lib earlier
+                // when method instructions are visited.
+                add(TypeInsnNode(NEW, dynamicClassName))
+                add(InsnNode(DUP))
+                add(MethodInsnNode(INVOKESPECIAL, dynamicClassName, "<init>", "()V", false))
+                add(
+                    MethodInsnNode(
+                        INVOKESTATIC,
+                        agentLibClassName,
+                        "methodCall_start",
+                        "(Lcom/octogonapus/omj/agentlib/MethodTrace;)V",
+                        false
+                    )
+                )
+
+                // Compute the stack index of each argument type. We can't use the list index as the
+                // stack index because some types take up two indices. Start `stackIndex` at `0`
+                // even if the method is virtual because the virtual offset is handled later.
+                var stackIndex = 0
+                val argumentTypes = Type.getArgumentTypes(methodNode.desc).map { type ->
+                    val oldStackIndex = stackIndex
+                    stackIndex += TypeUtil.getStackSize(type)
+                    type to oldStackIndex
+                }
+
+                logger.debug { "argumentTypes = ${argumentTypes.joinToString()}" }
+
+                val virtualOffset = if (isStatic) 0 else 1
+                if (!isStatic) {
+                    add(VarInsnNode(ALOAD, 0))
+                    add(
+                        MethodInsnNode(
+                            INVOKESTATIC,
+                            agentLibClassName,
+                            "methodCall_argument_Object",
+                            "(Ljava/lang/Object;)V",
+                            false
+                        )
+                    )
+                }
+
+                argumentTypes.forEach { (argumentType, stackIndex) ->
+                    val methodName = "methodCall_argument_" +
+                        TypeUtil.getAdaptedClassName(argumentType)
+                    val methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V"
+
+                    logger.debug {
+                        """
+                        Generated methodCall_argument_xxx override
+                        methodName = $methodName
+                        methodDescriptor = $methodDesc
+                        """.trimIndent()
+                    }
+
+                    add(VarInsnNode(argumentType.getOpcode(ILOAD), stackIndex + virtualOffset))
+                    add(
+                        MethodInsnNode(
+                            INVOKESTATIC,
+                            agentLibClassName,
+                            methodName,
+                            methodDesc,
+                            false
+                        )
+                    )
+                }
+
+                add(
+                    MethodInsnNode(
+                        INVOKESTATIC,
+                        agentLibClassName,
+                        "methodCall_end",
+                        "()V",
+                        false
+                    )
+                )
+            }
+        )
     }
 
     private fun instrumentMethodInsn(

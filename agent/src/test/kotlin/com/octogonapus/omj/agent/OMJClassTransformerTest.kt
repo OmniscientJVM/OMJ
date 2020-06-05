@@ -25,19 +25,23 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.koin.dsl.module
+import org.objectweb.asm.Opcodes.ACC_STATIC
 import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ASM8
 import org.objectweb.asm.Opcodes.ASTORE
 import org.objectweb.asm.Opcodes.DLOAD
 import org.objectweb.asm.Opcodes.DSTORE
+import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.FLOAD
 import org.objectweb.asm.Opcodes.FSTORE
 import org.objectweb.asm.Opcodes.ILOAD
+import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.INVOKEVIRTUAL
 import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LLOAD
 import org.objectweb.asm.Opcodes.LSTORE
+import org.objectweb.asm.Opcodes.NEW
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
@@ -87,7 +91,10 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
             val classNode = makeClassNode(className, superClassName, methodNode)
 
-            val transformer = OMJClassTransformer(classNode)
+            val transformer = OMJClassTransformer(
+                classNode,
+                ClassTransformerOptions(instrumentMethodBody = false)
+            )
             transformer.transform()
 
             checkInsns(methodNode.instructions) {
@@ -147,7 +154,10 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
             val classNode = makeClassNode(className, superClassName, methodNode)
 
-            val transformer = OMJClassTransformer(classNode)
+            val transformer = OMJClassTransformer(
+                classNode,
+                ClassTransformerOptions(instrumentMethodBody = false)
+            )
             transformer.transform()
 
             checkInsns(methodNode.instructions) {
@@ -157,6 +167,152 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
                 // Emit the method call
                 method(INVOKEVIRTUAL, methodOwner, methodName, "()V", false)
+            }
+        }
+    }
+
+    @Nested
+    inner class MethodBodies {
+
+        @Test
+        fun `visit virtual method with no args`() {
+            testKoin(
+                module {
+                    single {
+                        mockk<DynamicClassDefiner> {
+                            every { defineClassForMethod("()V", false) } returns dynamicClassName
+                        }
+                    }
+                }
+            )
+
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(classNode)
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                startMethodTrace(dynamicClassName)
+                receiver()
+                endMethodTrace()
+                lineNumber(lineNumber)
+            }
+        }
+
+        @Test
+        fun `visit static method with no args`() {
+            testKoin(
+                module {
+                    single {
+                        mockk<DynamicClassDefiner> {
+                            every { defineClassForMethod("()V", true) } returns dynamicClassName
+                        }
+                    }
+                }
+            )
+
+            val methodNode = makeMethodNode(
+                ACC_STATIC,
+                methodName,
+                "()V",
+                listOf(),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(classNode)
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                startMethodTrace(dynamicClassName)
+                endMethodTrace()
+                lineNumber(lineNumber)
+            }
+        }
+
+        @Test
+        fun `visit virtual method with one int arg`() {
+            testKoin(
+                module {
+                    single {
+                        mockk<DynamicClassDefiner> {
+                            every { defineClassForMethod("(I)V", false) } returns dynamicClassName
+                        }
+                    }
+                }
+            )
+
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "(I)V",
+                listOf(makeLocalVariable("myInt", "I", 1)),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(classNode)
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                startMethodTrace(dynamicClassName)
+                receiver()
+                local(ILOAD, 1)
+                method(INVOKESTATIC, agentLibClassName, "methodCall_argument_int", "(I)V", false)
+                endMethodTrace()
+                lineNumber(lineNumber)
+            }
+        }
+
+        @Test
+        fun `visit static method with one double arg`() {
+            testKoin(
+                module {
+                    single {
+                        mockk<DynamicClassDefiner> {
+                            every { defineClassForMethod("(D)V", true) } returns dynamicClassName
+                        }
+                    }
+                }
+            )
+
+            val methodNode = makeMethodNode(
+                ACC_STATIC,
+                methodName,
+                "(D)V",
+                listOf(makeLocalVariable("myDouble", "D", 0)),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(classNode)
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                startMethodTrace(dynamicClassName)
+                local(DLOAD, 0)
+                method(INVOKESTATIC, agentLibClassName, "methodCall_argument_double", "(D)V", false)
+                endMethodTrace()
+                lineNumber(lineNumber)
             }
         }
     }
@@ -181,7 +337,10 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
             val classNode = makeClassNode(className, superClassName, methodNode)
 
-            val transformer = OMJClassTransformer(classNode)
+            val transformer = OMJClassTransformer(
+                classNode,
+                ClassTransformerOptions(instrumentMethodBody = false)
+            )
             transformer.transform()
 
             checkInsns(methodNode.instructions) {
@@ -223,7 +382,10 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
             val classNode = makeClassNode(className, superClassName, methodNode)
 
-            val transformer = OMJClassTransformer(classNode)
+            val transformer = OMJClassTransformer(
+                classNode,
+                ClassTransformerOptions(instrumentMethodBody = false)
+            )
             transformer.transform()
 
             // No instrumentation for loads
@@ -248,7 +410,10 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
             val classNode = makeClassNode(className, superClassName, methodNode)
 
-            val transformer = OMJClassTransformer(classNode)
+            val transformer = OMJClassTransformer(
+                classNode,
+                ClassTransformerOptions(instrumentMethodBody = false)
+            )
             transformer.transform()
 
             checkInsns(methodNode.instructions) {
@@ -294,6 +459,34 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
     private fun makeLocalVariable(name: String, desc: String, index: Int) =
         LocalVariableNode(name, desc, null, LabelNode(), LabelNode(), index)
 
+    private fun CheckInsns.startMethodTrace(dynamicClassName: String) {
+        type(NEW, dynamicClassName)
+        insn(DUP)
+        method(INVOKESPECIAL, dynamicClassName, "<init>", "()V", false)
+        method(
+            INVOKESTATIC,
+            agentLibClassName,
+            "methodCall_start",
+            "(Lcom/octogonapus/omj/agentlib/MethodTrace;)V",
+            false
+        )
+    }
+
+    private fun CheckInsns.receiver() {
+        local(ALOAD, 0)
+        method(
+            INVOKESTATIC,
+            agentLibClassName,
+            "methodCall_argument_Object",
+            "(Ljava/lang/Object;)V",
+            false
+        )
+    }
+
+    private fun CheckInsns.endMethodTrace() {
+        method(INVOKESTATIC, agentLibClassName, "methodCall_end", "()V", false)
+    }
+
     companion object {
         private const val className = "className"
         private const val superClassName = "superClassName"
@@ -301,5 +494,6 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
         private const val methodOwner = "methodOwner"
         private const val varName = "varName"
         private const val lineNumber = 3495
+        private const val dynamicClassName = "dynamicClassname"
     }
 }
