@@ -33,6 +33,9 @@ import org.objectweb.asm.Opcodes.ASTORE
 import org.objectweb.asm.Opcodes.DLOAD
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
+import org.objectweb.asm.Opcodes.DUP2
+import org.objectweb.asm.Opcodes.DUP2_X1
+import org.objectweb.asm.Opcodes.DUP_X1
 import org.objectweb.asm.Opcodes.FLOAD
 import org.objectweb.asm.Opcodes.FSTORE
 import org.objectweb.asm.Opcodes.ILOAD
@@ -43,7 +46,11 @@ import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LLOAD
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
+import org.objectweb.asm.Opcodes.PUTFIELD
+import org.objectweb.asm.Opcodes.PUTSTATIC
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldInsnNode
+import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.LabelNode
@@ -94,7 +101,8 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
             val transformer = OMJClassTransformer(
                 classNode,
-                ClassTransformerOptions(instrumentMethodBody = false)
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
             )
             transformer.transform()
 
@@ -146,7 +154,8 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
             val transformer = OMJClassTransformer(
                 classNode,
-                ClassTransformerOptions(instrumentMethodBody = false)
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
             )
             transformer.transform()
 
@@ -483,7 +492,8 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
             val transformer = OMJClassTransformer(
                 classNode,
-                ClassTransformerOptions(instrumentMethodBody = false)
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
             )
             transformer.transform()
 
@@ -496,16 +506,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 local(opcode, 1)
 
                 // Load the context and trace the store
-                ldc(className)
-                ldc(lineNumber)
-                ldc(varName)
-                method(
-                    INVOKESTATIC,
-                    agentLibClassName,
-                    "store",
-                    "(${localVariableDesc}Ljava/lang/String;ILjava/lang/String;)V",
-                    false
-                )
+                recordStore(className, lineNumber, varName, localVariableDesc)
             }
         }
 
@@ -528,7 +529,8 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
             val transformer = OMJClassTransformer(
                 classNode,
-                ClassTransformerOptions(instrumentMethodBody = false)
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
             )
             transformer.transform()
 
@@ -556,7 +558,8 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
             val transformer = OMJClassTransformer(
                 classNode,
-                ClassTransformerOptions(instrumentMethodBody = false)
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
             )
             transformer.transform()
 
@@ -568,27 +571,320 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 local(ILOAD, 1)
 
                 // Load the context and trace the store
-                ldc(className)
-                ldc(lineNumber)
-                ldc(varName)
-                method(
-                    INVOKESTATIC,
-                    agentLibClassName,
-                    "store",
-                    "(ILjava/lang/String;ILjava/lang/String;)V",
-                    false
-                )
+                recordStore(className, lineNumber, varName, "I")
+            }
+        }
+
+        @Test
+        fun `istore into a byte`() {
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(makeLocalVariable(varName, "B", 1)),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(VarInsnNode(ISTORE, 1))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+
+                // Dup what will be stored
+                insn(DUP)
+
+                // Do the store
+                local(ISTORE, 1)
+
+                // Load the context and trace the store
+                recordStore(className, lineNumber, varName, "B")
+            }
+        }
+
+        @Test
+        fun `astore a string`() {
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(makeLocalVariable(varName, "Ljava/lang/String;", 1)),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(VarInsnNode(ASTORE, 1))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+
+                // Dup what will be stored
+                insn(DUP)
+
+                // Do the store
+                local(ASTORE, 1)
+
+                // Load the context and trace the store
+                recordStore(className, lineNumber, varName, "Ljava/lang/Object;")
+            }
+        }
+
+        @Test
+        fun `istore after dstore`() {
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(
+                    makeLocalVariable(varName, "D", 1),
+                    // Index 3 instead of 2 because doubles are category 2 types
+                    makeLocalVariable(varName2, "I", 3)
+                ),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(VarInsnNode(DSTORE, 1))
+                    // Index 3 instead of 2 because doubles are category 2 types
+                    add(VarInsnNode(ISTORE, 3))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+
+                // Dup what will be stored
+                insn(DUP2)
+
+                // Do the store
+                local(DSTORE, 1)
+
+                // Load the context and trace the store
+                recordStore(className, lineNumber, varName, "D")
+
+                // Dup what will be stored
+                insn(DUP)
+
+                // Do the store. Index 3 instead of 2 because doubles are category 2 types.
+                local(ISTORE, 3)
+
+                // Load the context and trace the store
+                recordStore(className, lineNumber, varName2, "I")
+            }
+        }
+    }
+
+    @Nested
+    inner class FieldTracing {
+
+        @Test
+        fun `put int field`() {
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(FieldInsnNode(PUTFIELD, className, varName, "I"))
+                }
+            )
+
+            val classNode = makeClassNode(
+                className,
+                superClassName,
+                listOf(makeFieldNode(0, varName, "I")),
+                methodNode
+            )
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+
+                // Dup what is on the stack and put it below both values for PUTFIELD
+                insn(DUP_X1)
+
+                // Emit the PUTFIELD
+                field(PUTFIELD, className, varName, "I")
+
+                // Record the put
+                recordStore(className, lineNumber, "$className.$varName", "I")
+            }
+        }
+
+        @Test
+        fun `put long field`() {
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(FieldInsnNode(PUTFIELD, className, varName, "J"))
+                }
+            )
+
+            val classNode = makeClassNode(
+                className,
+                superClassName,
+                listOf(makeFieldNode(0, varName, "J")),
+                methodNode
+            )
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+
+                // Dup what is on the stack and put it below both values for PUTFIELD
+                insn(DUP2_X1)
+
+                // Emit the PUTFIELD
+                field(PUTFIELD, className, varName, "J")
+
+                // Record the put
+                recordStore(className, lineNumber, "$className.$varName", "J")
+            }
+        }
+
+        @Test
+        fun `put static int field`() {
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(FieldInsnNode(PUTSTATIC, className, varName, "I"))
+                }
+            )
+
+            val classNode = makeClassNode(
+                className,
+                superClassName,
+                listOf(makeFieldNode(ACC_STATIC, varName, "I")),
+                methodNode
+            )
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+
+                // Dup what is on the stack and put it below the value for PUTSTATIC
+                insn(DUP)
+
+                // Emit the PUTSTATIC
+                field(PUTSTATIC, className, varName, "I")
+
+                // Record the put
+                recordStore(className, lineNumber, "$className.$varName", "I")
+            }
+        }
+
+        @Test
+        fun `put static long field`() {
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(FieldInsnNode(PUTSTATIC, className, varName, "J"))
+                }
+            )
+
+            val classNode = makeClassNode(
+                className,
+                superClassName,
+                listOf(makeFieldNode(ACC_STATIC, varName, "J")),
+                methodNode
+            )
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+
+                // Dup what is on the stack and put it below the value for PUTSTATIC
+                insn(DUP2)
+
+                // Emit the PUTSTATIC
+                field(PUTSTATIC, className, varName, "J")
+
+                // Record the put
+                recordStore(className, lineNumber, "$className.$varName", "J")
             }
         }
     }
 
     private fun makeClassNode(name: String, superName: String, method: MethodNode) =
-        ClassNode(ASM8).also {
-            it.name = name
-            it.superName = superName
-            it.methods.add(method)
-            it.version = 51
-        }
+        makeClassNode(name, superName, emptyList(), method)
+
+    private fun makeClassNode(
+        name: String,
+        superName: String,
+        fields: List<FieldNode>,
+        method: MethodNode
+    ) = ClassNode(ASM8).also {
+        it.name = name
+        it.superName = superName
+        it.fields = fields
+        it.methods.add(method)
+        it.version = 51
+    }
+
+    private fun makeFieldNode(access: Int, name: String, desc: String) =
+        FieldNode(ASM8, access, name, desc, null, null)
 
     private fun makeMethodNode(
         access: Int,
@@ -651,12 +947,31 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
         method(INVOKESTATIC, agentLibClassName, "methodCall_end", "()V", false)
     }
 
+    private fun CheckInsns.recordStore(
+        className: String,
+        lineNumber: Int,
+        varName: String,
+        varDesc: String
+    ) {
+        ldc(className)
+        ldc(lineNumber)
+        ldc(varName)
+        method(
+            INVOKESTATIC,
+            agentLibClassName,
+            "store",
+            "(${varDesc}Ljava/lang/String;ILjava/lang/String;)V",
+            false
+        )
+    }
+
     companion object {
         private const val className = "className"
         private const val superClassName = "superClassName"
         private const val methodName = "methodName"
         private const val methodOwner = "methodOwner"
         private const val varName = "varName"
+        private const val varName2 = "varName2"
         private const val lineNumber = 3495
         private const val lineNumber2 = 3895
         private const val dynamicClassName = "dynamicClassName"

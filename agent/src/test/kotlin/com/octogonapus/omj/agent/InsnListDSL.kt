@@ -18,6 +18,7 @@ package com.octogonapus.omj.agent
 
 import com.octogonapus.omj.testutil.shouldHaveExactlyInOrder
 import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
@@ -86,6 +87,17 @@ class CheckInsns(private val insnList: InsnList) {
     fun type(opcode: Int, descriptor: String) {
         checks.add {
             it is TypeInsnNode && it.opcode == opcode && it.desc == descriptor
+        }
+    }
+
+    @InsnListDSL
+    fun field(opcode: Int, fieldOwner: String, fieldName: String, fieldDesc: String) {
+        checks.add {
+            it is FieldInsnNode &&
+                it.opcode == opcode &&
+                it.owner == fieldOwner &&
+                it.name == fieldName &&
+                it.desc == fieldDesc
         }
     }
 

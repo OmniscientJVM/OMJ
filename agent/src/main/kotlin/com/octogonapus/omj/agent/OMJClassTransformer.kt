@@ -17,6 +17,7 @@
 package com.octogonapus.omj.agent
 
 import com.octogonapus.omj.agent.MethodAdapterUtil.Companion.agentLibClassName
+import com.octogonapus.omj.agent.MethodAdapterUtil.Companion.convertPathTypeToPackageType
 import com.octogonapus.omj.di.OMJKoinComponent
 import mu.KotlinLogging
 import org.koin.core.inject
@@ -52,11 +53,11 @@ import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
 /**
- * @param instrumentMethodBody If true, then the body of methods will be instrumented to record
+ * @param recordMethodCall If true, then the body of methods will be instrumented to record
  * method calls.
  */
 data class ClassTransformerOptions(
-    val instrumentMethodBody: Boolean = true
+    val recordMethodCall: Boolean = true
 )
 
 /**
@@ -127,14 +128,13 @@ internal class OMJClassTransformer(
             }
         ) + instrumentNormalMethod(
             methodNode,
-            // Don't instrument the body because we just did that in here
-            options.copy(instrumentMethodBody = false)
+            // Don't record the method call because we just did that in here
+            options.copy(recordMethodCall = false)
         )
     }
 
-    private fun instrumentClassInitializationMethod(
-        methodNode: MethodNode
-    ) = instrumentNormalMethod(methodNode, options)
+    private fun instrumentClassInitializationMethod(methodNode: MethodNode) =
+        instrumentNormalMethod(methodNode, options)
 
     private fun instrumentMainMethod(methodNode: MethodNode): List<InsnListInsertion> {
         val firstLineNumber = methodNode.instructions
@@ -176,7 +176,7 @@ internal class OMJClassTransformer(
                 is IincInsnNode -> instrumentIincInsn(methodNode, it, currentLineNumber.line)
 
                 is FieldInsnNode -> when (it.opcode) {
-                    PUTFIELD, PUTSTATIC -> TODO("Record store")
+                    PUTFIELD, PUTSTATIC -> instrumentPutInsn(methodNode, it, currentLineNumber.line)
                     else -> emptyList()
                 }
 
@@ -185,11 +185,24 @@ internal class OMJClassTransformer(
         }
 
         val bodyInstrumentation =
-            if (options.instrumentMethodBody) instrumentMethodBody(methodNode)
+            if (options.recordMethodCall) instrumentMethodBody(methodNode)
             else emptyList()
 
         return bodyInstrumentation + insertions
     }
+
+    private fun instrumentPutInsn(
+        methodNode: MethodNode,
+        fieldInsnNode: FieldInsnNode,
+        lineNumber: Int
+    ) = listOf(
+        methodNode.instructions.insertBefore(fieldInsnNode) {
+            add(InsnNode(OpcodeUtil.getDupOpcode(fieldInsnNode.opcode, fieldInsnNode.desc)))
+        },
+        methodNode.instructions.insertAfter(fieldInsnNode) {
+            recordStore(lineNumber, fieldInsnNode)
+        }
+    )
 
     private fun instrumentMethodBody(methodNode: MethodNode) = listOf(
         methodNode.instructions.insertBefore(methodNode.instructions.first) {
@@ -362,16 +375,48 @@ internal class OMJClassTransformer(
      * @param lineNumber The closest line number of the store.
      * @param localVariable The local variable being stored into.
      */
-    private fun InsnList.recordStore(lineNumber: Int, localVariable: LocalVariableNode) {
+    private fun InsnList.recordStore(lineNumber: Int, localVariable: LocalVariableNode) =
+        recordStore(
+            lineNumber,
+            localVariable.name,
+            TypeUtil.getAdaptedDescriptor(Type.getType(localVariable.desc))
+        )
+
+    /**
+     * Records a store into a field.
+     *
+     * @param lineNumber The closest line number of the store.
+     * @param field The field being stored into.
+     */
+    private fun InsnList.recordStore(lineNumber: Int, field: FieldInsnNode) =
+        recordStore(
+            lineNumber,
+            "${convertPathTypeToPackageType(field.owner)}.${field.name}",
+            TypeUtil.getAdaptedDescriptor(Type.getType(field.desc))
+        )
+
+    /**
+     * Records a store into any type of variable.
+     *
+     * @param lineNumber The closest line number of the store.
+     * @param variableName The name of the variable being stored into.
+     * @param adaptedVariableDesc The "adapted" type descriptor of the variable. See
+     * [TypeUtil.getAdaptedDescriptor].
+     */
+    private fun InsnList.recordStore(
+        lineNumber: Int,
+        variableName: String,
+        adaptedVariableDesc: String
+    ) {
         add(LdcInsnNode(fullyQualifiedClassName))
         add(LdcInsnNode(lineNumber))
-        add(LdcInsnNode(localVariable.name))
+        add(LdcInsnNode(variableName))
         add(
             MethodInsnNode(
                 INVOKESTATIC,
                 agentLibClassName,
                 "store",
-                "(${localVariable.desc}Ljava/lang/String;ILjava/lang/String;)V",
+                "(${adaptedVariableDesc}Ljava/lang/String;ILjava/lang/String;)V",
                 false
             )
         )
