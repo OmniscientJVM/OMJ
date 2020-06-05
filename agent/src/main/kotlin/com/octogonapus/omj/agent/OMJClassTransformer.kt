@@ -99,35 +99,63 @@ internal class OMJClassTransformer(
 
             methodNode.isMainMethod() -> instrumentMainMethod(methodNode)
 
-            else -> instrumentNormalMethod(methodNode)
+            else -> instrumentNormalMethod(methodNode, options)
         }
 
         insertions.forEach { it.insert() }
     }
 
-    private fun instrumentInstanceInitializationMethod(methodNode: MethodNode): List<InsnListInsertion> {
-        TODO("Not yet implemented")
+    private fun instrumentInstanceInitializationMethod(
+        methodNode: MethodNode
+    ): List<InsnListInsertion> {
+        // Ensure the superclass ctor is the first method insn
+        val methodInsns = methodNode.instructions.mapNotNull { it as? MethodInsnNode }
+        val firstMethodInsn = methodInsns.first()
+        check(
+            firstMethodInsn.let {
+                it.opcode == INVOKESPECIAL && it.name == "<init>" && it.owner == classNode.superName
+            }
+        ) {
+            "The first method insn was not the superclass instance initializer: $firstMethodInsn"
+        }
+
+        // Record this method call after the superclass instance initialization method has been
+        // called, because before that, `this` is uninitialized.
+        return listOf(
+            methodNode.instructions.insertAfter(firstMethodInsn) {
+                recordMethodCall(methodNode)
+            }
+        ) + instrumentNormalMethod(
+            methodNode,
+            // Don't instrument the body because we just did that in here
+            options.copy(instrumentMethodBody = false)
+        )
     }
 
-    private fun instrumentClassInitializationMethod(methodNode: MethodNode): List<InsnListInsertion> {
+    private fun instrumentClassInitializationMethod(
+        methodNode: MethodNode
+    ): List<InsnListInsertion> {
         TODO("Not yet implemented")
     }
 
     private fun instrumentMainMethod(methodNode: MethodNode): List<InsnListInsertion> {
         val firstLineNumber = methodNode.instructions
-                .mapNotNull { it as? LineNumberNode }
-                .firstOrNull()
-                ?.line
-                ?: 0
+            .mapNotNull { it as? LineNumberNode }
+            .firstOrNull()
+            ?.line
+            ?: 0
 
         return listOf(
-                methodNode.instructions.insertBefore(methodNode.instructions.first) {
-                    emitPreamble(firstLineNumber, methodNode.name)
-                }
-        ) + instrumentNormalMethod(methodNode)
+            methodNode.instructions.insertBefore(methodNode.instructions.first) {
+                emitPreamble(firstLineNumber, methodNode.name)
+            }
+        ) + instrumentNormalMethod(methodNode, options)
     }
 
-    private fun instrumentNormalMethod(methodNode: MethodNode): List<InsnListInsertion> {
+    private fun instrumentNormalMethod(
+        methodNode: MethodNode,
+        options: ClassTransformerOptions
+    ): List<InsnListInsertion> {
         var currentLineNumber = LineNumberNode(0, LabelNode())
 
         val insertions = methodNode.instructions.flatMap {
@@ -166,88 +194,92 @@ internal class OMJClassTransformer(
     }
 
     private fun instrumentMethodBody(methodNode: MethodNode): List<InsnListInsertion> {
+        return listOf(
+            methodNode.instructions.insertBefore(methodNode.instructions.first) {
+                recordMethodCall(methodNode)
+            }
+        )
+    }
+
+    private fun InsnList.recordMethodCall(methodNode: MethodNode) {
         val isStatic = hasAccessFlag(methodNode.access, ACC_STATIC)
         val dynamicClassName = dynamicClassDefiner.defineClassForMethod(methodNode.desc, isStatic)
 
-        return listOf(
-            methodNode.instructions.insertBefore(methodNode.instructions.first) {
-                // Generate a method trace container class and make a new instance of it.
-                // Contextual information about this method is passed to the agent lib earlier
-                // when method instructions are visited.
-                add(TypeInsnNode(NEW, dynamicClassName))
-                add(InsnNode(DUP))
-                add(MethodInsnNode(INVOKESPECIAL, dynamicClassName, "<init>", "()V", false))
-                add(
-                    MethodInsnNode(
-                        INVOKESTATIC,
-                        agentLibClassName,
-                        "methodCall_start",
-                        "(Lcom/octogonapus/omj/agentlib/MethodTrace;)V",
-                        false
-                    )
+        // Generate a method trace container class and make a new instance of it.
+        // Contextual information about this method is passed to the agent lib earlier
+        // when method instructions are visited.
+        add(TypeInsnNode(NEW, dynamicClassName))
+        add(InsnNode(DUP))
+        add(MethodInsnNode(INVOKESPECIAL, dynamicClassName, "<init>", "()V", false))
+        add(
+            MethodInsnNode(
+                INVOKESTATIC,
+                agentLibClassName,
+                "methodCall_start",
+                "(Lcom/octogonapus/omj/agentlib/MethodTrace;)V",
+                false
+            )
+        )
+
+        // Compute the stack index of each argument type. We can't use the list index as the
+        // stack index because some types take up two indices. Start `stackIndex` at `0`
+        // even if the method is virtual because the virtual offset is handled later.
+        var stackIndex = 0
+        val argumentTypes = Type.getArgumentTypes(methodNode.desc).map { type ->
+            val oldStackIndex = stackIndex
+            stackIndex += TypeUtil.getStackSize(type)
+            type to oldStackIndex
+        }
+
+        logger.debug { "argumentTypes = ${argumentTypes.joinToString()}" }
+
+        val virtualOffset = if (isStatic) 0 else 1
+        if (!isStatic) {
+            add(VarInsnNode(ALOAD, 0))
+            add(
+                MethodInsnNode(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    "methodCall_argument_Object",
+                    "(Ljava/lang/Object;)V",
+                    false
                 )
+            )
+        }
 
-                // Compute the stack index of each argument type. We can't use the list index as the
-                // stack index because some types take up two indices. Start `stackIndex` at `0`
-                // even if the method is virtual because the virtual offset is handled later.
-                var stackIndex = 0
-                val argumentTypes = Type.getArgumentTypes(methodNode.desc).map { type ->
-                    val oldStackIndex = stackIndex
-                    stackIndex += TypeUtil.getStackSize(type)
-                    type to oldStackIndex
-                }
+        argumentTypes.forEach { (argumentType, stackIndex) ->
+            val methodName = "methodCall_argument_" +
+                TypeUtil.getAdaptedClassName(argumentType)
+            val methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V"
 
-                logger.debug { "argumentTypes = ${argumentTypes.joinToString()}" }
-
-                val virtualOffset = if (isStatic) 0 else 1
-                if (!isStatic) {
-                    add(VarInsnNode(ALOAD, 0))
-                    add(
-                        MethodInsnNode(
-                            INVOKESTATIC,
-                            agentLibClassName,
-                            "methodCall_argument_Object",
-                            "(Ljava/lang/Object;)V",
-                            false
-                        )
-                    )
-                }
-
-                argumentTypes.forEach { (argumentType, stackIndex) ->
-                    val methodName = "methodCall_argument_" +
-                        TypeUtil.getAdaptedClassName(argumentType)
-                    val methodDesc = "(" + TypeUtil.getAdaptedDescriptor(argumentType) + ")V"
-
-                    logger.debug {
-                        """
-                        Generated methodCall_argument_xxx override
-                        methodName = $methodName
-                        methodDescriptor = $methodDesc
-                        """.trimIndent()
-                    }
-
-                    add(VarInsnNode(argumentType.getOpcode(ILOAD), stackIndex + virtualOffset))
-                    add(
-                        MethodInsnNode(
-                            INVOKESTATIC,
-                            agentLibClassName,
-                            methodName,
-                            methodDesc,
-                            false
-                        )
-                    )
-                }
-
-                add(
-                    MethodInsnNode(
-                        INVOKESTATIC,
-                        agentLibClassName,
-                        "methodCall_end",
-                        "()V",
-                        false
-                    )
-                )
+            logger.debug {
+                """
+                Generated methodCall_argument_xxx override
+                methodName = $methodName
+                methodDescriptor = $methodDesc
+                """.trimIndent()
             }
+
+            add(VarInsnNode(argumentType.getOpcode(ILOAD), stackIndex + virtualOffset))
+            add(
+                MethodInsnNode(
+                    INVOKESTATIC,
+                    agentLibClassName,
+                    methodName,
+                    methodDesc,
+                    false
+                )
+            )
+        }
+
+        add(
+            MethodInsnNode(
+                INVOKESTATIC,
+                agentLibClassName,
+                "methodCall_end",
+                "()V",
+                false
+            )
         )
     }
 
@@ -266,35 +298,35 @@ internal class OMJClassTransformer(
     private fun InsnList.emitPreamble(lineNumber: Int, methodName: String) {
         add(LdcInsnNode(fullyQualifiedClassName))
         add(
-                MethodInsnNode(
-                        INVOKESTATIC,
-                        agentLibClassName,
-                        "className",
-                        "(Ljava/lang/String;)V",
-                        false
-                )
+            MethodInsnNode(
+                INVOKESTATIC,
+                agentLibClassName,
+                "className",
+                "(Ljava/lang/String;)V",
+                false
+            )
         )
 
         add(LdcInsnNode(lineNumber))
         add(
-                MethodInsnNode(
-                        INVOKESTATIC,
-                        agentLibClassName,
-                        "lineNumber",
-                        "(I)V",
-                        false
-                )
+            MethodInsnNode(
+                INVOKESTATIC,
+                agentLibClassName,
+                "lineNumber",
+                "(I)V",
+                false
+            )
         )
 
         add(LdcInsnNode(methodName))
         add(
-                MethodInsnNode(
-                        INVOKESTATIC,
-                        agentLibClassName,
-                        "methodName",
-                        "(Ljava/lang/String;)V",
-                        false
-                )
+            MethodInsnNode(
+                INVOKESTATIC,
+                agentLibClassName,
+                "methodName",
+                "(Ljava/lang/String;)V",
+                false
+            )
         )
     }
 

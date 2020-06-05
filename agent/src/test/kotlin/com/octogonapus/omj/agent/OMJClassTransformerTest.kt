@@ -352,6 +352,65 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 lineNumber(lineNumber)
             }
         }
+
+        @Test
+        fun `visit instance initialization method`() {
+            testKoin(
+                module {
+                    single {
+                        mockk<ClassFilter> {
+                            every { shouldTransform(className) } returns true
+                            every { shouldTransform(superClassName) } returns true
+                        }
+                    }
+
+                    single {
+                        mockk<DynamicClassDefiner> {
+                            every { defineClassForMethod("()V", false) } returns dynamicClassName
+                            every { defineClassForMethod("(I)V", false) } returns dynamicClassName2
+                        }
+                    }
+                }
+            )
+
+            val methodNode = makeMethodNode(
+                0,
+                "<init>",
+                "()V",
+                listOf(),
+                InsnList().apply {
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(MethodInsnNode(INVOKESPECIAL, superClassName, "<init>", "()V", false))
+                    add(LineNumberNode(lineNumber2, LabelNode()))
+                    add(MethodInsnNode(INVOKEVIRTUAL, superClassName, "someMethod", "(I)V", false))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(classNode)
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+
+                // Preamble for superclass ctor
+                methodPreamble(className, lineNumber, "<init>")
+
+                // Superclass ctor
+                method(INVOKESPECIAL, superClassName, "<init>", "()V", false)
+
+                // Record superclass trace after `this` is initialized
+                startMethodTrace(dynamicClassName)
+                receiver()
+                endMethodTrace()
+
+                lineNumber(lineNumber2)
+
+                // Preamble for the next method like normal
+                methodPreamble(className, lineNumber2, "someMethod")
+            }
+        }
     }
 
     @Nested
@@ -497,8 +556,12 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
     private fun makeLocalVariable(name: String, desc: String, index: Int) =
         LocalVariableNode(name, desc, null, LabelNode(), LabelNode(), index)
 
-    private fun CheckInsns.methodPreamble(className: String, lineNumber: Int, methodName: String) {
-        ldc(className)
+    private fun CheckInsns.methodPreamble(
+        callerClass: String,
+        lineNumber: Int,
+        methodName: String
+    ) {
+        ldc(callerClass)
         method(INVOKESTATIC, agentLibClassName, "className", "(Ljava/lang/String;)V", false)
         ldc(lineNumber)
         method(INVOKESTATIC, agentLibClassName, "lineNumber", "(I)V", false)
@@ -547,6 +610,8 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
         private const val methodOwner = "methodOwner"
         private const val varName = "varName"
         private const val lineNumber = 3495
+        private const val lineNumber2 = 3895
         private const val dynamicClassName = "dynamicClassName"
+        private const val dynamicClassName2 = "dynamicClassName2"
     }
 }
