@@ -106,7 +106,7 @@ internal class OMJClassTransformer(
                 }
 
                 is MethodInsnNode -> if (classFilter.shouldTransform(it.owner)) {
-                    TODO("Emit preamble")
+                    instrumentMethodInsn(methodNode, it, currentLineNumber.line)
                 } else emptyList()
 
                 is VarInsnNode -> when (it.opcode) {
@@ -127,6 +127,49 @@ internal class OMJClassTransformer(
         }.forEach { insertion ->
             insertion.insert()
         }
+    }
+
+    private fun instrumentMethodInsn(
+        methodNode: MethodNode,
+        methodInsnNode: MethodInsnNode,
+        lineNumber: Int
+    ): List<InsnListInsertion> {
+        return listOf(
+            methodNode.instructions.insertBefore(methodInsnNode) {
+                add(LdcInsnNode(fullyQualifiedClassName))
+                add(
+                    MethodInsnNode(
+                        INVOKESTATIC,
+                        agentLibClassName,
+                        "className",
+                        "(Ljava/lang/String;)V",
+                        false
+                    )
+                )
+
+                add(LdcInsnNode(lineNumber))
+                add(
+                    MethodInsnNode(
+                        INVOKESTATIC,
+                        agentLibClassName,
+                        "lineNumber",
+                        "(I)V",
+                        false
+                    )
+                )
+
+                add(LdcInsnNode(methodInsnNode.name))
+                add(
+                    MethodInsnNode(
+                        INVOKESTATIC,
+                        agentLibClassName,
+                        "methodName",
+                        "(Ljava/lang/String;)V",
+                        false
+                    )
+                )
+            }
+        )
     }
 
     private fun instrumentVarInsn(
