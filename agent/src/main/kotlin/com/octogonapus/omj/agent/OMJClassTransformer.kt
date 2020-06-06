@@ -224,6 +224,19 @@ internal class OMJClassTransformer(
             localVariable = lookForNewArrayLocalVariable(insnNode, methodNode)
         }
 
+        // We are at an array store insn, which means that the stack currently looks like
+        //  arrayref, index, value ->
+        // We want to find the local variable corresponding to arrayref (which might not exist yet)
+        // These are the possible cases:
+        //  1. The arrayref was loaded from a local variable
+        //  2. The arrayref was not loaded from a local variable but will be stored in one later in
+        //      this method body
+        // For case (1), we need to trace the data flow backwards from the arrayref to the local it
+        //  was loaded from.
+        // For case (2), we need to trace the data flow backwards from the arrayref to where is was
+        //  first put on the stack (from a new array insn or method call) and then trace the data
+        //  flow forwards until we find the local it is stored in.
+
         localVariable?.let {
             logger.debug {
                 """
