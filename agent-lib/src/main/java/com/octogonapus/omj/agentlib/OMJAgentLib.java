@@ -234,6 +234,7 @@ public final class OMJAgentLib {
       final String className,
       final int lineNumber,
       final String variableName) {
+    array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_boolean(
             traceCounter.getAndIncrement(),
@@ -253,6 +254,7 @@ public final class OMJAgentLib {
       final String className,
       final int lineNumber,
       final String variableName) {
+    array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_char(
             traceCounter.getAndIncrement(),
@@ -272,6 +274,7 @@ public final class OMJAgentLib {
       final String className,
       final int lineNumber,
       final String variableName) {
+    array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_byte(
             traceCounter.getAndIncrement(),
@@ -291,6 +294,7 @@ public final class OMJAgentLib {
       final String className,
       final int lineNumber,
       final String variableName) {
+    array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_short(
             traceCounter.getAndIncrement(),
@@ -310,6 +314,7 @@ public final class OMJAgentLib {
       final String className,
       final int lineNumber,
       final String variableName) {
+    array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_int(
             traceCounter.getAndIncrement(),
@@ -329,6 +334,7 @@ public final class OMJAgentLib {
       final String className,
       final int lineNumber,
       final String variableName) {
+    array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_float(
             traceCounter.getAndIncrement(),
@@ -348,6 +354,7 @@ public final class OMJAgentLib {
       final String className,
       final int lineNumber,
       final String variableName) {
+    array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_long(
             traceCounter.getAndIncrement(),
@@ -367,6 +374,7 @@ public final class OMJAgentLib {
       final String className,
       final int lineNumber,
       final String variableName) {
+    array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_double(
             traceCounter.getAndIncrement(),
@@ -386,6 +394,7 @@ public final class OMJAgentLib {
       final String className,
       final int lineNumber,
       final String variableName) {
+    array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_Object(
             traceCounter.getAndIncrement(),
