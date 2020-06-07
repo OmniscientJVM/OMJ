@@ -64,14 +64,21 @@ import org.objectweb.asm.Opcodes.SALOAD
 import org.objectweb.asm.Opcodes.SASTORE
 import org.objectweb.asm.Opcodes.SIPUSH
 import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
+/**
+ * This class is NOT thread-safe.
+ */
 internal class Interpreter {
 
     private val stackMap: MutableMap<AbstractInsnNode, OperandStack> = HashMap()
+
+    /**
+     * Determine the state of the stack immediately before the [insn] executes.
+     */
+    internal fun stackBefore(insn: AbstractInsnNode) = stackAfter(insn.previous)
 
     /**
      * Determine the state of the stack immediately after the [insn] executes.
@@ -83,7 +90,22 @@ internal class Interpreter {
     }
 
     /**
-     * Sets the stack for the first insn. FOR TESTING PURPOSES ONLY!
+     * Changes every occurrence of the [old] operand to the [new] operand.
+     *
+     * @param old The old operand to get rid of.
+     * @param new The new operand to replace the [old] with.
+     */
+    internal fun updateOperand(old: Operand, new: Operand) {
+        val newMap = stackMap.mapValues { (_, stack) ->
+            stack.updateOperand(old, new)
+        }
+
+        stackMap.clear()
+        stackMap.putAll(newMap)
+    }
+
+    /**
+     * Sets the stack for the first insn. FOR USE IN TESTS ONLY!
      */
     internal fun setStackAfter(insn: AbstractInsnNode, stack: OperandStack) {
         stackMap[insn] = stack

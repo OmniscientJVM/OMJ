@@ -17,9 +17,11 @@
 package com.octogonapus.omj.agent.interpreter
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.property.checkAll
 import java.lang.RuntimeException
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
 
 class PopInsns : StringSpec({
@@ -68,6 +70,28 @@ class PopInsns : StringSpec({
                 stackBefore = OperandStack.from(value),
                 stackAfter = OperandStack.from()
             )
+        }
+    }
+
+    "stack before pop2 a category 2 value" {
+        checkAll(allCategory2Values, allCategory1Values) { value1, value2 ->
+            val insn = InsnNode(Opcodes.POP2)
+            val stackBefore = OperandStack.from(value2, value1)
+            val stackAfter = OperandStack.from(value2)
+
+            val insnList = InsnList().apply {
+                // Add a NOP so we can set the stack for it to stackBefore
+                add(InsnNode(Opcodes.NOP))
+                add(insn)
+            }
+
+            val interpreter = Interpreter()
+
+            // This will set the stack after the NOP to stackBefore
+            interpreter.setStackAfter(insnList.first, stackBefore)
+
+            interpreter.stackAfter(insn).shouldBe(stackAfter)
+            interpreter.stackBefore(insn).shouldBe(stackBefore)
         }
     }
 })

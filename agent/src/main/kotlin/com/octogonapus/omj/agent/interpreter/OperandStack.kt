@@ -26,12 +26,50 @@ import org.objectweb.asm.Opcodes.T_SHORT
 
 @Suppress("DataClassPrivateConstructor")
 internal data class OperandStack private constructor(
-    private val stack: List<Operand>
+    internal val stack: List<Operand>
 ) {
 
+    internal fun peek() = peek(0)
+
+    internal fun peek(offset: Int) = stack[stack.lastIndex - offset]
+
+    internal operator fun contains(operand: Operand): Boolean {
+        for (elem in stack) {
+            if (elem === operand) return true
+        }
+
+        return false
+    }
+
+    /**
+     * Applies the [operation] to this stack. Does not modify this stack.
+     *
+     * @return operation The operation to apply.
+     * @return A new stack.
+     */
     internal fun applyOperation(operation: OperandStackOperation): OperandStack {
         val localStack = ArrayList(stack)
         localStack.applyOperation(operation)
+        return OperandStack(localStack)
+    }
+
+    /**
+     * Changes every occurrence of the [old] operand to the [new] operand. Does not modify this
+     * stack.
+     *
+     * @param old The old operand to get rid of.
+     * @param new The new operand to replace the [old] with.
+     * @return A new stack.
+     */
+    internal fun updateOperand(old: Operand, new: Operand): OperandStack {
+        val localStack = ArrayList(stack)
+
+        for (index in localStack.indices) {
+            if (localStack[index] === old) {
+                localStack[index] = new
+            }
+        }
+
         return OperandStack(localStack)
     }
 
@@ -47,89 +85,89 @@ internal data class OperandStack private constructor(
             is OperandStackOperation.PushConstByte -> push(Operand.ByteType.ConstByte(op.value))
             is OperandStackOperation.PushConstShort -> push(Operand.ShortType.ConstShort(op.value))
             is OperandStackOperation.NewArray -> {
-                check(pop() is Operand.IntType)
-                push(Operand.RefType.ArrayRef(op.type))
+                check(pop().isInt())
+                push(Operand.RefType.ArrayRef(ArrayType.Primitive(op.type)))
             }
-            OperandStackOperation.PushNullRef -> push(Operand.RefType.Null)
+            OperandStackOperation.PushNullRef -> push(Operand.RefType.Null())
             OperandStackOperation.LoadIntFromArray -> {
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_INT))
-                push(Operand.IntType.RuntimeInt)
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_INT)))
+                push(Operand.IntType.RuntimeInt())
             }
             OperandStackOperation.StoreIntoIntArray -> {
-                check(pop() is Operand.IntType)
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_INT))
+                check(pop().isInt())
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_INT)))
             }
             OperandStackOperation.LoadLongFromArray -> {
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_LONG))
-                push(Operand.LongType.RuntimeLong)
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_LONG)))
+                push(Operand.LongType.RuntimeLong())
             }
             OperandStackOperation.StoreIntoLongArray -> {
                 check(pop() is Operand.LongType)
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_LONG))
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_LONG)))
             }
             OperandStackOperation.LoadFloatFromArray -> {
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_FLOAT))
-                push(Operand.FloatType.RuntimeFloat)
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_FLOAT)))
+                push(Operand.FloatType.RuntimeFloat())
             }
             OperandStackOperation.StoreIntoFloatArray -> {
                 check(pop() is Operand.FloatType)
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_FLOAT))
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_FLOAT)))
             }
             OperandStackOperation.LoadDoubleFromArray -> {
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_DOUBLE))
-                push(Operand.DoubleType.RuntimeDouble)
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_DOUBLE)))
+                push(Operand.DoubleType.RuntimeDouble())
             }
             OperandStackOperation.StoreIntoDoubleArray -> {
                 check(pop() is Operand.DoubleType)
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_DOUBLE))
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_DOUBLE)))
             }
             OperandStackOperation.LoadRefFromArray -> {
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.RefArrayRef)
-                push(Operand.RefType.RuntimeRef)
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Ref))
+                push(Operand.RefType.RuntimeRef())
             }
             OperandStackOperation.StoreIntoRefArray -> {
                 check(pop() is Operand.RefType)
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.RefArrayRef)
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Ref))
             }
             OperandStackOperation.LoadByteFromArray -> {
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_BYTE))
-                push(Operand.ByteType.RuntimeByte)
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_BYTE)))
+                push(Operand.ByteType.RuntimeByte())
             }
             OperandStackOperation.StoreIntoByteArray -> {
                 check(pop() is Operand.ByteType)
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_BYTE))
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_BYTE)))
             }
             OperandStackOperation.LoadCharFromArray -> {
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_CHAR))
-                push(Operand.CharType.RuntimeChar)
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_CHAR)))
+                push(Operand.CharType.RuntimeChar())
             }
             OperandStackOperation.StoreIntoCharArray -> {
                 check(pop() is Operand.CharType)
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_CHAR))
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_CHAR)))
             }
             OperandStackOperation.LoadShortFromArray -> {
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_SHORT))
-                push(Operand.ShortType.RuntimeShort)
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_SHORT)))
+                push(Operand.ShortType.RuntimeShort())
             }
             OperandStackOperation.StoreIntoShortArray -> {
                 check(pop() is Operand.ShortType)
-                check(pop() is Operand.IntType)
-                check(pop() == Operand.RefType.ArrayRef(T_SHORT))
+                check(pop().isInt())
+                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_SHORT)))
             }
             OperandStackOperation.Pop -> {
                 check(pop().category() == Category.CategoryOne)
@@ -235,37 +273,39 @@ internal data class OperandStack private constructor(
                 }
             }
             is OperandStackOperation.LoadIntFromLocal -> {
-                push(Operand.IntType.RuntimeInt)
+                push(Operand.IntType.RuntimeInt())
             }
             is OperandStackOperation.StoreIntIntoLocal -> {
                 check(pop() is Operand.IntType)
             }
             is OperandStackOperation.LoadLongFromLocal -> {
-                push(Operand.LongType.RuntimeLong)
+                push(Operand.LongType.RuntimeLong())
             }
             is OperandStackOperation.StoreLongIntoLocal -> {
                 check(pop() is Operand.LongType)
             }
             is OperandStackOperation.LoadFloatFromLocal -> {
-                push(Operand.FloatType.RuntimeFloat)
+                push(Operand.FloatType.RuntimeFloat())
             }
             is OperandStackOperation.StoreFloatIntoLocal -> {
                 check(pop() is Operand.FloatType)
             }
             is OperandStackOperation.LoadDoubleFromLocal -> {
-                push(Operand.DoubleType.RuntimeDouble)
+                push(Operand.DoubleType.RuntimeDouble())
             }
             is OperandStackOperation.StoreDoubleIntoLocal -> {
                 check(pop() is Operand.DoubleType)
             }
             is OperandStackOperation.LoadRefFromLocal -> {
-                push(Operand.RefType.RuntimeRef)
+                push(Operand.RefType.RuntimeRef())
             }
             is OperandStackOperation.StoreRefIntoLocal -> {
                 check(pop() is Operand.RefType)
             }
         }
     }
+
+    override fun toString() = stack.joinToString()
 
     companion object {
 

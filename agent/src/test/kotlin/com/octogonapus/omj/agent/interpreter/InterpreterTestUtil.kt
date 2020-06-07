@@ -52,7 +52,7 @@ internal val positiveInts = listOf(
     Operand.IntType.ConstInt(3),
     Operand.IntType.ConstInt(4),
     Operand.IntType.ConstInt(5),
-    Operand.IntType.RuntimeInt
+    Operand.IntType.RuntimeInt()
 ).exhaustive()
 
 /**
@@ -75,7 +75,7 @@ internal val allInts = listOf(
 internal val allLongs = listOf(
     Operand.LongType.ConstLong(0),
     Operand.LongType.ConstLong(1),
-    Operand.LongType.RuntimeLong
+    Operand.LongType.RuntimeLong()
 ).exhaustive()
 
 /**
@@ -84,7 +84,7 @@ internal val allLongs = listOf(
 internal val allFloats = listOf(
     Operand.FloatType.ConstFloat(0.0f),
     Operand.FloatType.ConstFloat(1.0f),
-    Operand.FloatType.RuntimeFloat
+    Operand.FloatType.RuntimeFloat()
 ).exhaustive()
 
 /**
@@ -93,17 +93,17 @@ internal val allFloats = listOf(
 internal val allDoubles = listOf(
     Operand.DoubleType.ConstDouble(0.0),
     Operand.DoubleType.ConstDouble(1.0),
-    Operand.DoubleType.RuntimeDouble
+    Operand.DoubleType.RuntimeDouble()
 ).exhaustive()
 
 /**
  * All ref constants + runtime ref.
  */
 internal val allRefs = listOf(
-    Operand.RefType.RefArrayRef,
-    Operand.RefType.ArrayRef(T_INT),
-    Operand.RefType.Null,
-    Operand.RefType.RuntimeRef
+    Operand.RefType.ArrayRef(ArrayType.Ref),
+    Operand.RefType.ArrayRef(ArrayType.Primitive(T_INT)),
+    Operand.RefType.Null(),
+    Operand.RefType.RuntimeRef()
 ).exhaustive()
 
 /**
@@ -112,14 +112,14 @@ internal val allRefs = listOf(
 internal val allBytes = listOf(
     Operand.ByteType.ConstByte(0),
     Operand.ByteType.ConstByte(1),
-    Operand.ByteType.RuntimeByte
+    Operand.ByteType.RuntimeByte()
 ).exhaustive()
 
 /**
  * All char constants + runtime char.
  */
 internal val allChars = listOf(
-    Operand.CharType.RuntimeChar
+    Operand.CharType.RuntimeChar()
 ).exhaustive<Operand.CharType>()
 
 /**
@@ -128,7 +128,7 @@ internal val allChars = listOf(
 internal val allShorts = listOf(
     Operand.ShortType.ConstShort(0),
     Operand.ShortType.ConstShort(1),
-    Operand.ShortType.RuntimeShort
+    Operand.ShortType.RuntimeShort()
 ).exhaustive()
 
 /**
@@ -162,15 +162,19 @@ internal fun valuesForArrayInsn(opcode: Int) = when (opcode) {
  * [opcode].
  */
 internal fun runtimeValueForArrayInsn(opcode: Int) = when (opcode) {
-    IALOAD -> Operand.IntType.RuntimeInt
-    LALOAD -> Operand.LongType.RuntimeLong
-    FALOAD -> Operand.FloatType.RuntimeFloat
-    DALOAD -> Operand.DoubleType.RuntimeDouble
-    AALOAD -> Operand.RefType.RuntimeRef
-    BALOAD -> Operand.ByteType.RuntimeByte
-    CALOAD -> Operand.CharType.RuntimeChar
-    SALOAD -> Operand.ShortType.RuntimeShort
+    IALOAD -> Operand.IntType.RuntimeInt()
+    LALOAD -> Operand.LongType.RuntimeLong()
+    FALOAD -> Operand.FloatType.RuntimeFloat()
+    DALOAD -> Operand.DoubleType.RuntimeDouble()
+    AALOAD -> Operand.RefType.RuntimeRef()
+    BALOAD -> Operand.ByteType.RuntimeByte()
+    CALOAD -> Operand.CharType.RuntimeChar()
+    SALOAD -> Operand.ShortType.RuntimeShort()
     else -> error("")
+}
+
+internal fun OperandStack.operandTypesShouldEqual(other: OperandStack) {
+    stack.map { it::class }.shouldBe(other.stack.map { it::class })
 }
 
 /**
@@ -202,7 +206,7 @@ internal fun singleInsnTest(
     // This will set the stack after the NOP to stackBefore
     if (stackBefore != null) interpreter.setStackAfter(insnList.first, stackBefore)
 
-    interpreter.stackAfter(insn).shouldBe(stackAfter)
+    interpreter.stackAfter(insn).operandTypesShouldEqual(stackAfter)
 }
 
 /**

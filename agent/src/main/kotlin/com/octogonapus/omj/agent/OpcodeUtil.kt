@@ -16,6 +16,7 @@
  */
 package com.octogonapus.omj.agent
 
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.AALOAD
 import org.objectweb.asm.Opcodes.AASTORE
 import org.objectweb.asm.Opcodes.ALOAD
@@ -50,6 +51,11 @@ import org.objectweb.asm.Opcodes.SALOAD
 import org.objectweb.asm.Opcodes.SASTORE
 
 object OpcodeUtil {
+
+    val arrayTypes = listOf(
+        Opcodes.T_BOOLEAN, Opcodes.T_CHAR, Opcodes.T_FLOAT, Opcodes.T_DOUBLE,
+        Opcodes.T_BYTE, Opcodes.T_SHORT, Opcodes.T_INT, Opcodes.T_LONG
+    )
 
     /**
      * Picks a [DUP] or [DUP2] opcode for a *STORE opcode.

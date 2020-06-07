@@ -53,23 +53,23 @@ import org.objectweb.asm.Opcodes.T_SHORT
 internal object OperandUtil {
 
     internal fun operandForArrayInsn(opcode: Int): Operand.RefType = when (opcode) {
-        IALOAD, IASTORE -> Operand.RefType.ArrayRef(T_INT)
-        LALOAD, LASTORE -> Operand.RefType.ArrayRef(T_LONG)
-        FALOAD, FASTORE -> Operand.RefType.ArrayRef(T_FLOAT)
-        DALOAD, DASTORE -> Operand.RefType.ArrayRef(T_DOUBLE)
-        AALOAD, AASTORE -> Operand.RefType.RefArrayRef
-        BALOAD, BASTORE -> Operand.RefType.ArrayRef(T_BYTE)
-        CALOAD, CASTORE -> Operand.RefType.ArrayRef(T_CHAR)
-        SALOAD, SASTORE -> Operand.RefType.ArrayRef(T_SHORT)
+        IALOAD, IASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_INT))
+        LALOAD, LASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_LONG))
+        FALOAD, FASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_FLOAT))
+        DALOAD, DASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_DOUBLE))
+        AALOAD, AASTORE -> Operand.RefType.ArrayRef(ArrayType.Ref)
+        BALOAD, BASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_BYTE))
+        CALOAD, CASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_CHAR))
+        SALOAD, SASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_SHORT))
         else -> throw IllegalArgumentException("Cannot get the operand for opcode $opcode")
     }
 
     internal fun operandForVarInsn(opcode: Int): Operand = when (opcode) {
-        ILOAD, ISTORE -> Operand.IntType.RuntimeInt
-        LLOAD, LSTORE -> Operand.LongType.RuntimeLong
-        FLOAD, FSTORE -> Operand.FloatType.RuntimeFloat
-        DLOAD, DSTORE -> Operand.DoubleType.RuntimeDouble
-        ALOAD, ASTORE -> Operand.RefType.RuntimeRef
+        ILOAD, ISTORE -> Operand.IntType.RuntimeInt()
+        LLOAD, LSTORE -> Operand.LongType.RuntimeLong()
+        FLOAD, FSTORE -> Operand.FloatType.RuntimeFloat()
+        DLOAD, DSTORE -> Operand.DoubleType.RuntimeDouble()
+        ALOAD, ASTORE -> Operand.RefType.RuntimeRef()
         else -> throw IllegalArgumentException("Cannot get the operand for opcode $opcode")
     }
 }

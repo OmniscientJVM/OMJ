@@ -16,77 +16,90 @@
  */
 package com.octogonapus.omj.agent.interpreter
 
-internal sealed class Category {
-    object CategoryOne : Category()
-    object CategoryTwo : Category()
-}
-
+// It's important that every subclass in this hierarchy has a unique reference because data flow
+// analysis uses referential equality.
+@Suppress("CanSealedSubClassBeObject")
 internal sealed class Operand {
 
+    /**
+     * @return The storage category of this operand.
+     */
     abstract fun category(): Category
+
+    /**
+     * @return True if this operand can be treated like an int by various opcodes.
+     */
+    abstract fun isInt(): Boolean
 
     sealed class IntType : Operand() {
 
         override fun category() = Category.CategoryOne
+        override fun isInt() = true
 
         data class ConstInt(val value: Int) : IntType()
-        object RuntimeInt : IntType()
+        class RuntimeInt : IntType()
     }
 
     sealed class LongType : Operand() {
 
         override fun category() = Category.CategoryTwo
+        override fun isInt() = false
 
         data class ConstLong(val value: Long) : LongType()
-        object RuntimeLong : LongType()
+        class RuntimeLong : LongType()
     }
 
     sealed class FloatType : Operand() {
 
         override fun category() = Category.CategoryOne
+        override fun isInt() = false
 
         data class ConstFloat(val value: Float) : FloatType()
-        object RuntimeFloat : FloatType()
+        class RuntimeFloat : FloatType()
     }
 
     sealed class DoubleType : Operand() {
 
         override fun category() = Category.CategoryTwo
+        override fun isInt() = false
 
         data class ConstDouble(val value: Double) : DoubleType()
-        object RuntimeDouble : DoubleType()
+        class RuntimeDouble : DoubleType()
     }
 
     sealed class ByteType : Operand() {
 
         override fun category() = Category.CategoryOne
+        override fun isInt() = true
 
         data class ConstByte(val value: Int) : ByteType()
-        object RuntimeByte : ByteType()
+        class RuntimeByte : ByteType()
     }
 
     sealed class ShortType : Operand() {
 
         override fun category() = Category.CategoryOne
+        override fun isInt() = true
 
         data class ConstShort(val value: Int) : ShortType()
-        object RuntimeShort : ShortType()
+        class RuntimeShort : ShortType()
     }
 
     sealed class CharType : Operand() {
 
         override fun category() = Category.CategoryOne
+        override fun isInt() = true
 
-        object RuntimeChar : CharType()
+        class RuntimeChar : CharType()
     }
 
     sealed class RefType : Operand() {
 
         override fun category() = Category.CategoryOne
+        override fun isInt() = false
 
-        data class ArrayRef(val type: Int) : RefType()
-        object RefArrayRef : RefType()
-        object RuntimeRef : RefType()
-        object Null : RefType()
+        data class ArrayRef(val type: ArrayType) : RefType()
+        class RuntimeRef : RefType()
+        class Null : RefType()
     }
 }

@@ -16,22 +16,21 @@
  */
 package com.octogonapus.omj.agent.interpreter
 
-import io.kotest.core.spec.style.StringSpec
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.InsnNode
+import com.octogonapus.omj.agent.OpcodeUtil
 
-class OtherZeroOperandInsns : StringSpec({
-    "nop" {
-        singleInsnTest(
-            insn = InsnNode(Opcodes.NOP),
-            stackAfter = OperandStack.from()
-        )
+sealed class ArrayType {
+
+    /**
+     * An array of primitives.
+     */
+    data class Primitive(val type: Int) : ArrayType() {
+        init {
+            require(type in OpcodeUtil.arrayTypes)
+        }
     }
 
-    "aconst_null" {
-        singleInsnTest(
-            insn = InsnNode(Opcodes.ACONST_NULL),
-            stackAfter = OperandStack.from(Operand.RefType.Null())
-        )
-    }
-})
+    /**
+     * An array of references.
+     */
+    object Ref : ArrayType()
+}

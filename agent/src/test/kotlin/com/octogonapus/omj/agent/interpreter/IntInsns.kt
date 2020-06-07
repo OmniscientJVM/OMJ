@@ -41,7 +41,9 @@ class IntInsns : StringSpec({
             singleInsnTest(
                 insn = IntInsnNode(Opcodes.NEWARRAY, arrayType),
                 stackBefore = OperandStack.from(count),
-                stackAfter = OperandStack.from(Operand.RefType.ArrayRef(arrayType))
+                stackAfter = OperandStack.from(
+                    Operand.RefType.ArrayRef(ArrayType.Primitive(arrayType))
+                )
             )
         }
     }

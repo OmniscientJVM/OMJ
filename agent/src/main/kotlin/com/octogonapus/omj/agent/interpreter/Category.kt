@@ -16,22 +16,7 @@
  */
 package com.octogonapus.omj.agent.interpreter
 
-import io.kotest.core.spec.style.StringSpec
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.InsnNode
-
-class OtherZeroOperandInsns : StringSpec({
-    "nop" {
-        singleInsnTest(
-            insn = InsnNode(Opcodes.NOP),
-            stackAfter = OperandStack.from()
-        )
-    }
-
-    "aconst_null" {
-        singleInsnTest(
-            insn = InsnNode(Opcodes.ACONST_NULL),
-            stackAfter = OperandStack.from(Operand.RefType.Null())
-        )
-    }
-})
+internal sealed class Category {
+    object CategoryOne : Category()
+    object CategoryTwo : Category()
+}
