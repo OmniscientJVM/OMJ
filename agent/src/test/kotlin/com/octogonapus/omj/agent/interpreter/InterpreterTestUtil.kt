@@ -38,35 +38,10 @@ import org.objectweb.asm.Opcodes.LASTORE
 import org.objectweb.asm.Opcodes.NOP
 import org.objectweb.asm.Opcodes.SALOAD
 import org.objectweb.asm.Opcodes.SASTORE
-import org.objectweb.asm.Opcodes.T_BOOLEAN
-import org.objectweb.asm.Opcodes.T_BYTE
-import org.objectweb.asm.Opcodes.T_CHAR
-import org.objectweb.asm.Opcodes.T_DOUBLE
-import org.objectweb.asm.Opcodes.T_FLOAT
 import org.objectweb.asm.Opcodes.T_INT
-import org.objectweb.asm.Opcodes.T_LONG
-import org.objectweb.asm.Opcodes.T_SHORT
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
-
-/**
- * All *ALOAD insns.
- */
-internal val arrayLoadInsns =
-    listOf(IALOAD, LALOAD, FALOAD, DALOAD, AALOAD, BALOAD, CALOAD, SALOAD).exhaustive()
-
-/**
- * All *ASTORE insns.
- */
-internal val arrayStoreInsns =
-    listOf(IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, BASTORE, CASTORE, SASTORE).exhaustive()
-
-/**
- * All array type operands for the NEWARRAY insn.
- */
-internal val allArrayTypes =
-    listOf(T_BOOLEAN, T_CHAR, T_FLOAT, T_DOUBLE, T_BYTE, T_SHORT, T_INT, T_LONG).exhaustive()
 
 /**
  * All positive int constants + runtime int.

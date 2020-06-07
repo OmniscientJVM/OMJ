@@ -18,6 +18,31 @@ package com.octogonapus.omj.agent.interpreter
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.property.checkAll
+import io.kotest.property.exhaustive.exhaustive
+import org.objectweb.asm.Opcodes.AALOAD
+import org.objectweb.asm.Opcodes.AASTORE
+import org.objectweb.asm.Opcodes.BALOAD
+import org.objectweb.asm.Opcodes.BASTORE
+import org.objectweb.asm.Opcodes.CALOAD
+import org.objectweb.asm.Opcodes.CASTORE
+import org.objectweb.asm.Opcodes.DALOAD
+import org.objectweb.asm.Opcodes.DASTORE
+import org.objectweb.asm.Opcodes.FALOAD
+import org.objectweb.asm.Opcodes.FASTORE
+import org.objectweb.asm.Opcodes.IALOAD
+import org.objectweb.asm.Opcodes.IASTORE
+import org.objectweb.asm.Opcodes.LALOAD
+import org.objectweb.asm.Opcodes.LASTORE
+import org.objectweb.asm.Opcodes.SALOAD
+import org.objectweb.asm.Opcodes.SASTORE
+import org.objectweb.asm.Opcodes.T_BOOLEAN
+import org.objectweb.asm.Opcodes.T_BYTE
+import org.objectweb.asm.Opcodes.T_CHAR
+import org.objectweb.asm.Opcodes.T_DOUBLE
+import org.objectweb.asm.Opcodes.T_FLOAT
+import org.objectweb.asm.Opcodes.T_INT
+import org.objectweb.asm.Opcodes.T_LONG
+import org.objectweb.asm.Opcodes.T_SHORT
 import org.objectweb.asm.tree.InsnNode
 
 class ArrayStoresAndLoads : StringSpec({
@@ -44,3 +69,21 @@ class ArrayStoresAndLoads : StringSpec({
         }
     }
 })
+
+/**
+ * All *ALOAD insns.
+ */
+internal val arrayLoadInsns =
+    listOf(IALOAD, LALOAD, FALOAD, DALOAD, AALOAD, BALOAD, CALOAD, SALOAD).exhaustive()
+
+/**
+ * All *ASTORE insns.
+ */
+internal val arrayStoreInsns =
+    listOf(IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, BASTORE, CASTORE, SASTORE).exhaustive()
+
+/**
+ * All array type operands for the NEWARRAY insn.
+ */
+internal val allArrayTypes =
+    listOf(T_BOOLEAN, T_CHAR, T_FLOAT, T_DOUBLE, T_BYTE, T_SHORT, T_INT, T_LONG).exhaustive()

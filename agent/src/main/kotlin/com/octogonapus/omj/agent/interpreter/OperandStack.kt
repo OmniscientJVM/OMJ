@@ -234,6 +234,36 @@ internal data class OperandStack private constructor(
                     }
                 }
             }
+            is OperandStackOperation.LoadIntFromLocal -> {
+                push(Operand.IntType.RuntimeInt)
+            }
+            is OperandStackOperation.StoreIntIntoLocal -> {
+                check(pop() is Operand.IntType)
+            }
+            is OperandStackOperation.LoadLongFromLocal -> {
+                push(Operand.LongType.RuntimeLong)
+            }
+            is OperandStackOperation.StoreLongIntoLocal -> {
+                check(pop() is Operand.LongType)
+            }
+            is OperandStackOperation.LoadFloatFromLocal -> {
+                push(Operand.FloatType.RuntimeFloat)
+            }
+            is OperandStackOperation.StoreFloatIntoLocal -> {
+                check(pop() is Operand.FloatType)
+            }
+            is OperandStackOperation.LoadDoubleFromLocal -> {
+                push(Operand.DoubleType.RuntimeDouble)
+            }
+            is OperandStackOperation.StoreDoubleIntoLocal -> {
+                check(pop() is Operand.DoubleType)
+            }
+            is OperandStackOperation.LoadRefFromLocal -> {
+                push(Operand.RefType.RuntimeRef)
+            }
+            is OperandStackOperation.StoreRefIntoLocal -> {
+                check(pop() is Operand.RefType)
+            }
         }
     }
 

@@ -19,6 +19,8 @@ package com.octogonapus.omj.agent.interpreter
 import org.objectweb.asm.Opcodes.AALOAD
 import org.objectweb.asm.Opcodes.AASTORE
 import org.objectweb.asm.Opcodes.ACONST_NULL
+import org.objectweb.asm.Opcodes.ALOAD
+import org.objectweb.asm.Opcodes.ASTORE
 import org.objectweb.asm.Opcodes.BALOAD
 import org.objectweb.asm.Opcodes.BASTORE
 import org.objectweb.asm.Opcodes.BIPUSH
@@ -28,6 +30,8 @@ import org.objectweb.asm.Opcodes.DALOAD
 import org.objectweb.asm.Opcodes.DASTORE
 import org.objectweb.asm.Opcodes.DCONST_0
 import org.objectweb.asm.Opcodes.DCONST_1
+import org.objectweb.asm.Opcodes.DLOAD
+import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
 import org.objectweb.asm.Opcodes.DUP2
 import org.objectweb.asm.Opcodes.DUP2_X1
@@ -38,14 +42,20 @@ import org.objectweb.asm.Opcodes.FALOAD
 import org.objectweb.asm.Opcodes.FASTORE
 import org.objectweb.asm.Opcodes.FCONST_0
 import org.objectweb.asm.Opcodes.FCONST_2
+import org.objectweb.asm.Opcodes.FLOAD
+import org.objectweb.asm.Opcodes.FSTORE
 import org.objectweb.asm.Opcodes.IALOAD
 import org.objectweb.asm.Opcodes.IASTORE
 import org.objectweb.asm.Opcodes.ICONST_5
 import org.objectweb.asm.Opcodes.ICONST_M1
+import org.objectweb.asm.Opcodes.ILOAD
+import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LALOAD
 import org.objectweb.asm.Opcodes.LASTORE
 import org.objectweb.asm.Opcodes.LCONST_0
 import org.objectweb.asm.Opcodes.LCONST_1
+import org.objectweb.asm.Opcodes.LLOAD
+import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEWARRAY
 import org.objectweb.asm.Opcodes.NOP
 import org.objectweb.asm.Opcodes.POP
@@ -57,6 +67,7 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.VarInsnNode
 
 internal class Interpreter(
     private val insnList: InsnList
@@ -154,6 +165,20 @@ internal class Interpreter(
                 BIPUSH -> OperandStackOperation.PushConstByte(insn.operand)
                 SIPUSH -> OperandStackOperation.PushConstShort(insn.operand)
                 NEWARRAY -> OperandStackOperation.NewArray(insn.operand)
+                else -> throw UnsupportedOperationException("Unknown insn: $insn")
+            }
+
+            is VarInsnNode -> when (insn.opcode) {
+                ILOAD -> OperandStackOperation.LoadIntFromLocal(insn.`var`)
+                LLOAD -> OperandStackOperation.LoadLongFromLocal(insn.`var`)
+                FLOAD -> OperandStackOperation.LoadFloatFromLocal(insn.`var`)
+                DLOAD -> OperandStackOperation.LoadDoubleFromLocal(insn.`var`)
+                ALOAD -> OperandStackOperation.LoadRefFromLocal(insn.`var`)
+                ISTORE -> OperandStackOperation.StoreIntIntoLocal(insn.`var`)
+                LSTORE -> OperandStackOperation.StoreLongIntoLocal(insn.`var`)
+                FSTORE -> OperandStackOperation.StoreFloatIntoLocal(insn.`var`)
+                DSTORE -> OperandStackOperation.StoreDoubleIntoLocal(insn.`var`)
+                ASTORE -> OperandStackOperation.StoreRefIntoLocal(insn.`var`)
                 else -> throw UnsupportedOperationException("Unknown insn: $insn")
             }
 

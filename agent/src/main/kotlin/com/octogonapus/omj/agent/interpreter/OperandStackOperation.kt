@@ -16,6 +16,17 @@
  */
 package com.octogonapus.omj.agent.interpreter
 
+// Comment to help with making column selection mode edits
+/*
+Int
+Long
+Float
+Double
+Byte
+Short
+Ref
+ */
+
 internal sealed class OperandStackOperation {
     object NOP : OperandStackOperation()
     data class PushConstInt(val value: Int) : OperandStackOperation()
@@ -50,4 +61,14 @@ internal sealed class OperandStackOperation {
     object Dup2 : OperandStackOperation()
     object Dup2X1 : OperandStackOperation()
     object Dup2X2 : OperandStackOperation()
+    data class LoadIntFromLocal(val index: Int) : OperandStackOperation()
+    data class StoreIntIntoLocal(val index: Int) : OperandStackOperation()
+    data class LoadLongFromLocal(val index: Int) : OperandStackOperation()
+    data class StoreLongIntoLocal(val index: Int) : OperandStackOperation()
+    data class LoadFloatFromLocal(val index: Int) : OperandStackOperation()
+    data class StoreFloatIntoLocal(val index: Int) : OperandStackOperation()
+    data class LoadDoubleFromLocal(val index: Int) : OperandStackOperation()
+    data class StoreDoubleIntoLocal(val index: Int) : OperandStackOperation()
+    data class LoadRefFromLocal(val index: Int) : OperandStackOperation()
+    data class StoreRefIntoLocal(val index: Int) : OperandStackOperation()
 }
