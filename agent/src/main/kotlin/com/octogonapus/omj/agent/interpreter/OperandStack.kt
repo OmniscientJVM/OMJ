@@ -113,11 +113,122 @@ internal data class OperandStack private constructor(
                 check(pop() is Operand.IntType)
                 check(pop() == Operand.RefType.ArrayRef(T_SHORT))
             }
+            OperandStackOperation.Pop -> {
+                check(pop().category() == Category.CategoryOne)
+            }
+            OperandStackOperation.Pop2 -> {
+                when (pop().category()) {
+                    Category.CategoryOne -> check(pop().category() == Category.CategoryOne)
+                    Category.CategoryTwo -> nop()
+                }
+            }
+            OperandStackOperation.Dup -> {
+                val value = peek()
+                check(value.category() == Category.CategoryOne)
+                push(value)
+            }
+            OperandStackOperation.DupX1 -> {
+                val value1 = peek()
+                check(value1.category() == Category.CategoryOne)
+                val value2 = peek(1)
+                check(value2.category() == Category.CategoryOne)
+                push(value1, 1)
+            }
+            OperandStackOperation.DupX2 -> {
+                val value1 = peek()
+                check(value1.category() == Category.CategoryOne)
+                val value2 = peek(1)
+                when (value2.category()) {
+                    Category.CategoryOne -> {
+                        val value3 = peek(2)
+                        check(value3.category() == Category.CategoryOne)
+                        push(value1, 2)
+                    }
+
+                    Category.CategoryTwo -> push(value1, 1)
+                }
+            }
+            OperandStackOperation.Dup2 -> {
+                val value1 = peek()
+                when (value1.category()) {
+                    Category.CategoryOne -> {
+                        val value2 = peek(1)
+                        check(value2.category() == Category.CategoryOne)
+                        push(value2)
+                        push(value1)
+                    }
+                    
+                    Category.CategoryTwo -> push(value1)
+                }
+            }
+            OperandStackOperation.Dup2X1 -> {
+                val value1 = peek()
+                when (value1.category()) {
+                    Category.CategoryOne -> {
+                        val value2 = peek(1)
+                        check(value2.category() == Category.CategoryOne)
+                        val value3 = peek(2)
+                        check(value3.category() == Category.CategoryOne)
+                        push(value2, 2)
+                        push(value1, 2)
+                    }
+
+                    Category.CategoryTwo -> {
+                        val value2 = peek(1)
+                        check(value2.category() == Category.CategoryOne)
+                        push(value1, 1)
+                    }
+                }
+            }
+            OperandStackOperation.Dup2X2 -> {
+                val value1 = peek()
+                when (value1.category()) {
+                    Category.CategoryOne -> {
+                        val value2 = peek(1)
+                        check(value2.category() == Category.CategoryOne)
+                        val value3 = peek(2)
+                        when (value3.category()) {
+                            Category.CategoryOne -> {
+                                val value4 = peek(3)
+                                check(value4.category() == Category.CategoryOne)
+                                push(value2, 3)
+                                push(value1, 3)
+                            }
+
+                            Category.CategoryTwo -> {
+                                push(value2, 2)
+                                push(value1, 2)
+                            }
+                        }
+                    }
+
+                    Category.CategoryTwo -> {
+                        val value2 = peek(1)
+                        when (value2.category()) {
+                            Category.CategoryOne -> {
+                                val value3 = peek(2)
+                                check(value3.category() == Category.CategoryOne)
+                                push(value1, 2)
+                            }
+
+                            Category.CategoryTwo -> push(value1, 1)
+                        }
+                    }
+                }
+            }
         }
     }
 
     companion object {
 
+        /**
+         * Creates the operand stack from the given operands. The stack grows from left to right.
+         * For example:
+         *   from(op1, op2)
+         *   becomes
+         *   op2
+         *   op1
+         */
         internal fun from(vararg operands: Operand): OperandStack {
             val stack = operands.toList()
             return OperandStack(stack)
@@ -129,9 +240,14 @@ internal data class OperandStack private constructor(
             add(operand)
         }
 
+        private fun MutableList<Operand>.push(operand: Operand, offset: Int) =
+                add(size - 1 - offset, operand)
+
         @OptIn(ExperimentalStdlibApi::class)
-        private fun MutableList<Operand>.pop(): Operand {
-            return removeLast()
-        }
+        private fun MutableList<Operand>.pop() = removeLast()
+
+        private fun List<Operand>.peek() = peek(0)
+
+        private fun List<Operand>.peek(offset: Int) = this[lastIndex - offset]
     }
 }

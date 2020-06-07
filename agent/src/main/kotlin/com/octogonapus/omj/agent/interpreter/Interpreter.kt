@@ -23,6 +23,12 @@ import org.objectweb.asm.Opcodes.BALOAD
 import org.objectweb.asm.Opcodes.BASTORE
 import org.objectweb.asm.Opcodes.CALOAD
 import org.objectweb.asm.Opcodes.CASTORE
+import org.objectweb.asm.Opcodes.DUP
+import org.objectweb.asm.Opcodes.DUP2
+import org.objectweb.asm.Opcodes.DUP2_X1
+import org.objectweb.asm.Opcodes.DUP2_X2
+import org.objectweb.asm.Opcodes.DUP_X1
+import org.objectweb.asm.Opcodes.DUP_X2
 import org.objectweb.asm.Opcodes.SALOAD
 import org.objectweb.asm.Opcodes.SASTORE
 import org.objectweb.asm.Opcodes.LASTORE
@@ -30,6 +36,8 @@ import org.objectweb.asm.Opcodes.LCONST_0
 import org.objectweb.asm.Opcodes.LCONST_1
 import org.objectweb.asm.Opcodes.NEWARRAY
 import org.objectweb.asm.Opcodes.NOP
+import org.objectweb.asm.Opcodes.POP
+import org.objectweb.asm.Opcodes.POP2
 import org.objectweb.asm.Opcodes.SIPUSH
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
@@ -110,6 +118,14 @@ internal class Interpreter(
                 CASTORE -> OperandStackOperation.StoreIntoCharArray
                 SALOAD -> OperandStackOperation.LoadShortFromArray
                 SASTORE -> OperandStackOperation.StoreIntoShortArray
+                POP -> OperandStackOperation.Pop
+                POP2 -> OperandStackOperation.Pop2
+                DUP -> OperandStackOperation.Dup
+                DUP_X1 -> OperandStackOperation.DupX1
+                DUP_X2 -> OperandStackOperation.DupX2
+                DUP2 -> OperandStackOperation.Dup2
+                DUP2_X1 -> OperandStackOperation.Dup2X1
+                DUP2_X2 -> OperandStackOperation.Dup2X2
                 else -> throw UnsupportedOperationException("Unknown insn: $insn")
             }
 

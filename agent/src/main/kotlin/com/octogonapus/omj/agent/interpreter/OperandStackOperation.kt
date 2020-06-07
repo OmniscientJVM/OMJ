@@ -26,4 +26,12 @@ internal sealed class OperandStackOperation {
     object StoreIntoCharArray : OperandStackOperation()
     object LoadShortFromArray : OperandStackOperation()
     object StoreIntoShortArray : OperandStackOperation()
+    object Pop : OperandStackOperation()
+    object Pop2 : OperandStackOperation()
+    object Dup : OperandStackOperation()
+    object DupX1 : OperandStackOperation()
+    object DupX2 : OperandStackOperation()
+    object Dup2 : OperandStackOperation()
+    object Dup2X1 : OperandStackOperation()
+    object Dup2X2 : OperandStackOperation()
 }
