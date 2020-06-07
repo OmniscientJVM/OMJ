@@ -69,9 +69,7 @@ import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
-internal class Interpreter(
-    private val insnList: InsnList
-) {
+internal class Interpreter {
 
     private val stackMap: MutableMap<AbstractInsnNode, OperandStack> = HashMap()
 
@@ -82,20 +80,6 @@ internal class Interpreter(
         return stackMap.getOrPut(insn) {
             computeStack(insn)
         }
-    }
-
-    /**
-     * Analyze the data flow from the [insn] backwards until the beginning of the [insnList].
-     */
-    internal fun dataFlowBackwards(insn: AbstractInsnNode) {
-        TODO()
-    }
-
-    /**
-     * Analyze the data flow from the [insn] forwards until the end of the [insnList].
-     */
-    internal fun dataFlowForwards(insn: AbstractInsnNode) {
-        TODO()
     }
 
     /**

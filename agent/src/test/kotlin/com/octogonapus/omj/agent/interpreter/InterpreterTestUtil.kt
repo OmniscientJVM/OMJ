@@ -197,7 +197,7 @@ internal fun singleInsnTest(
         }
     }
 
-    val interpreter = Interpreter(insnList)
+    val interpreter = Interpreter()
 
     // This will set the stack after the NOP to stackBefore
     if (stackBefore != null) interpreter.setStackAfter(insnList.first, stackBefore)
@@ -227,7 +227,7 @@ internal inline fun <reified T : Throwable> singleInsnShouldThrowTest(
         }
     }
 
-    val interpreter = Interpreter(insnList)
+    val interpreter = Interpreter()
 
     // This will set the stack after the NOP to stackBefore
     if (stackBefore != null) interpreter.setStackAfter(insnList.first, stackBefore)
