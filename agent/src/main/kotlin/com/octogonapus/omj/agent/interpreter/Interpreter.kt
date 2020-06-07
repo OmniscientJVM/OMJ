@@ -109,6 +109,7 @@ internal class Interpreter(
         return stack.applyOperation(operation)
     }
 
+    @Suppress("ThrowsCount", "ComplexMethod")
     private fun stackOperationFor(insn: AbstractInsnNode): OperandStackOperation {
         return when (insn) {
             is InsnNode -> when (insn.opcode) {

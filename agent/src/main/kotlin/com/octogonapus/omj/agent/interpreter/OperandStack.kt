@@ -35,6 +35,7 @@ internal data class OperandStack private constructor(
         return OperandStack(localStack)
     }
 
+    @Suppress("LongMethod", "ComplexMethod")
     private fun MutableList<Operand>.applyOperation(op: OperandStackOperation) {
         when (op) {
             OperandStackOperation.NOP -> nop()
