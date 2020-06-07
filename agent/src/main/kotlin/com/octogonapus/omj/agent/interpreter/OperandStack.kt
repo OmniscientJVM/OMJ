@@ -1,3 +1,19 @@
+/*
+ * This file is part of OMJ.
+ *
+ * OMJ is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * OMJ is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with OMJ.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package com.octogonapus.omj.agent.interpreter
 
 import org.objectweb.asm.Opcodes.T_BYTE
@@ -10,7 +26,7 @@ import org.objectweb.asm.Opcodes.T_SHORT
 
 @Suppress("DataClassPrivateConstructor")
 internal data class OperandStack private constructor(
-        private val stack: List<Operand>
+    private val stack: List<Operand>
 ) {
 
     internal fun applyOperation(operation: OperandStackOperation): OperandStack {
@@ -25,7 +41,8 @@ internal data class OperandStack private constructor(
             is OperandStackOperation.PushConstInt -> push(Operand.IntType.ConstInt(op.value))
             is OperandStackOperation.PushConstLong -> push(Operand.LongType.ConstLong(op.value))
             is OperandStackOperation.PushConstFloat -> push(Operand.FloatType.ConstFloat(op.value))
-            is OperandStackOperation.PushConstDouble -> push(Operand.DoubleType.ConstDouble(op.value))
+            is OperandStackOperation.PushConstDouble ->
+                push(Operand.DoubleType.ConstDouble(op.value))
             is OperandStackOperation.PushConstByte -> push(Operand.ByteType.ConstByte(op.value))
             is OperandStackOperation.PushConstShort -> push(Operand.ShortType.ConstShort(op.value))
             is OperandStackOperation.NewArray -> {
@@ -157,7 +174,7 @@ internal data class OperandStack private constructor(
                         push(value2)
                         push(value1)
                     }
-                    
+
                     Category.CategoryTwo -> push(value1)
                 }
             }
@@ -241,7 +258,7 @@ internal data class OperandStack private constructor(
         }
 
         private fun MutableList<Operand>.push(operand: Operand, offset: Int) =
-                add(size - 1 - offset, operand)
+            add(size - 1 - offset, operand)
 
         @OptIn(ExperimentalStdlibApi::class)
         private fun MutableList<Operand>.pop() = removeLast()
