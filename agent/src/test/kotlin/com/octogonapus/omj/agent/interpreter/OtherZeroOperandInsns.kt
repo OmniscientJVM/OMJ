@@ -17,6 +17,7 @@
 package com.octogonapus.omj.agent.interpreter
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.property.checkAll
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.InsnNode
 
@@ -33,5 +34,15 @@ class OtherZeroOperandInsns : StringSpec({
             insn = InsnNode(Opcodes.ACONST_NULL),
             stackAfter = OperandStack.from(Operand.RefType.Null())
         )
+    }
+
+    "swap" {
+        checkAll(allCategory1Values, allCategory1Values) { value1, value2 ->
+            singleInsnTest(
+                insn = InsnNode(Opcodes.SWAP),
+                stackBefore = OperandStack.from(value2, value1),
+                stackAfter = OperandStack.from(value1, value2)
+            )
+        }
     }
 })

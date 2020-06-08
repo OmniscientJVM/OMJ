@@ -184,4 +184,63 @@ internal class DataFlowTest : FunSpec({
         val dataFlow = DataFlow(Interpreter())
         dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
     }
+
+    test("Find ALOAD from array *ASTORE with a useless NEWARRAY and misleading ASTORE") {
+        /*
+        thing(new int[1]);
+        static void thing(int[] i) {
+            i[0] = 6;
+        }
+
+        ALOAD 0        : arrayref(int,1) ->
+        ICONST_1       : arrayref(int,1), 1 ->
+        NEWARRAY T_INT : arrayref(int,1), arrayref(int,1) ->
+        ASTORE 0       : arrayref(int,1) ->
+        ICONST_0       : arrayref(int,1), 0 ->
+        BIPUSH 6       : arrayref(int,1), 0, 6 ->
+        IASTORE        : ->
+         */
+
+        val aload = VarInsnNode(Opcodes.ALOAD, 0)
+        val iastore = InsnNode(Opcodes.IASTORE)
+        InsnList().apply {
+            add(aload)
+            add(InsnNode(Opcodes.ICONST_1))
+            add(IntInsnNode(Opcodes.NEWARRAY, Opcodes.T_INT))
+            add(VarInsnNode(Opcodes.ASTORE, 0))
+            add(InsnNode(Opcodes.ICONST_0))
+            add(IntInsnNode(Opcodes.BIPUSH, 6))
+            add(iastore)
+        }
+
+        val dataFlow = DataFlow(Interpreter())
+        dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
+    }
+
+    test("Find ALOAD from array *ASTORE with a useless NEWARRAY and a SWAP") {
+        /*
+        ALOAD 0        : arrayref(int,1) -> (from a method parameter)
+        ICONST_1       : arrayref(int,1), 1 ->
+        NEWARRAY T_INT : arrayref(int,1), arrayref(int,1) ->
+        SWAP           : arrayref(int,1), arrayref(int,1) ->
+        ICONST_0       : arrayref(int,1), 0 ->
+        BIPUSH 6       : arrayref(int,1), 0, 6 ->
+        IASTORE        : ->
+         */
+
+        val aload = VarInsnNode(Opcodes.ALOAD, 0)
+        val iastore = InsnNode(Opcodes.IASTORE)
+        InsnList().apply {
+            add(aload)
+            add(InsnNode(Opcodes.ICONST_1))
+            add(IntInsnNode(Opcodes.NEWARRAY, Opcodes.T_INT))
+            add(InsnNode(Opcodes.SWAP))
+            add(InsnNode(Opcodes.ICONST_0))
+            add(IntInsnNode(Opcodes.BIPUSH, 6))
+            add(iastore)
+        }
+
+        val dataFlow = DataFlow(Interpreter())
+        dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
+    }
 })

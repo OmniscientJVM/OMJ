@@ -16,6 +16,7 @@
  */
 package com.octogonapus.omj.agent.interpreter
 
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.AALOAD
 import org.objectweb.asm.Opcodes.AASTORE
 import org.objectweb.asm.Opcodes.ACONST_NULL
@@ -164,6 +165,7 @@ internal class Interpreter {
                 DUP2 -> OperandStackOperation.Dup2
                 DUP2_X1 -> OperandStackOperation.Dup2X1
                 DUP2_X2 -> OperandStackOperation.Dup2X2
+                Opcodes.SWAP -> OperandStackOperation.Swap
                 else -> throw UnsupportedOperationException("Unknown insn: $insn")
             }
 

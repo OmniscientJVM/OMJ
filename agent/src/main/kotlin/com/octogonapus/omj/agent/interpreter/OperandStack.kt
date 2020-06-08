@@ -302,6 +302,14 @@ internal data class OperandStack private constructor(
             is OperandStackOperation.StoreRefIntoLocal -> {
                 check(pop() is Operand.RefType)
             }
+            is OperandStackOperation.Swap -> {
+                val value1 = pop()
+                check(value1.category() == Category.CategoryOne)
+                val value2 = pop()
+                check(value2.category() == Category.CategoryOne)
+                push(value1)
+                push(value2)
+            }
         }
     }
 

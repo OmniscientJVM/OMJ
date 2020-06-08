@@ -61,6 +61,7 @@ internal sealed class OperandStackOperation {
     object Dup2 : OperandStackOperation()
     object Dup2X1 : OperandStackOperation()
     object Dup2X2 : OperandStackOperation()
+    object Swap : OperandStackOperation()
     data class LoadIntFromLocal(val index: Int) : OperandStackOperation()
     data class StoreIntIntoLocal(val index: Int) : OperandStackOperation()
     data class LoadLongFromLocal(val index: Int) : OperandStackOperation()
