@@ -315,6 +315,8 @@ internal data class OperandStack private constructor(
 
     override fun toString() = stack.joinToString()
 
+    operator fun minus(other: OperandStack) = OperandStack(stack - other.stack)
+
     companion object {
 
         /**

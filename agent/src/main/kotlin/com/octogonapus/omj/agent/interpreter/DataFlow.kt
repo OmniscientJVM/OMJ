@@ -33,17 +33,21 @@ internal class DataFlow(private val interpreter: Interpreter) {
      * @return The insn that introduced the array ref.
      */
     internal fun insnIntroductingArray(astoreInsn: AbstractInsnNode): AbstractInsnNode? {
-        require(
-            astoreInsn is InsnNode && astoreInsn.opcode in listOf(
-                Opcodes.IASTORE,
-                Opcodes.LASTORE, Opcodes.FASTORE, Opcodes.DASTORE, Opcodes.AASTORE, Opcodes.BASTORE,
-                Opcodes.CASTORE, Opcodes.SASTORE
-            )
+        require(isAStoreInsn(astoreInsn))
+        val arrayRef = findArrayRef(astoreInsn) ?: return null
+        return findEarliestInsnIntroducingOperand(astoreInsn, arrayRef)
+    }
+
+    private fun isAStoreInsn(astoreInsn: AbstractInsnNode) =
+        astoreInsn is InsnNode && astoreInsn.opcode in listOf(
+            Opcodes.IASTORE, Opcodes.LASTORE, Opcodes.FASTORE, Opcodes.DASTORE,
+            Opcodes.AASTORE, Opcodes.BASTORE, Opcodes.CASTORE, Opcodes.SASTORE
         )
 
+    private fun findArrayRef(astoreInsn: AbstractInsnNode): Operand.RefType? {
         // Get the stack before the *ASTORE insn. The 3rd element on the stack must be an array ref.
         val stackAtASTORE = interpreter.stackBefore(astoreInsn)
-        val arrayRef = stackAtASTORE.peek(2).let {
+        return stackAtASTORE.peek(2).let {
             when (it) {
                 // If we already got an ArrayRef we are done
                 is Operand.RefType.ArrayRef -> it
@@ -62,8 +66,70 @@ internal class DataFlow(private val interpreter: Interpreter) {
                 else -> error("Expected an arrayref, got: $it")
             }
         }
+    }
 
-        return findEarliestInsnIntroducingOperand(astoreInsn, arrayRef)
+    /**
+     * Finds the index of the local variable holding the array ref that was stored into. If the
+     * array ref was not stored into a local before the [astoreInsn] runs but will be stored into a
+     * local after the [astoreInsn] runs, then the index of that local will be returned.
+     *
+     * @param astoreInsn The *ASTORE insn in question.
+     * @return The index of the local variable holding the array ref being stored into, or null if
+     * no local variable ever holds the array.
+     */
+    internal fun findLocalVariableHoldingArrayRef(astoreInsn: AbstractInsnNode): Int? {
+        val introducingInsn = insnIntroductingArray(astoreInsn)
+        return when {
+            introducingInsn == null -> null
+
+            // If it was loaded from a parameter
+            introducingInsn is VarInsnNode && introducingInsn.opcode == Opcodes.ALOAD ->
+                introducingInsn.`var`
+
+            // If it was created
+            introducingInsn.opcode == Opcodes.NEWARRAY -> {
+                val ref = findArrayRef(astoreInsn) ?: return null
+                val removingInsn = findLatestInsnRemovingOperand(astoreInsn, ref)
+                when {
+                    removingInsn == null -> null
+
+                    removingInsn is VarInsnNode && removingInsn.opcode == Opcodes.ASTORE ->
+                        removingInsn.`var`
+
+                    isAStoreInsn(removingInsn) -> {
+                        // The array ref was introduced by a NEWARRAY and removed by an *ASTORE.
+                        // Either it was leaked or it was stored into and loaded from a local
+                        // variable between the introducing and removing insns. Look for an ALOAD
+                        // that introduced the array ref between those two.
+                        findALOADBetweenInsns(introducingInsn, removingInsn, ref)?.`var`
+                    }
+
+                    else -> error("Unknown removing insn: $removingInsn")
+                }
+            }
+
+            else -> error("Unknown introducing insn: $introducingInsn")
+        }
+    }
+
+    private fun findALOADBetweenInsns(
+        introducingInsn: AbstractInsnNode,
+        removingInsn: AbstractInsnNode?,
+        ref: Operand.RefType
+    ): VarInsnNode? = if (introducingInsn === removingInsn || removingInsn == null) {
+        // Either the search range was reduced to 0 or the lower bound fell off the edge.
+        null
+    } else if (removingInsn is VarInsnNode &&
+        removingInsn.opcode == Opcodes.ALOAD &&
+        (
+            interpreter.stackAfter(removingInsn) -
+                interpreter.stackBefore(removingInsn)
+            ).contains(ref)
+    ) {
+        // If we raised the lower bound to an ALOAD insn that put the ref on the stack, we found it.
+        removingInsn
+    } else {
+        findALOADBetweenInsns(introducingInsn, removingInsn.previous, ref)
     }
 
     /**
@@ -127,11 +193,11 @@ internal class DataFlow(private val interpreter: Interpreter) {
         }
 
     /**
-     * Finds the earliest possible (highest up in the bytecode) insn that introduced the operand.
+     * Finds the earliest possible (highest in the bytecode) insn that introduced the operand.
      *
      * @param insn The insn to start searching from.
      * @param operand The operand to search for.
-     * @return The earliest matching insn, or null if non was found.
+     * @return The earliest matching insn, or null if none was found.
      */
     private fun findEarliestInsnIntroducingOperand(
         insn: AbstractInsnNode?,
@@ -147,6 +213,26 @@ internal class DataFlow(private val interpreter: Interpreter) {
     }
 
     /**
+     * Finds the latest possible (lowest in the bytecode) insn that introduced the operand.
+     *
+     * @param insn The insn to start searching from.
+     * @param operand The operand to search for.
+     * @return The latest matching insn, or null if none was found.
+     */
+    private fun findLatestInsnRemovingOperand(
+        insn: AbstractInsnNode?,
+        operand: Operand
+    ): AbstractInsnNode? = when {
+        insn == null -> null
+
+        // Even if we find a removing insn, keep looking for an earlier one
+        didInsnRemoveOperand(insn, operand) ->
+            findLatestInsnRemovingOperand(insn.next, operand) ?: insn
+
+        else -> findLatestInsnRemovingOperand(insn.next, operand)
+    }
+
+    /**
      * Computes whether an insn introduced an operand by pushing it on the stack.
      *
      * @param insn The insn to consider.
@@ -157,9 +243,26 @@ internal class DataFlow(private val interpreter: Interpreter) {
         insn: AbstractInsnNode?,
         operand: Operand
     ) = insn?.let {
-        // Check if this is the first insn
+        // Check if this is the first insn. The stack before is empty so just check the stack after.
         if (insn.previous == null) return operand in interpreter.stackAfter(insn)
 
         operand !in interpreter.stackBefore(insn) && operand in interpreter.stackAfter(insn)
+    } ?: false
+
+    /**
+     * Computes whether an insn removed an operand by popping it off the stack.
+     *
+     * @param insn The insn to consider.
+     * @param operand The operand to check for.
+     * @return True if the insn removed the operand.
+     */
+    private fun didInsnRemoveOperand(
+        insn: AbstractInsnNode?,
+        operand: Operand
+    ) = insn?.let {
+        // Check if this is the first insn. Nothing could have been removed so return false.
+        if (insn.previous == null) return false
+
+        operand in interpreter.stackBefore(insn) && operand !in interpreter.stackAfter(insn)
     } ?: false
 }

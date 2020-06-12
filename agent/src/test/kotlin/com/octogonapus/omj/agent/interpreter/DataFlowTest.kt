@@ -54,6 +54,7 @@ internal class DataFlowTest : FunSpec({
 
         val dataFlow = DataFlow(Interpreter())
         dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
+        dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(1)
     }
 
     test("find NEWARRAY from *ASTORE with two ALOADs") {
@@ -91,6 +92,7 @@ internal class DataFlowTest : FunSpec({
 
         val dataFlow = DataFlow(Interpreter())
         dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
+        dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(1)
     }
 
     test("Find NEWARRAY from *ASTORE with zero ALOADs") {
@@ -120,6 +122,7 @@ internal class DataFlowTest : FunSpec({
 
         val dataFlow = DataFlow(Interpreter())
         dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
+        dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(1)
     }
 
     test("Find correct NEWARRAY instance from *ASTORE with zero ALOADs") {
@@ -157,6 +160,7 @@ internal class DataFlowTest : FunSpec({
 
         val dataFlow = DataFlow(Interpreter())
         dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
+        dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(1)
     }
 
     test("Find ALOAD from array *ASTORE without a NEWARRAY") {
@@ -183,6 +187,7 @@ internal class DataFlowTest : FunSpec({
 
         val dataFlow = DataFlow(Interpreter())
         dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
+        dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(0)
     }
 
     test("Find ALOAD from array *ASTORE with a useless NEWARRAY and misleading ASTORE") {
@@ -215,17 +220,18 @@ internal class DataFlowTest : FunSpec({
 
         val dataFlow = DataFlow(Interpreter())
         dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
+        dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(0)
     }
 
     test("Find ALOAD from array *ASTORE with a useless NEWARRAY and a SWAP") {
         /*
-        ALOAD 0        : arrayref(int,1) -> (from a method parameter)
-        ICONST_1       : arrayref(int,1), 1 ->
-        NEWARRAY T_INT : arrayref(int,1), arrayref(int,1) ->
-        SWAP           : arrayref(int,1), arrayref(int,1) ->
-        ICONST_0       : arrayref(int,1), 0 ->
-        BIPUSH 6       : arrayref(int,1), 0, 6 ->
-        IASTORE        : ->
+        ALOAD 0        : arrayref(int,1)<l0> -> (from a method parameter)
+        ICONST_1       : arrayref(int,1)<l0>, 1 ->
+        NEWARRAY T_INT : arrayref(int,1)<l0>, arrayref(int,1)<na> ->
+        SWAP           : arrayref(int,1)<na>, arrayref(int,1)<l0> ->
+        ICONST_0       : arrayref(int,1)<na>, arrayref(int,1)<l0>, 0 ->
+        BIPUSH 6       : arrayref(int,1)<na>, arrayref(int,1)<l0>, 0, 6 ->
+        IASTORE        : arrayref(int,1)<na> ->
          */
 
         val aload = VarInsnNode(Opcodes.ALOAD, 0)
@@ -242,5 +248,63 @@ internal class DataFlowTest : FunSpec({
 
         val dataFlow = DataFlow(Interpreter())
         dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
+        dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(0)
+    }
+
+    test("Find variable with a useless ASTORE after the IASTORE") {
+        /*
+        ALOAD 0        : arrayref(int,1)<l0> ->
+        DUP            : arrayref(int,1)<l0>, arrayref(int,1)<l0> ->
+        SWAP           : arrayref(int,1)<l0>, arrayref(int,1)<l0> ->
+        ICONST_0       : arrayref(int,1)<l0>, arrayref(int,1)<l0>, 0 ->
+        BIPUSH 6       : arrayref(int,1)<l0>, arrayref(int,1)<l0>, 0, 6 ->
+        IASTORE        : arrayref(int,1)<l0> ->
+        ASTORE 1       : ->
+         */
+
+        val aload = VarInsnNode(Opcodes.ALOAD, 0)
+        val iastore = InsnNode(Opcodes.IASTORE)
+        InsnList().apply {
+            add(aload)
+            add(InsnNode(Opcodes.DUP))
+            add(InsnNode(Opcodes.SWAP))
+            add(InsnNode(Opcodes.ICONST_0))
+            add(IntInsnNode(Opcodes.BIPUSH, 6))
+            add(iastore)
+            add(VarInsnNode(Opcodes.ASTORE, 1))
+        }
+
+        val dataFlow = DataFlow(Interpreter())
+        dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
+        dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(0)
+    }
+
+    test("Store into leaked array with misleading ASTORE after the IASTORE") {
+        /*
+        ALOAD 0        : arrayref(int,1)<l0> ->
+        ICONST_1       : arrayref(int,1)<l0>, 1 ->
+        NEWARRAY T_INT : arrayref(int,1)<l0>, arrayref(int,1)<na> ->
+        ICONST_0       : arrayref(int,1)<l0>, arrayref(int,1)<na>, 0 ->
+        BIPUSH 6       : arrayref(int,1)<l0>, arrayref(int,1)<na>, 0, 6 ->
+        IASTORE        : arrayref(int,1)<l0> ->
+        ASTORE 1       : ->
+         */
+
+        val aload = VarInsnNode(Opcodes.ALOAD, 0)
+        val newarray = IntInsnNode(Opcodes.NEWARRAY, Opcodes.T_INT)
+        val iastore = InsnNode(Opcodes.IASTORE)
+        InsnList().apply {
+            add(aload)
+            add(InsnNode(Opcodes.ICONST_1))
+            add(newarray)
+            add(InsnNode(Opcodes.ICONST_0))
+            add(IntInsnNode(Opcodes.BIPUSH, 6))
+            add(iastore)
+            add(VarInsnNode(Opcodes.ASTORE, 1))
+        }
+
+        val dataFlow = DataFlow(Interpreter())
+        dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
+        dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(null)
     }
 })
