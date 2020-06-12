@@ -804,6 +804,16 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
 
         @Test
         fun `store into new object array one-liner`() {
+            testKoin(
+                module {
+                    single {
+                        mockk<ClassFilter> {
+                            every { shouldTransform("Ljava/lang/Object;") } returns false
+                        }
+                    }
+                }
+            )
+
             // TODO: Add tests for new object (not one-liner), finish this test, add test for String
             val methodNode = makeMethodNode(
                 0,
