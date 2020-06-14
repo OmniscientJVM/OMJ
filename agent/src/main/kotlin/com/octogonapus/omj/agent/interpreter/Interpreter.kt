@@ -67,6 +67,8 @@ import org.objectweb.asm.Opcodes.SIPUSH
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
 /**
@@ -187,6 +189,42 @@ internal class Interpreter {
                 FSTORE -> OperandStackOperation.StoreFloatIntoLocal(insn.`var`)
                 DSTORE -> OperandStackOperation.StoreDoubleIntoLocal(insn.`var`)
                 ASTORE -> OperandStackOperation.StoreRefIntoLocal(insn.`var`)
+                else -> throw UnsupportedOperationException("Unknown insn: $insn")
+            }
+
+            is TypeInsnNode -> when (insn.opcode) {
+                Opcodes.NEW -> OperandStackOperation.New(insn.desc)
+                Opcodes.ANEWARRAY -> OperandStackOperation.ANewArray(insn.desc)
+                Opcodes.CHECKCAST -> OperandStackOperation.CheckCast(insn.desc)
+                Opcodes.INSTANCEOF -> OperandStackOperation.InstanceOf(insn.desc)
+                else -> throw UnsupportedOperationException("Unknown insn: $insn")
+            }
+
+            is MethodInsnNode -> when (insn.opcode) {
+                Opcodes.INVOKEVIRTUAL -> OperandStackOperation.Invoke.Virtual(
+                    insn.owner,
+                    insn.name,
+                    insn.desc,
+                    insn.itf
+                )
+                Opcodes.INVOKESPECIAL -> OperandStackOperation.Invoke.Special(
+                    insn.owner,
+                    insn.name,
+                    insn.desc,
+                    insn.itf
+                )
+                Opcodes.INVOKESTATIC -> OperandStackOperation.Invoke.Static(
+                    insn.owner,
+                    insn.name,
+                    insn.desc,
+                    insn.itf
+                )
+                Opcodes.INVOKEINTERFACE -> OperandStackOperation.Invoke.Interface(
+                    insn.owner,
+                    insn.name,
+                    insn.desc,
+                    insn.itf
+                )
                 else -> throw UnsupportedOperationException("Unknown insn: $insn")
             }
 

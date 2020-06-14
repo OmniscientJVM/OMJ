@@ -31,6 +31,9 @@ sealed class ArrayType {
 
     /**
      * An array of references.
+     *
+     * @param desc The descriptor of the reference type, or null if there is no type
+     * information.
      */
-    object Ref : ArrayType()
+    data class Ref(val desc: String?) : ArrayType()
 }

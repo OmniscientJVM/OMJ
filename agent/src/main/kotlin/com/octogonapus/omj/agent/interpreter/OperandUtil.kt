@@ -42,6 +42,7 @@ import org.objectweb.asm.Opcodes.LLOAD
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.SALOAD
 import org.objectweb.asm.Opcodes.SASTORE
+import org.objectweb.asm.Opcodes.T_BOOLEAN
 import org.objectweb.asm.Opcodes.T_BYTE
 import org.objectweb.asm.Opcodes.T_CHAR
 import org.objectweb.asm.Opcodes.T_DOUBLE
@@ -49,6 +50,7 @@ import org.objectweb.asm.Opcodes.T_FLOAT
 import org.objectweb.asm.Opcodes.T_INT
 import org.objectweb.asm.Opcodes.T_LONG
 import org.objectweb.asm.Opcodes.T_SHORT
+import org.objectweb.asm.Type
 
 internal object OperandUtil {
 
@@ -57,7 +59,7 @@ internal object OperandUtil {
         LALOAD, LASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_LONG))
         FALOAD, FASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_FLOAT))
         DALOAD, DASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_DOUBLE))
-        AALOAD, AASTORE -> Operand.RefType.ArrayRef(ArrayType.Ref)
+        AALOAD, AASTORE -> Operand.RefType.ArrayRef(ArrayType.Ref(null))
         BALOAD, BASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_BYTE))
         CALOAD, CASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_CHAR))
         SALOAD, SASTORE -> Operand.RefType.ArrayRef(ArrayType.Primitive(T_SHORT))
@@ -69,7 +71,46 @@ internal object OperandUtil {
         LLOAD, LSTORE -> Operand.LongType.RuntimeLong()
         FLOAD, FSTORE -> Operand.FloatType.RuntimeFloat()
         DLOAD, DSTORE -> Operand.DoubleType.RuntimeDouble()
-        ALOAD, ASTORE -> Operand.RefType.RuntimeRef()
+        ALOAD, ASTORE -> Operand.RefType.RuntimeRef(null)
         else -> throw IllegalArgumentException("Cannot get the operand for opcode $opcode")
+    }
+
+    internal fun operandForType(type: Type): Operand = when (type.sort) {
+        Type.VOID -> error("Can't get the operand for void.")
+        Type.BOOLEAN -> Operand.IntType.RuntimeInt()
+        Type.CHAR -> Operand.IntType.RuntimeInt()
+        Type.BYTE -> Operand.ByteType.RuntimeByte()
+        Type.SHORT -> Operand.ShortType.RuntimeShort()
+        Type.INT -> Operand.IntType.RuntimeInt()
+        Type.FLOAT -> Operand.FloatType.RuntimeFloat()
+        Type.LONG -> Operand.LongType.RuntimeLong()
+        Type.DOUBLE -> Operand.DoubleType.RuntimeDouble()
+        Type.ARRAY -> Operand.RefType.ArrayRef(arrayTypeForType(type))
+        Type.OBJECT -> Operand.RefType.RuntimeRef(type.descriptor)
+        else -> error("Can't get operand for sort ${type.sort}")
+    }
+
+    internal fun typeDescriptorForOperand(operand: Operand): String = when (operand) {
+        is Operand.IntType -> "I"
+        is Operand.LongType -> "J"
+        is Operand.FloatType -> "F"
+        is Operand.DoubleType -> "D"
+        is Operand.ByteType -> "B"
+        is Operand.ShortType -> "S"
+        is Operand.CharType -> "C"
+        is Operand.RefType -> "Ljava/lang/Object;"
+    }
+
+    private fun arrayTypeForType(type: Type): ArrayType = when (type.elementType.sort) {
+        Type.BOOLEAN -> ArrayType.Primitive(T_BOOLEAN)
+        Type.CHAR -> ArrayType.Primitive(T_CHAR)
+        Type.BYTE -> ArrayType.Primitive(T_BYTE)
+        Type.SHORT -> ArrayType.Primitive(T_SHORT)
+        Type.INT -> ArrayType.Primitive(T_INT)
+        Type.FLOAT -> ArrayType.Primitive(T_FLOAT)
+        Type.LONG -> ArrayType.Primitive(T_LONG)
+        Type.DOUBLE -> ArrayType.Primitive(T_DOUBLE)
+        Type.OBJECT -> ArrayType.Ref(type.elementType.descriptor)
+        else -> error("Can't get array element type for type ${type.elementType}")
     }
 }

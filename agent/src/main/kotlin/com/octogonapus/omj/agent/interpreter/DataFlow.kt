@@ -87,7 +87,8 @@ internal class DataFlow(private val interpreter: Interpreter) {
                 introducingInsn.`var`
 
             // If it was created
-            introducingInsn.opcode == Opcodes.NEWARRAY -> {
+            introducingInsn.opcode == Opcodes.NEWARRAY ||
+                introducingInsn.opcode == Opcodes.ANEWARRAY -> {
                 val ref = findArrayRef(astoreInsn) ?: return null
                 val removingInsn = findLatestInsnRemovingOperand(astoreInsn, ref)
                 when {

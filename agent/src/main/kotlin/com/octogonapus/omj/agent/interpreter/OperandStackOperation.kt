@@ -72,4 +72,39 @@ internal sealed class OperandStackOperation {
     data class StoreDoubleIntoLocal(val index: Int) : OperandStackOperation()
     data class LoadRefFromLocal(val index: Int) : OperandStackOperation()
     data class StoreRefIntoLocal(val index: Int) : OperandStackOperation()
+    data class New(val desc: String) : OperandStackOperation()
+    data class ANewArray(val desc: String) : OperandStackOperation()
+    data class CheckCast(val desc: String) : OperandStackOperation()
+    data class InstanceOf(val desc: String) : OperandStackOperation()
+    sealed class Invoke : OperandStackOperation() {
+        abstract val owner: String
+        abstract val name: String
+        abstract val desc: String
+        abstract val isInterface: Boolean
+
+        data class Virtual(
+            override val owner: String,
+            override val name: String,
+            override val desc: String,
+            override val isInterface: Boolean
+        ) : Invoke()
+        data class Special(
+            override val owner: String,
+            override val name: String,
+            override val desc: String,
+            override val isInterface: Boolean
+        ) : Invoke()
+        data class Static(
+            override val owner: String,
+            override val name: String,
+            override val desc: String,
+            override val isInterface: Boolean
+        ) : Invoke()
+        data class Interface(
+            override val owner: String,
+            override val name: String,
+            override val desc: String,
+            override val isInterface: Boolean
+        ) : Invoke()
+    }
 }

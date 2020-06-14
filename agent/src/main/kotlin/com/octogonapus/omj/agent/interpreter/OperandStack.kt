@@ -23,6 +23,7 @@ import org.objectweb.asm.Opcodes.T_FLOAT
 import org.objectweb.asm.Opcodes.T_INT
 import org.objectweb.asm.Opcodes.T_LONG
 import org.objectweb.asm.Opcodes.T_SHORT
+import org.objectweb.asm.Type
 
 @Suppress("DataClassPrivateConstructor")
 internal data class OperandStack private constructor(
@@ -131,13 +132,13 @@ internal data class OperandStack private constructor(
             }
             OperandStackOperation.LoadRefFromArray -> {
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Ref))
-                push(Operand.RefType.RuntimeRef())
+                check(pop().let { it is Operand.RefType.ArrayRef && it.type is ArrayType.Ref })
+                push(Operand.RefType.RuntimeRef(null))
             }
             OperandStackOperation.StoreIntoRefArray -> {
                 check(pop() is Operand.RefType)
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Ref))
+                check(pop().let { it is Operand.RefType.ArrayRef && it.type is ArrayType.Ref })
             }
             OperandStackOperation.LoadByteFromArray -> {
                 check(pop().isInt())
@@ -297,7 +298,7 @@ internal data class OperandStack private constructor(
                 check(pop() is Operand.DoubleType)
             }
             is OperandStackOperation.LoadRefFromLocal -> {
-                push(Operand.RefType.RuntimeRef())
+                push(Operand.RefType.RuntimeRef(null))
             }
             is OperandStackOperation.StoreRefIntoLocal -> {
                 check(pop() is Operand.RefType)
@@ -310,6 +311,58 @@ internal data class OperandStack private constructor(
                 push(value1)
                 push(value2)
             }
+            is OperandStackOperation.New -> {
+                push(Operand.RefType.RuntimeRef(op.desc))
+            }
+            is OperandStackOperation.ANewArray -> {
+                check(pop().isInt())
+                push(Operand.RefType.ArrayRef(ArrayType.Ref(op.desc)))
+            }
+            is OperandStackOperation.CheckCast -> {
+                check(peek() is Operand.RefType)
+            }
+            is OperandStackOperation.InstanceOf -> {
+                check(pop() is Operand.RefType)
+                push(Operand.IntType.RuntimeInt())
+            }
+            is OperandStackOperation.Invoke.Virtual, is OperandStackOperation.Invoke.Special,
+            is OperandStackOperation.Invoke.Interface -> {
+                op as OperandStackOperation.Invoke
+                popArguments(op)
+                check(pop() is Operand.RefType) // Receiver
+                pushReturnOperand(op)
+            }
+            is OperandStackOperation.Invoke.Static -> {
+                popArguments(op)
+                pushReturnOperand(op)
+            }
+        }
+    }
+
+    private fun MutableList<Operand>.popArguments(op: OperandStackOperation.Invoke) {
+        Type.getArgumentTypes(op.desc).reversed().forEach {
+            when (it.sort) {
+                Type.VOID -> error("How did this get VOID?")
+                Type.ARRAY, Type.OBJECT -> check(pop() is Operand.RefType)
+                Type.BOOLEAN -> check(pop() is Operand.ByteType)
+                Type.CHAR -> check(pop() is Operand.CharType)
+                Type.BYTE -> check(pop() is Operand.ByteType)
+                Type.SHORT -> check(pop() is Operand.ShortType)
+                Type.INT -> check(pop().isInt())
+                Type.FLOAT -> check(pop() is Operand.FloatType)
+                Type.LONG -> check(pop() is Operand.LongType)
+                Type.DOUBLE -> check(pop() is Operand.DoubleType)
+                else -> error("Unknown type $it")
+            }
+        }
+    }
+
+    private fun MutableList<Operand>.pushReturnOperand(op: OperandStackOperation.Invoke) {
+        val returnType = Type.getReturnType(op.desc)
+        if (returnType.sort == Type.VOID) {
+            nop()
+        } else {
+            push(OperandUtil.operandForType(returnType))
         }
     }
 

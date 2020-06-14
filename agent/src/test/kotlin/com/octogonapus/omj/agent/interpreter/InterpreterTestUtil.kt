@@ -100,10 +100,12 @@ internal val allDoubles = listOf(
  * All ref constants + runtime ref.
  */
 internal val allRefs = listOf(
-    Operand.RefType.ArrayRef(ArrayType.Ref),
+    Operand.RefType.ArrayRef(ArrayType.Ref(null)),
+    Operand.RefType.ArrayRef(ArrayType.Ref("Ljava/lang/Object;")),
     Operand.RefType.ArrayRef(ArrayType.Primitive(T_INT)),
     Operand.RefType.Null(),
-    Operand.RefType.RuntimeRef()
+    Operand.RefType.RuntimeRef(null),
+    Operand.RefType.RuntimeRef("Ljava/lang/Object;")
 ).exhaustive()
 
 /**
@@ -143,6 +145,11 @@ internal val allCategory1Values = allInts.merge(allFloats).merge(allRefs).merge(
 internal val allCategory2Values = allLongs.merge(allDoubles)
 
 /**
+ * All category 1 and 2 values.
+ */
+internal val allValues = allCategory1Values.merge(allCategory2Values)
+
+/**
  * @return The values you could store in an array of the type corresponding to the [opcode].
  */
 internal fun valuesForArrayInsn(opcode: Int) = when (opcode) {
@@ -166,7 +173,7 @@ internal fun runtimeValueForArrayInsn(opcode: Int) = when (opcode) {
     LALOAD -> Operand.LongType.RuntimeLong()
     FALOAD -> Operand.FloatType.RuntimeFloat()
     DALOAD -> Operand.DoubleType.RuntimeDouble()
-    AALOAD -> Operand.RefType.RuntimeRef()
+    AALOAD -> Operand.RefType.RuntimeRef(null)
     BALOAD -> Operand.ByteType.RuntimeByte()
     CALOAD -> Operand.CharType.RuntimeChar()
     SALOAD -> Operand.ShortType.RuntimeShort()

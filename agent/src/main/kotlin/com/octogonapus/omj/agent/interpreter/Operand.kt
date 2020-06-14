@@ -99,7 +99,12 @@ internal sealed class Operand {
         override fun isInt() = false
 
         data class ArrayRef(val type: ArrayType) : RefType()
-        class RuntimeRef : RefType()
+
+        /**
+         * @param desc The descriptor of the reference type, or null if there is no type
+         * information.
+         */
+        data class RuntimeRef(val desc: String?) : RefType()
         class Null : RefType()
     }
 }

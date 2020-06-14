@@ -22,6 +22,8 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
 internal class DataFlowTest : FunSpec({
@@ -55,6 +57,42 @@ internal class DataFlowTest : FunSpec({
         val dataFlow = DataFlow(Interpreter())
         dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
         dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(1)
+    }
+
+    test("find ANEWARRAY from AASTORE with one ALOAD") {
+        /*
+        Object[] o = new Object[1];
+        o[0] = new Object();
+
+        ICONST_1                                    : 1 ->
+        ANEWARRAY Ljava/lang/Object;                : arrayref(Object,1) ->
+        ASTORE 1                                    : -> (local 1 now contains arrayref(Object,1))
+        ALOAD 1                                     : arrayref(Object,1) ->
+        ICONST_0                                    : arrayref(Object, 1), 0 ->
+        NEW Ljava/lang/Object;                      : arrayref(Object, 1), 0, Object ->
+        DUP                                         : arrayref(Object, 1), 0, Object, Object ->
+        INVOKESPECIAL Ljava/lang/Object;.<init> ()V : arrayref(Object, 1), 0, Object ->
+        AASTORE                                     : -> (arrayref(Object,1)[0] = Object)
+         */
+
+        val anewarray = TypeInsnNode(Opcodes.ANEWARRAY, "Ljava/lang/Object;")
+        val aload = VarInsnNode(Opcodes.ALOAD, 1)
+        val aastore = InsnNode(Opcodes.AASTORE)
+        InsnList().apply {
+            add(InsnNode(Opcodes.ICONST_1))
+            add(anewarray)
+            add(VarInsnNode(Opcodes.ASTORE, 1))
+            add(aload)
+            add(InsnNode(Opcodes.ICONST_0))
+            add(TypeInsnNode(Opcodes.NEW, "Ljava/lang/Object;"))
+            add(InsnNode(Opcodes.DUP))
+            add(MethodInsnNode(Opcodes.INVOKESPECIAL, "Ljava/lang/Object;", "<init>", "()V", false))
+            add(aastore)
+        }
+
+        val dataFlow = DataFlow(Interpreter())
+        dataFlow.insnIntroductingArray(aastore).shouldBe(anewarray)
+        dataFlow.findLocalVariableHoldingArrayRef(aastore).shouldBe(1)
     }
 
     test("find NEWARRAY from *ASTORE with two ALOADs") {
