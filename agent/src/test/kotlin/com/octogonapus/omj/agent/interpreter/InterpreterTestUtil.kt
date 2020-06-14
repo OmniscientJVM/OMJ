@@ -181,7 +181,17 @@ internal fun runtimeValueForArrayInsn(opcode: Int) = when (opcode) {
 }
 
 internal fun OperandStack.operandTypesShouldEqual(other: OperandStack) {
-    stack.map { it::class }.shouldBe(other.stack.map { it::class })
+    val classes = stack.map { it::class }
+    val otherClasses = other.stack.map { it::class }
+
+    classes.zip(otherClasses).forEachIndexed { index, (left, right) ->
+        left.shouldBe(right)
+        if (left == Operand.RefType.ArrayRef::class) {
+            val type = (stack[index] as Operand.RefType.ArrayRef).type
+            val otherType = (other.stack[index] as Operand.RefType.ArrayRef).type
+            type.shouldBe(otherType)
+        }
+    }
 }
 
 /**

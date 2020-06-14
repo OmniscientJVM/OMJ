@@ -85,7 +85,14 @@ internal object OperandUtil {
         Type.FLOAT -> Operand.FloatType.RuntimeFloat()
         Type.LONG -> Operand.LongType.RuntimeLong()
         Type.DOUBLE -> Operand.DoubleType.RuntimeDouble()
-        Type.ARRAY -> Operand.RefType.ArrayRef(arrayTypeForType(type))
+        Type.ARRAY -> {
+            if (type.dimensions == 1) {
+                Operand.RefType.ArrayRef(arrayTypeForType(type))
+            } else {
+                val dimPrefix = (1 until type.dimensions).joinToString(separator = "") { "[" }
+                Operand.RefType.ArrayRef(ArrayType.Ref("$dimPrefix${type.elementType.descriptor}"))
+            }
+        }
         Type.OBJECT -> Operand.RefType.RuntimeRef(type.descriptor)
         else -> error("Can't get operand for sort ${type.sort}")
     }

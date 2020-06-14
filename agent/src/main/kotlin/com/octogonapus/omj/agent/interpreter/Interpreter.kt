@@ -68,6 +68,7 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.MultiANewArrayInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
@@ -227,6 +228,8 @@ internal class Interpreter {
                 )
                 else -> throw UnsupportedOperationException("Unknown insn: $insn")
             }
+
+            is MultiANewArrayInsnNode -> OperandStackOperation.MultiANewArray(insn.desc, insn.dims)
 
             else -> throw UnsupportedOperationException("Unknown insn: $insn")
         }

@@ -107,4 +107,5 @@ internal sealed class OperandStackOperation {
             override val isInterface: Boolean
         ) : Invoke()
     }
+    data class MultiANewArray(val desc: String, val dims: Int) : OperandStackOperation()
 }

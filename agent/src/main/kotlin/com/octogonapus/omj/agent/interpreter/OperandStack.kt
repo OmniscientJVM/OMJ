@@ -336,6 +336,12 @@ internal data class OperandStack private constructor(
                 popArguments(op)
                 pushReturnOperand(op)
             }
+            is OperandStackOperation.MultiANewArray -> {
+                repeat(op.dims) {
+                    check(pop().isInt())
+                }
+                push(OperandUtil.operandForType(Type.getType(op.desc)))
+            }
         }
     }
 

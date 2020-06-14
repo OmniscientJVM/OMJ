@@ -558,6 +558,11 @@ internal class TraceIteratorTest {
                 )
             }
         }
+
+        @Test
+        fun `test multi int array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeMultiIntArray.jar")
+        }
     }
 
     @Nested
