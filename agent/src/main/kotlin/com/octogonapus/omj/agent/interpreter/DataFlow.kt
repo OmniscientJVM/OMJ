@@ -27,15 +27,20 @@ import org.objectweb.asm.tree.VarInsnNode
 internal class DataFlow(private val interpreter: Interpreter) {
 
     /**
-     * Finds the insn that introduced an array used by an *ASTORE insn.
+     * Finds the insn that introduced an array used by an *ASTORE or *ALOAD insn.
      *
-     * @param astoreInsn The insn that stores into the array ref to search for.
+     * @param insn The insn that stores into or loads from the array ref to search for.
      * @return The insn that introduced the array ref.
      */
-    internal fun insnIntroductingArray(astoreInsn: AbstractInsnNode): AbstractInsnNode? {
-        require(isAStoreInsn(astoreInsn))
-        val arrayRef = findArrayRef(astoreInsn) ?: return null
-        return findEarliestInsnIntroducingOperand(astoreInsn, arrayRef)
+    internal fun insnIntroducingArray(insn: AbstractInsnNode): AbstractInsnNode? =
+        insnIntroducingArrayAndRef(insn).first
+
+    private fun insnIntroducingArrayAndRef(
+        insn: AbstractInsnNode
+    ): Pair<AbstractInsnNode?, Operand.RefType> {
+        val arrayRef = findArrayRef(insn)
+        val introducingInsn = findEarliestInsnIntroducingOperand(insn, arrayRef)
+        return introducingInsn to arrayRef
     }
 
     private fun isAStoreInsn(astoreInsn: AbstractInsnNode) =
@@ -44,17 +49,33 @@ internal class DataFlow(private val interpreter: Interpreter) {
             Opcodes.AASTORE, Opcodes.BASTORE, Opcodes.CASTORE, Opcodes.SASTORE
         )
 
-    private fun findArrayRef(astoreInsn: AbstractInsnNode): Operand.RefType? {
-        // Get the stack before the *ASTORE insn. The 3rd element on the stack must be an array ref.
-        val stackAtASTORE = interpreter.stackBefore(astoreInsn)
-        return stackAtASTORE.peek(2).let {
+    private fun isALoadInsn(aloadInsn: AbstractInsnNode) =
+        aloadInsn is InsnNode && aloadInsn.opcode in listOf(
+            Opcodes.IALOAD, Opcodes.LALOAD, Opcodes.FALOAD, Opcodes.DALOAD,
+            Opcodes.AALOAD, Opcodes.BALOAD, Opcodes.CALOAD, Opcodes.SALOAD
+        )
+
+    private fun findArrayRef(insn: AbstractInsnNode): Operand.RefType {
+        require(isAStoreInsn(insn) || isALoadInsn(insn))
+
+        val stackAtInsn = interpreter.stackBefore(insn)
+
+        val startingRef = when {
+            isAStoreInsn(insn) -> stackAtInsn.peek(2) as Operand.RefType
+            isALoadInsn(insn) -> stackAtInsn.peek(1) as Operand.RefType
+            else -> error("")
+        }
+
+        return startingRef.let {
             when (it) {
                 // If we already got an ArrayRef we are done
                 is Operand.RefType.ArrayRef -> it
 
                 is Operand.RefType.RuntimeRef -> {
-                    // We know the ref `it` is really an array ref, so find its real value
-                    val arrayRef = getArrayRefFromRefType(astoreInsn, it) ?: return null
+                    // We know the ref `it` is really an array ref, so find its real value. If it
+                    // couldn't find the real value, return the ref we started with (i.e., the best
+                    // we can do).
+                    val arrayRef = getArrayRefFromRefType(insn, it) ?: return startingRef
 
                     // Tell the interpreter that the `it` (probably a RuntimeRef) is actually
                     // `arrayRef` so that we can search for it later.
@@ -69,48 +90,64 @@ internal class DataFlow(private val interpreter: Interpreter) {
     }
 
     /**
-     * Finds the index of the local variable holding the array ref that was stored into. If the
-     * array ref was not stored into a local before the [astoreInsn] runs but will be stored into a
-     * local after the [astoreInsn] runs, then the index of that local will be returned.
+     * Finds the index of the local variable holding the array ref that was stored into or loaded
+     * from. If the array ref was not stored into a local before the [insn] runs but will be stored
+     * into a local after the [insn] runs, then the index of that local will be returned. Array refs
+     * that are part of >=2D arrays typically don't have local variables associated with them. In
+     * this case, the local variable storing the outermost array dimension will be returned.
      *
-     * @param astoreInsn The *ASTORE insn in question.
-     * @return The index of the local variable holding the array ref being stored into, or null if
-     * no local variable ever holds the array.
+     * @param insn The *ASTORE or *ALOAD insn in question.
+     * @return The index of the local variable.
      */
-    internal fun findLocalVariableHoldingArrayRef(astoreInsn: AbstractInsnNode): Int? {
-        val introducingInsn = insnIntroductingArray(astoreInsn)
-        return when {
-            introducingInsn == null -> null
+    internal fun findLocalVariableHoldingArrayRef(insn: AbstractInsnNode): Int? {
+        val (introducingInsn, ref) = insnIntroducingArrayAndRef(insn)
+        return findLocalVarFromIntroducingInsn(introducingInsn, ref)
+    }
 
-            // If it was loaded from a parameter
-            introducingInsn is VarInsnNode && introducingInsn.opcode == Opcodes.ALOAD ->
-                introducingInsn.`var`
+    private fun findLocalVarFromIntroducingInsn(
+        introducingInsn: AbstractInsnNode?,
+        ref: Operand.RefType
+    ): Int? = when {
+        introducingInsn == null -> null
 
-            // If it was created
-            introducingInsn.opcode == Opcodes.NEWARRAY ||
-                introducingInsn.opcode == Opcodes.ANEWARRAY -> {
-                val ref = findArrayRef(astoreInsn) ?: return null
-                val removingInsn = findLatestInsnRemovingOperand(astoreInsn, ref)
-                when {
-                    removingInsn == null -> null
+        // If it was loaded from a parameter
+        introducingInsn is VarInsnNode && introducingInsn.opcode == Opcodes.ALOAD ->
+            introducingInsn.`var`
 
-                    removingInsn is VarInsnNode && removingInsn.opcode == Opcodes.ASTORE ->
-                        removingInsn.`var`
+        // If it was created
+        introducingInsn.opcode == Opcodes.NEWARRAY ||
+            introducingInsn.opcode == Opcodes.ANEWARRAY ||
+            introducingInsn.opcode == Opcodes.MULTIANEWARRAY -> {
+            val removingInsn = findLatestInsnRemovingOperand(introducingInsn, ref)
+            when {
+                removingInsn == null -> null
 
-                    isAStoreInsn(removingInsn) -> {
-                        // The array ref was introduced by a NEWARRAY and removed by an *ASTORE.
-                        // Either it was leaked or it was stored into and loaded from a local
-                        // variable between the introducing and removing insns. Look for an ALOAD
-                        // that introduced the array ref between those two.
-                        findALOADBetweenInsns(introducingInsn, removingInsn, ref)?.`var`
-                    }
+                removingInsn is VarInsnNode && removingInsn.opcode == Opcodes.ASTORE ->
+                    removingInsn.`var`
 
-                    else -> error("Unknown removing insn: $removingInsn")
+                isAStoreInsn(removingInsn) || removingInsn.opcode == Opcodes.AALOAD -> {
+                    // The array ref was introduced by a NEWARRAY and removed by an *ASTORE or
+                    // an AALOAD (in the case of a >=2D array).
+                    // Either it was leaked or it was stored into and loaded from a local
+                    // variable between the introducing and removing insns. Look for an ALOAD
+                    // that introduced the array ref between those two.
+                    findALOADBetweenInsns(introducingInsn, removingInsn, ref)?.`var`
                 }
-            }
 
-            else -> error("Unknown introducing insn: $introducingInsn")
+                else -> error("Unknown removing insn: $removingInsn")
+            }
         }
+
+        introducingInsn.opcode == Opcodes.AALOAD -> {
+            // An AALOAD obscures the local because inner array dimensions don't typically have
+            // local variables. The user expects to see the local for the outermost array dimension
+            // instead. So find the array ref the AALOAD loaded from and recurse with it.
+            val arrayRef = findArrayRef(introducingInsn)
+            val prevArrayInsn = findEarliestInsnIntroducingOperand(introducingInsn, arrayRef)
+            findLocalVarFromIntroducingInsn(prevArrayInsn, arrayRef)
+        }
+
+        else -> error("Unknown introducing insn: $introducingInsn")
     }
 
     private fun findALOADBetweenInsns(
@@ -167,6 +204,11 @@ internal class DataFlow(private val interpreter: Interpreter) {
 
                     else -> error("Unexpected operand type: $storedRef")
                 }
+            }
+
+            Opcodes.AALOAD -> {
+                check(introducingInsn is InsnNode)
+                null
             }
 
             else -> error("Unknown introducing insn: $introducingInsn")

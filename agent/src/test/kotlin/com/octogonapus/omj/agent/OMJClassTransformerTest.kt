@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.koin.dsl.module
+import org.objectweb.asm.Opcodes.AALOAD
 import org.objectweb.asm.Opcodes.AASTORE
 import org.objectweb.asm.Opcodes.ACC_PUBLIC
 import org.objectweb.asm.Opcodes.ACC_STATIC
@@ -68,6 +69,7 @@ import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.MultiANewArrayInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
@@ -765,6 +767,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                     // Generated from:
                     //   int[] i = {6};
                     add(LineNumberNode(lineNumber, LabelNode()))
+                    add(InsnNode(ICONST_1))
                     add(IntInsnNode(NEWARRAY, T_INT))
                     add(InsnNode(DUP))
                     add(InsnNode(ICONST_0))
@@ -787,6 +790,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 lineNumber(lineNumber)
 
                 // Keep the values on the stack that IASTORE needs
+                insn(ICONST_1)
                 intInsn(NEWARRAY, T_INT)
                 insn(DUP)
                 insn(ICONST_0)
@@ -824,8 +828,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 ),
                 InsnList().apply {
                     // Generated from:
-                    //   Object[] o = new Object[1];
-                    //   o[0] = new Object();
+                    //   Object[] o = {new Object()};
                     //
                     //   ICONST_1
                     //   ANEWARRAY java/lang/Object
@@ -868,6 +871,8 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 typeInsn(NEW, "Ljava/lang/Object;")
                 insn(DUP)
                 method(INVOKESPECIAL, "Ljava/lang/Object;", "<init>", "()V", false)
+
+                // Replace the AASTORE with recording the store (which internally will do the store)
                 recordStore(
                     className,
                     lineNumber,
@@ -875,8 +880,85 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                     "[Ljava/lang/Object;ILjava/lang/Object;"
                 )
 
+                // DUP what will be stored
+                insn(DUP)
                 varInsn(ASTORE, 1)
                 recordStore(className, lineNumber, varName, "Ljava/lang/Object;")
+            }
+        }
+
+        @Test
+        fun `store into 2d int array`() {
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(
+                    makeLocalVariable(varName, "[[I", 1)
+                ),
+                InsnList().apply {
+                        /*
+                        Generated from:
+                        int[][] i = new int[1][1];
+                        i[0][0] = 6;
+
+                        ICONST_1
+                        ICONST_1
+                        MULTIANEWARRAY [[I 2
+                        ASTORE 1
+                        ALOAD 1
+                        ICONST_0
+                        AALOAD
+                        ICONST_0
+                        BIPUSH 6
+                        IASTORE
+                         */
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(InsnNode(ICONST_1))
+                    add(InsnNode(ICONST_1))
+                    add(MultiANewArrayInsnNode("[[I", 2))
+                    add(VarInsnNode(ASTORE, 1))
+                    add(LineNumberNode(lineNumber2, LabelNode()))
+                    add(VarInsnNode(ALOAD, 1))
+                    add(InsnNode(ICONST_0))
+                    add(InsnNode(AALOAD))
+                    add(InsnNode(ICONST_0))
+                    add(IntInsnNode(BIPUSH, 6))
+                    add(InsnNode(IASTORE))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+                insn(ICONST_1)
+                insn(ICONST_1)
+                multiANewArrayInsn("[[I", 2)
+
+                // The ASTORE also gets recorded
+                insn(DUP)
+                varInsn(ASTORE, 1)
+                recordStore(className, lineNumber, varName, "Ljava/lang/Object;")
+
+                // Keep the values on the stack that IASTORE needs
+                lineNumber(lineNumber2)
+                varInsn(ALOAD, 1)
+                insn(ICONST_0)
+                insn(AALOAD)
+                insn(ICONST_0)
+                intInsn(BIPUSH, 6)
+
+                // But replace IASTORE with recording the store (which internally will do the store)
+                // TODO: Define store methods for up to 8 dims
+                recordStore(className, lineNumber2, varName, "[[III")
             }
         }
     }
@@ -1155,7 +1237,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
         private const val varName = "varName"
         private const val varName2 = "varName2"
         private const val lineNumber = 3495
-        private const val lineNumber2 = 3895
+        private const val lineNumber2 = 8439
         private const val dynamicClassName = "dynamicClassName"
         private const val dynamicClassName2 = "dynamicClassName2"
     }

@@ -527,7 +527,20 @@ internal class TraceIteratorTest {
             }
         }
 
-        // TODO: Add tests for object and string array stores (not one-liner)
+        @Test
+        fun `test object array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeObjectArray.jar")
+
+            traces.shouldExist {
+                it.storeArray(
+                    containingClass = "com.agenttest.storeObjectArray.Main",
+                    varType = "java.lang.Object",
+                    varName = "o",
+                    arrayIndex = 0,
+                    value = null
+                )
+            }
+        }
 
         @Test
         fun `test object array store one-liner`(@TempDir tempDir: File) {
@@ -540,6 +553,21 @@ internal class TraceIteratorTest {
                     varName = "o",
                     arrayIndex = 0,
                     value = null
+                )
+            }
+        }
+
+        @Test
+        fun `test string array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeStringArray.jar")
+
+            traces.shouldExist {
+                it.storeArray(
+                    containingClass = "com.agenttest.storeStringArray.Main",
+                    varType = "java.lang.String",
+                    varName = "o",
+                    arrayIndex = 0,
+                    value = "Hello"
                 )
             }
         }
@@ -562,6 +590,7 @@ internal class TraceIteratorTest {
         @Test
         fun `test multi int array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeMultiIntArray.jar")
+            TODO()
         }
     }
 

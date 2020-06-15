@@ -16,6 +16,8 @@
  */
 package com.octogonapus.omj.agent
 
+import com.octogonapus.omj.agent.interpreter.DataFlow
+import com.octogonapus.omj.agent.interpreter.Interpreter
 import com.octogonapus.omj.di.OMJKoinComponent
 import java.util.concurrent.ThreadLocalRandom
 import mu.KotlinLogging
@@ -41,7 +43,6 @@ import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.LASTORE
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
-import org.objectweb.asm.Opcodes.NEWARRAY
 import org.objectweb.asm.Opcodes.PUTFIELD
 import org.objectweb.asm.Opcodes.PUTSTATIC
 import org.objectweb.asm.Opcodes.SASTORE
@@ -51,7 +52,6 @@ import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
-import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
@@ -202,54 +202,9 @@ internal class OMJClassTransformer(
         insnNode: InsnNode,
         lineNumber: Int
     ): List<InsnListInsertion> {
-        // Try to find the local variable that contains the array being stored into by looking for
-        // an ALOAD that loads from that variable.
-        val possibleArrayLoad = insnNode.previous.previous.previous
-        var localVariable = if (possibleArrayLoad is VarInsnNode &&
-            possibleArrayLoad.opcode == ALOAD
-        ) {
-            methodNode.localVariables.first { it.index == possibleArrayLoad.`var` }
-        } else null
-
-        localVariable?.let {
-            logger.debug {
-                """
-                Found local variable ${it.name}: ${it.desc} by looking for ALOAD.
-                """.trimIndent()
-            }
-        }
-
-        // If looking for an ALOAD failed, try looking for a NEWARRAY.
-        if (localVariable == null) {
-            localVariable = lookForNewArrayLocalVariable(insnNode, methodNode)
-        }
-
-        // We are at an array store insn, which means that the stack currently looks like
-        //  arrayref, index, value ->
-        // We want to find the local variable corresponding to arrayref (which might not exist yet)
-        // These are the possible cases:
-        //  1. The arrayref was loaded from a local variable
-        //  2. The arrayref was not loaded from a local variable but will be stored in one later in
-        //      this method body
-        // For case (1), we need to trace the data flow backwards from the arrayref to the local it
-        //  was loaded from.
-        // For case (2), we need to trace the data flow backwards from the arrayref to where is was
-        //  first put on the stack (from a new array insn or method call) and then trace the data
-        //  flow forwards until we find the local it is stored in.
-
-        localVariable?.let {
-            logger.debug {
-                """
-                Found local variable ${it.name}: ${it.desc} by looking for NEWARRAY.
-                """.trimIndent()
-            }
-        } ?: logger.error {
-            """
-            Did not find a local variable for the array store.
-            className = $fullyQualifiedClassName
-            methodName = ${methodNode.name}
-            lineNumber = $lineNumber
-            """.trimIndent()
+        val localIndex = DataFlow(Interpreter()).findLocalVariableHoldingArrayRef(insnNode)
+        val localVariable = localIndex?.let { index ->
+            methodNode.localVariables.first { it.index == index }
         }
 
         val variableName = localVariable?.name
@@ -272,38 +227,6 @@ internal class OMJClassTransformer(
                 recordStore(lineNumber, variableName, descPrefix)
             }
         )
-    }
-
-    private fun lookForNewArrayLocalVariable(
-        insnNode: InsnNode,
-        methodNode: MethodNode
-    ): LocalVariableNode? {
-        // We might not find the array by looking for an ALOAD, though, if the user wrote something
-        // like `int[] i = {6};`, which generates this:
-        //
-        //    NEWARRAY T_INT
-        //    DUP
-        //    ICONST_0
-        //    BIPUSH 6
-        //    IASTORE
-        //    ASTORE 1
-        //
-        // In that case, we need to see if the 3rd previous insn puts two array refs on the stack
-        // (so a NEWARRAY and a DUP). One of the refs will be used by *ASTORE. Then we need to check
-        // if the other is used by ASTORE to put it into a local variable, which we can then search
-        // for.
-        val possibleDup = insnNode.previous.previous.previous
-        val possibleNewArray = insnNode.previous.previous.previous.previous
-        return if (possibleDup is InsnNode && possibleDup.opcode == DUP &&
-            possibleNewArray is IntInsnNode && possibleNewArray.opcode == NEWARRAY
-        ) {
-            // We found the two array refs. Now look for the store.
-            val possibleStore = insnNode.next
-            if (possibleStore is VarInsnNode && possibleStore.opcode == ASTORE) {
-                // We found the store.
-                methodNode.localVariables.first { it.index == possibleStore.`var` }
-            } else null
-        } else null
     }
 
     private fun instrumentPutInsn(

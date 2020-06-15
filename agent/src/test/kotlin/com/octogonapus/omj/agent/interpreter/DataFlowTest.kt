@@ -55,7 +55,7 @@ internal class DataFlowTest : FunSpec({
         }
 
         val dataFlow = DataFlow(Interpreter())
-        dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
+        dataFlow.insnIntroducingArray(iastore).shouldBe(newarray)
         dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(1)
     }
 
@@ -91,7 +91,7 @@ internal class DataFlowTest : FunSpec({
         }
 
         val dataFlow = DataFlow(Interpreter())
-        dataFlow.insnIntroductingArray(aastore).shouldBe(anewarray)
+        dataFlow.insnIntroducingArray(aastore).shouldBe(anewarray)
         dataFlow.findLocalVariableHoldingArrayRef(aastore).shouldBe(1)
     }
 
@@ -129,7 +129,7 @@ internal class DataFlowTest : FunSpec({
         }
 
         val dataFlow = DataFlow(Interpreter())
-        dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
+        dataFlow.insnIntroducingArray(iastore).shouldBe(newarray)
         dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(1)
     }
 
@@ -159,7 +159,7 @@ internal class DataFlowTest : FunSpec({
         }
 
         val dataFlow = DataFlow(Interpreter())
-        dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
+        dataFlow.insnIntroducingArray(iastore).shouldBe(newarray)
         dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(1)
     }
 
@@ -197,7 +197,7 @@ internal class DataFlowTest : FunSpec({
         }
 
         val dataFlow = DataFlow(Interpreter())
-        dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
+        dataFlow.insnIntroducingArray(iastore).shouldBe(newarray)
         dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(1)
     }
 
@@ -224,7 +224,7 @@ internal class DataFlowTest : FunSpec({
         }
 
         val dataFlow = DataFlow(Interpreter())
-        dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
+        dataFlow.insnIntroducingArray(iastore).shouldBe(aload)
         dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(0)
     }
 
@@ -257,7 +257,7 @@ internal class DataFlowTest : FunSpec({
         }
 
         val dataFlow = DataFlow(Interpreter())
-        dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
+        dataFlow.insnIntroducingArray(iastore).shouldBe(aload)
         dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(0)
     }
 
@@ -285,7 +285,7 @@ internal class DataFlowTest : FunSpec({
         }
 
         val dataFlow = DataFlow(Interpreter())
-        dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
+        dataFlow.insnIntroducingArray(iastore).shouldBe(aload)
         dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(0)
     }
 
@@ -313,7 +313,7 @@ internal class DataFlowTest : FunSpec({
         }
 
         val dataFlow = DataFlow(Interpreter())
-        dataFlow.insnIntroductingArray(iastore).shouldBe(aload)
+        dataFlow.insnIntroducingArray(iastore).shouldBe(aload)
         dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(0)
     }
 
@@ -342,7 +342,7 @@ internal class DataFlowTest : FunSpec({
         }
 
         val dataFlow = DataFlow(Interpreter())
-        dataFlow.insnIntroductingArray(iastore).shouldBe(newarray)
+        dataFlow.insnIntroducingArray(iastore).shouldBe(newarray)
         dataFlow.findLocalVariableHoldingArrayRef(iastore).shouldBe(null)
     }
 })

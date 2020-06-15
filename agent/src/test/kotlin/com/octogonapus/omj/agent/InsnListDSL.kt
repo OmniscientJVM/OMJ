@@ -26,6 +26,7 @@ import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.MultiANewArrayInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
@@ -113,6 +114,13 @@ class CheckInsns(private val insnList: InsnList) {
     fun typeInsn(opcode: Int, desc: String) {
         checks.add {
             it is TypeInsnNode && it.opcode == opcode && it.desc == desc
+        }
+    }
+
+    @InsnListDSL
+    fun multiANewArrayInsn(desc: String, dims: Int) {
+        checks.add {
+            it is MultiANewArrayInsnNode && it.desc == desc && it.dims == dims
         }
     }
 

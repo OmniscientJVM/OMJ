@@ -16,13 +16,6 @@
  */
 package com.octogonapus.omj.agent.interpreter
 
-import org.objectweb.asm.Opcodes.T_BYTE
-import org.objectweb.asm.Opcodes.T_CHAR
-import org.objectweb.asm.Opcodes.T_DOUBLE
-import org.objectweb.asm.Opcodes.T_FLOAT
-import org.objectweb.asm.Opcodes.T_INT
-import org.objectweb.asm.Opcodes.T_LONG
-import org.objectweb.asm.Opcodes.T_SHORT
 import org.objectweb.asm.Type
 
 @Suppress("DataClassPrivateConstructor")
@@ -92,83 +85,99 @@ internal data class OperandStack private constructor(
             OperandStackOperation.PushNullRef -> push(Operand.RefType.Null())
             OperandStackOperation.LoadIntFromArray -> {
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_INT)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
                 push(Operand.IntType.RuntimeInt())
             }
             OperandStackOperation.StoreIntoIntArray -> {
                 check(pop().isInt())
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_INT)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
             }
             OperandStackOperation.LoadLongFromArray -> {
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_LONG)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
                 push(Operand.LongType.RuntimeLong())
             }
             OperandStackOperation.StoreIntoLongArray -> {
                 check(pop() is Operand.LongType)
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_LONG)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
             }
             OperandStackOperation.LoadFloatFromArray -> {
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_FLOAT)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
                 push(Operand.FloatType.RuntimeFloat())
             }
             OperandStackOperation.StoreIntoFloatArray -> {
                 check(pop() is Operand.FloatType)
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_FLOAT)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
             }
             OperandStackOperation.LoadDoubleFromArray -> {
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_DOUBLE)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
                 push(Operand.DoubleType.RuntimeDouble())
             }
             OperandStackOperation.StoreIntoDoubleArray -> {
                 check(pop() is Operand.DoubleType)
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_DOUBLE)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
             }
             OperandStackOperation.LoadRefFromArray -> {
                 check(pop().isInt())
-                check(pop().let { it is Operand.RefType.ArrayRef && it.type is ArrayType.Ref })
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
                 push(Operand.RefType.RuntimeRef(null))
             }
             OperandStackOperation.StoreIntoRefArray -> {
                 check(pop() is Operand.RefType)
                 check(pop().isInt())
-                check(pop().let { it is Operand.RefType.ArrayRef && it.type is ArrayType.Ref })
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
             }
             OperandStackOperation.LoadByteFromArray -> {
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_BYTE)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
                 push(Operand.ByteType.RuntimeByte())
             }
             OperandStackOperation.StoreIntoByteArray -> {
                 check(pop() is Operand.ByteType)
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_BYTE)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
             }
             OperandStackOperation.LoadCharFromArray -> {
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_CHAR)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
                 push(Operand.CharType.RuntimeChar())
             }
             OperandStackOperation.StoreIntoCharArray -> {
                 check(pop() is Operand.CharType)
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_CHAR)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
             }
             OperandStackOperation.LoadShortFromArray -> {
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_SHORT)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
                 push(Operand.ShortType.RuntimeShort())
             }
             OperandStackOperation.StoreIntoShortArray -> {
                 check(pop() is Operand.ShortType)
                 check(pop().isInt())
-                check(pop() == Operand.RefType.ArrayRef(ArrayType.Primitive(T_SHORT)))
+                // Can't enforce a strict type of ArrayRef here because *LOAD pushes a RuntimeRef
+                check(pop() is Operand.RefType)
             }
             OperandStackOperation.Pop -> {
                 check(pop().category() == Category.CategoryOne)
