@@ -957,7 +957,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 intInsn(BIPUSH, 6)
 
                 // But replace IASTORE with recording the store (which internally will do the store)
-                // TODO: Define store methods for up to 8 dims
+                // TODO: Define store methods for up to 6 dims
                 recordStore(className, lineNumber2, varName, "[[III")
             }
         }
