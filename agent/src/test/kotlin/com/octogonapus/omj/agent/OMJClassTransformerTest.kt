@@ -957,8 +957,183 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 intInsn(BIPUSH, 6)
 
                 // But replace IASTORE with recording the store (which internally will do the store)
-                // TODO: Define store methods for up to 6 dims
                 recordStore(className, lineNumber2, varName, "[[III")
+            }
+        }
+
+        @Test
+        fun `store into 3d int array`() {
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(
+                    makeLocalVariable(varName, "[[[I", 1)
+                ),
+                InsnList().apply {
+                        /*
+                        Generated from:
+                        int[][][] i = new int[1][1][1];
+                        i[0][0][0] = 6;
+
+                        ICONST_1
+                        ICONST_1
+                        ICONST_1
+                        MULTIANEWARRAY [[[I 3
+                        ASTORE 1
+                        ALOAD 1
+                        ICONST_0
+                        AALOAD
+                        ICONST_0
+                        AALOAD
+                        ICONST_0
+                        BIPUSH 6
+                        IASTORE
+                         */
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(InsnNode(ICONST_1))
+                    add(InsnNode(ICONST_1))
+                    add(InsnNode(ICONST_1))
+                    add(MultiANewArrayInsnNode("[[[I", 3))
+                    add(VarInsnNode(ASTORE, 1))
+                    add(LineNumberNode(lineNumber2, LabelNode()))
+                    add(VarInsnNode(ALOAD, 1))
+                    add(InsnNode(ICONST_0))
+                    add(InsnNode(AALOAD))
+                    add(InsnNode(ICONST_0))
+                    add(InsnNode(AALOAD))
+                    add(InsnNode(ICONST_0))
+                    add(IntInsnNode(BIPUSH, 6))
+                    add(InsnNode(IASTORE))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+                insn(ICONST_1)
+                insn(ICONST_1)
+                insn(ICONST_1)
+                multiANewArrayInsn("[[[I", 3)
+
+                // The ASTORE also gets recorded
+                insn(DUP)
+                varInsn(ASTORE, 1)
+                recordStore(className, lineNumber, varName, "Ljava/lang/Object;")
+
+                // Keep the values on the stack that IASTORE needs
+                lineNumber(lineNumber2)
+                varInsn(ALOAD, 1)
+                insn(ICONST_0)
+                insn(AALOAD)
+                insn(ICONST_0)
+                insn(AALOAD)
+                insn(ICONST_0)
+                intInsn(BIPUSH, 6)
+
+                // But replace IASTORE with recording the store (which internally will do the store)
+                recordStore(className, lineNumber2, varName, "[[[III")
+            }
+        }
+
+        @Test
+        fun `store into 3d int array one-liner`() {
+            // TODO: This is broken because the DFA doesn't know that the innermost array is part
+            //  of a 3D array.
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(
+                    makeLocalVariable(varName, "[[[I", 1)
+                ),
+                InsnList().apply {
+                        /*
+                        Generated from:
+                        int[][][] i = {{{6}}};
+
+                        ICONST_1
+                        ANEWARRAY [[I
+                        DUP
+                        ICONST_0
+                        ICONST_1
+                        ANEWARRAY [I
+                        DUP
+                        ICONST_0
+                        ICONST_1
+                        NEWARRAY T_INT
+                        DUP
+                        ICONST_0
+                        BIPUSH 6
+                        IASTORE
+                        AASTORE
+                        AASTORE
+                        ASTORE 1
+                         */
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(InsnNode(ICONST_1))
+                    add(TypeInsnNode(ANEWARRAY, "[[I"))
+                    add(InsnNode(DUP))
+                    add(InsnNode(ICONST_0))
+                    add(InsnNode(ICONST_1))
+                    add(TypeInsnNode(ANEWARRAY, "[I"))
+                    add(InsnNode(DUP))
+                    add(InsnNode(ICONST_0))
+                    add(InsnNode(ICONST_1))
+                    add(IntInsnNode(NEWARRAY, T_INT))
+                    add(InsnNode(DUP))
+                    add(InsnNode(ICONST_0))
+                    add(IntInsnNode(BIPUSH, 6))
+                    add(InsnNode(IASTORE))
+                    add(InsnNode(AASTORE))
+                    add(InsnNode(AASTORE))
+                    add(VarInsnNode(ASTORE, 1))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+                insn(ICONST_1)
+                typeInsn(ANEWARRAY, "[[I")
+                insn(DUP)
+                insn(ICONST_0)
+                insn(ICONST_1)
+                typeInsn(ANEWARRAY, "[I")
+                insn(DUP)
+                insn(ICONST_0)
+                insn(ICONST_1)
+                intInsn(NEWARRAY, T_INT)
+                insn(DUP)
+                insn(ICONST_0)
+                intInsn(BIPUSH, 6)
+
+                // Replace IASTORE with recording the store (which internally will do the store)
+                recordStore(className, lineNumber, varName, "[[[III")
+
+                insn(AASTORE)
+                insn(AASTORE)
+
+                // Record the ASTORE. Dup what it stores.
+                insn(DUP)
+                varInsn(ASTORE, 1)
+                recordStore(className, lineNumber, varName, "Ljava/lang/Object;")
             }
         }
     }
