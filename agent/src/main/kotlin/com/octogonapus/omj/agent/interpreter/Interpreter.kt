@@ -65,11 +65,20 @@ import org.objectweb.asm.Opcodes.SALOAD
 import org.objectweb.asm.Opcodes.SASTORE
 import org.objectweb.asm.Opcodes.SIPUSH
 import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.FieldInsnNode
+import org.objectweb.asm.tree.FrameNode
+import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.InvokeDynamicInsnNode
+import org.objectweb.asm.tree.JumpInsnNode
+import org.objectweb.asm.tree.LabelNode
+import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
+import org.objectweb.asm.tree.LookupSwitchInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MultiANewArrayInsnNode
+import org.objectweb.asm.tree.TableSwitchInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
@@ -134,7 +143,21 @@ internal class Interpreter {
     @Suppress("ThrowsCount", "ComplexMethod")
     private fun stackOperationFor(insn: AbstractInsnNode): OperandStackOperation {
         return when (insn) {
+            is FieldInsnNode -> TODO()
+
+            is FrameNode -> TODO()
+
+            is IincInsnNode -> TODO()
+
             is InsnNode -> when (insn.opcode) {
+                /*
+                Remaining:
+                IADD, LADD, FADD, DADD, ISUB, LSUB, FSUB, DSUB, IMUL, LMUL, FMUL, DMUL, IDIV, LDIV,
+                FDIV, DDIV, IREM, LREM, FREM, DREM, INEG, LNEG, FNEG, DNEG, ISHL, LSHL, ISHR, LSHR, IUSHR,
+                LUSHR, IAND, LAND, IOR, LOR, IXOR, LXOR, I2L, I2F, I2D, L2I, L2F, L2D, F2I, F2L, F2D, D2I,
+                D2L, D2F, I2B, I2C, I2S, LCMP, FCMPL, FCMPG, DCMPL, DCMPG, IRETURN, LRETURN, FRETURN,
+                DRETURN, ARETURN, RETURN, ARRAYLENGTH, ATHROW, MONITORENTER, or MONITOREXIT
+                 */
                 NOP -> OperandStackOperation.NOP
                 ACONST_NULL -> OperandStackOperation.PushNullRef
                 in ICONST_M1..ICONST_5 ->
@@ -180,6 +203,58 @@ internal class Interpreter {
                 else -> throw UnsupportedOperationException("Unknown insn: $insn")
             }
 
+            is InvokeDynamicInsnNode -> TODO()
+
+            is JumpInsnNode -> TODO()
+
+            is LabelNode -> TODO()
+
+            is LdcInsnNode -> TODO()
+
+            is LineNumberNode -> OperandStackOperation.NOP
+
+            is LookupSwitchInsnNode -> TODO()
+
+            is MethodInsnNode -> when (insn.opcode) {
+                Opcodes.INVOKEVIRTUAL -> OperandStackOperation.Invoke.Virtual(
+                        insn.owner,
+                        insn.name,
+                        insn.desc,
+                        insn.itf
+                )
+                Opcodes.INVOKESPECIAL -> OperandStackOperation.Invoke.Special(
+                        insn.owner,
+                        insn.name,
+                        insn.desc,
+                        insn.itf
+                )
+                Opcodes.INVOKESTATIC -> OperandStackOperation.Invoke.Static(
+                        insn.owner,
+                        insn.name,
+                        insn.desc,
+                        insn.itf
+                )
+                Opcodes.INVOKEINTERFACE -> OperandStackOperation.Invoke.Interface(
+                        insn.owner,
+                        insn.name,
+                        insn.desc,
+                        insn.itf
+                )
+                else -> throw UnsupportedOperationException("Unknown insn: $insn")
+            }
+
+            is MultiANewArrayInsnNode -> OperandStackOperation.MultiANewArray(insn.desc, insn.dims)
+
+            is TableSwitchInsnNode -> TODO()
+
+            is TypeInsnNode -> when (insn.opcode) {
+                Opcodes.NEW -> OperandStackOperation.New(insn.desc)
+                Opcodes.ANEWARRAY -> OperandStackOperation.ANewArray(insn.desc)
+                Opcodes.CHECKCAST -> OperandStackOperation.CheckCast(insn.desc)
+                Opcodes.INSTANCEOF -> OperandStackOperation.InstanceOf(insn.desc)
+                else -> throw UnsupportedOperationException("Unknown insn: $insn")
+            }
+
             is VarInsnNode -> when (insn.opcode) {
                 ILOAD -> OperandStackOperation.LoadIntFromLocal(insn.`var`)
                 LLOAD -> OperandStackOperation.LoadLongFromLocal(insn.`var`)
@@ -193,46 +268,6 @@ internal class Interpreter {
                 ASTORE -> OperandStackOperation.StoreRefIntoLocal(insn.`var`)
                 else -> throw UnsupportedOperationException("Unknown insn: $insn")
             }
-
-            is TypeInsnNode -> when (insn.opcode) {
-                Opcodes.NEW -> OperandStackOperation.New(insn.desc)
-                Opcodes.ANEWARRAY -> OperandStackOperation.ANewArray(insn.desc)
-                Opcodes.CHECKCAST -> OperandStackOperation.CheckCast(insn.desc)
-                Opcodes.INSTANCEOF -> OperandStackOperation.InstanceOf(insn.desc)
-                else -> throw UnsupportedOperationException("Unknown insn: $insn")
-            }
-
-            is MethodInsnNode -> when (insn.opcode) {
-                Opcodes.INVOKEVIRTUAL -> OperandStackOperation.Invoke.Virtual(
-                    insn.owner,
-                    insn.name,
-                    insn.desc,
-                    insn.itf
-                )
-                Opcodes.INVOKESPECIAL -> OperandStackOperation.Invoke.Special(
-                    insn.owner,
-                    insn.name,
-                    insn.desc,
-                    insn.itf
-                )
-                Opcodes.INVOKESTATIC -> OperandStackOperation.Invoke.Static(
-                    insn.owner,
-                    insn.name,
-                    insn.desc,
-                    insn.itf
-                )
-                Opcodes.INVOKEINTERFACE -> OperandStackOperation.Invoke.Interface(
-                    insn.owner,
-                    insn.name,
-                    insn.desc,
-                    insn.itf
-                )
-                else -> throw UnsupportedOperationException("Unknown insn: $insn")
-            }
-
-            is MultiANewArrayInsnNode -> OperandStackOperation.MultiANewArray(insn.desc, insn.dims)
-
-            is LineNumberNode -> OperandStackOperation.NOP
 
             else -> throw UnsupportedOperationException("Unknown insn: $insn")
         }
