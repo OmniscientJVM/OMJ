@@ -865,7 +865,6 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 }
             )
 
-            // TODO: Add tests for new object (not one-liner), finish this test, add test for String
             val methodNode = makeMethodNode(
                 0,
                 methodName,

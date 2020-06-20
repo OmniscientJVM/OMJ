@@ -25,15 +25,15 @@ stages:
             restoreKeys: gradle
             path: $(GRADLE_USER_HOME)
 
-        - bash: wget https://cdn.azul.com/zulu/bin/zulu14.28.21-ca-jdk14.0.1-linux_x64.tar.gz
+        - bash: wget https://cdn.azul.com/zulu/bin/zulu11.39.15-ca-jdk11.0.7-linux_x64.tar.gz
 
         - task: JavaToolInstaller@0
           inputs:
-            verisonSpec: "14"
+            verisonSpec: "11"
             jdkArchitectureOption: x64
             jdkSourceOption: LocalDirectory
-            jdkFile: "zulu14.28.21-ca-jdk14.0.1-linux_x64.tar.gz"
-            jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk14'
+            jdkFile: "zulu11.39.15-ca-jdk11.0.7-linux_x64.tar.gz"
+            jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk11'
             cleanDestinationDirectory: true
 
         - task: Gradle@2
@@ -78,15 +78,15 @@ stages:
             restoreKeys: gradle
             path: $(GRADLE_USER_HOME)
 
-        - bash: wget https://cdn.azul.com/zulu/bin/zulu14.28.21-ca-jdk14.0.1-macosx_x64.tar.gz
+        - bash: wget https://cdn.azul.com/zulu/bin/zulu11.39.15-ca-jdk11.0.7-macosx_x64.tar.gz
 
         - task: JavaToolInstaller@0
           inputs:
-            verisonSpec: "14"
+            verisonSpec: "11"
             jdkArchitectureOption: x64
             jdkSourceOption: LocalDirectory
-            jdkFile: "zulu14.28.21-ca-jdk14.0.1-macosx_x64.tar.gz"
-            jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk14'
+            jdkFile: "zulu11.39.15-ca-jdk11.0.7-macosx_x64.tar.gz"
+            jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk11'
             cleanDestinationDirectory: true
 
         - task: Gradle@2
@@ -120,15 +120,15 @@ stages:
 
       steps:
         # SilentlyContinue is important because it makes the download go WAY faster
-        - powershell: "$ProgressPreference = 'SilentlyContinue'\nInvoke-WebRequest -URI https://cdn.azul.com/zulu/bin/zulu14.28.21-ca-jdk14.0.1-win_x64.zip -OutFile zulu14.28.21-ca-jdk14.0.1-win_x64.zip"
+        - powershell: "$ProgressPreference = 'SilentlyContinue'\nInvoke-WebRequest -URI https://cdn.azul.com/zulu/bin/zulu11.39.15-ca-jdk11.0.7-win_x64.zip -OutFile zulu11.39.15-ca-jdk11.0.7-win_x64.zip"
 
         - task: JavaToolInstaller@0
           inputs:
-            verisonSpec: "14"
+            verisonSpec: "11"
             jdkArchitectureOption: x64
             jdkSourceOption: LocalDirectory
-            jdkFile: "zulu14.28.21-ca-jdk14.0.1-win_x64.zip"
-            jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk14'
+            jdkFile: "zulu11.39.15-ca-jdk11.0.7-win_x64.zip"
+            jdkDestinationDirectory: '$(agent.toolsDirectory)/jdk11'
             cleanDestinationDirectory: true
 
         - task: Cache@2

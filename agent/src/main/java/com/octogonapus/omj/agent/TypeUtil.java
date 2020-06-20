@@ -72,8 +72,6 @@ final class TypeUtil {
    *     Object}.
    */
   static String getAdaptedClassName(final Type type) {
-    // TODO: Waiting on a new google-java-format release to use enhanced switch statements
-    //noinspection EnhancedSwitchMigration
     switch (type.getSort()) {
       case Type.VOID:
         return "void";
@@ -100,8 +98,6 @@ final class TypeUtil {
 
   /** @return The number of stack slots the type uses. */
   public static int getStackSize(final Type type) {
-    // TODO: Waiting on a new google-java-format release to use enhanced switch statements
-    //noinspection EnhancedSwitchMigration
     switch (type.getSort()) {
       case Type.LONG:
       case Type.DOUBLE:
