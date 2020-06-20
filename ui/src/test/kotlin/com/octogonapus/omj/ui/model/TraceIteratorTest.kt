@@ -471,126 +471,210 @@ internal class TraceIteratorTest {
         fun `test int array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeIntArray.jar")
 
-            traces.shouldExist {
-                it.storeArray(
-                    containingClass = "com.agenttest.storeIntArray.Main",
-                    varType = "int",
-                    varName = "i",
-                    arrayIndex = 0,
-                    value = "6"
-                )
-            }
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar("com.agenttest.storeIntArray.Main", "[I", "i", null)
+                },
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeIntArray.Main",
+                        varType = "int",
+                        arrayIndex = 0,
+                        value = "6"
+                    )
+                }
+            )
         }
 
         @Test
         fun `test int array store one-liner`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeIntArrayOneLiner.jar")
 
-            traces.shouldExist {
-                it.storeArray(
-                    containingClass = "com.agenttest.storeIntArrayOneLiner.Main",
-                    varType = "int",
-                    varName = "i",
-                    arrayIndex = 0,
-                    value = "6"
-                )
-            }
+            traces.shouldHaveInOrder(
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeIntArrayOneLiner.Main",
+                        varType = "int",
+                        arrayIndex = 0,
+                        value = "6"
+                    )
+                },
+                {
+                    it.storeVar("com.agenttest.storeIntArrayOneLiner.Main", "[I", "i", null)
+                }
+            )
         }
 
         @Test
         fun `test double array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeDoubleArray.jar")
 
-            traces.shouldExist {
-                it.storeArray(
-                    containingClass = "com.agenttest.storeDoubleArray.Main",
-                    varType = "double",
-                    varName = "d",
-                    arrayIndex = 0,
-                    value = "4.2"
-                )
-            }
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar("com.agenttest.storeDoubleArray.Main", "[D", "d", null)
+                },
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeDoubleArray.Main",
+                        varType = "double",
+                        arrayIndex = 0,
+                        value = "4.2"
+                    )
+                }
+            )
         }
 
         @Test
         fun `test double array store one-liner`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeDoubleArrayOneLiner.jar")
 
-            traces.shouldExist {
-                it.storeArray(
-                    containingClass = "com.agenttest.storeDoubleArrayOneLiner.Main",
-                    varType = "double",
-                    varName = "d",
-                    arrayIndex = 0,
-                    value = "4.2"
-                )
-            }
+            traces.shouldHaveInOrder(
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeDoubleArrayOneLiner.Main",
+                        varType = "double",
+                        arrayIndex = 0,
+                        value = "4.2"
+                    )
+                },
+                {
+                    it.storeVar("com.agenttest.storeDoubleArrayOneLiner.Main", "[D", "d", null)
+                }
+            )
         }
 
         @Test
         fun `test object array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeObjectArray.jar")
 
-            traces.shouldExist {
-                it.storeArray(
-                    containingClass = "com.agenttest.storeObjectArray.Main",
-                    varType = "java.lang.Object",
-                    varName = "o",
-                    arrayIndex = 0,
-                    value = null
-                )
-            }
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar(
+                        "com.agenttest.storeObjectArray.Main",
+                        "[Ljava.lang.Object;",
+                        "o",
+                        null
+                    )
+                },
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeObjectArray.Main",
+                        varType = "java.lang.Object",
+                        arrayIndex = 0,
+                        value = null
+                    )
+                }
+            )
         }
 
         @Test
         fun `test object array store one-liner`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeObjectArrayOneLiner.jar")
 
-            traces.shouldExist {
-                it.storeArray(
-                    containingClass = "com.agenttest.storeObjectArrayOneLiner.Main",
-                    varType = "java.lang.Object",
-                    varName = "o",
-                    arrayIndex = 0,
-                    value = null
-                )
-            }
+            traces.shouldHaveInOrder(
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeObjectArrayOneLiner.Main",
+                        varType = "java.lang.Object",
+                        arrayIndex = 0,
+                        value = null
+                    )
+                },
+                {
+                    it.storeVar(
+                        "com.agenttest.storeObjectArrayOneLiner.Main",
+                        "[Ljava.lang.Object;",
+                        "o",
+                        null
+                    )
+                }
+            )
         }
 
         @Test
         fun `test string array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeStringArray.jar")
 
-            traces.shouldExist {
-                it.storeArray(
-                    containingClass = "com.agenttest.storeStringArray.Main",
-                    varType = "java.lang.String",
-                    varName = "o",
-                    arrayIndex = 0,
-                    value = "Hello"
-                )
-            }
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar(
+                        "com.agenttest.storeStringArray.Main",
+                        "[Ljava.lang.String;",
+                        "o",
+                        null
+                    )
+                },
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeStringArray.Main",
+                        varType = "java.lang.String",
+                        arrayIndex = 0,
+                        value = "Hello"
+                    )
+                }
+            )
         }
 
         @Test
         fun `test string array store one-liner`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeStringArrayOneLiner.jar")
 
-            traces.shouldExist {
-                it.storeArray(
-                    containingClass = "com.agenttest.storeStringArrayOneLiner.Main",
-                    varType = "java.lang.String",
-                    varName = "o",
-                    arrayIndex = 0,
-                    value = "Hello"
-                )
-            }
+            traces.shouldHaveInOrder(
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeStringArrayOneLiner.Main",
+                        varType = "java.lang.String",
+                        arrayIndex = 0,
+                        value = "Hello"
+                    )
+                },
+                {
+                    it.storeVar(
+                        "com.agenttest.storeStringArrayOneLiner.Main",
+                        "[Ljava.lang.String;",
+                        "o",
+                        null
+                    )
+                }
+            )
         }
 
         @Test
-        fun `test multi int array store`(@TempDir tempDir: File) {
+        fun `test 2D int array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeMultiIntArray.jar")
-            TODO()
+
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar("com.agenttest.storeMultiIntArray.Main", "[[I", "i", null)
+                },
+                {
+                    it.storeArray(
+                        "com.agenttest.storeMultiIntArray.Main",
+                        "int",
+                        0,
+                        "6"
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `test 3D int array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeMultiIntArray3.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar("com.agenttest.storeMultiIntArray3.Main", "[[[I", "i", null)
+                },
+                {
+                    it.storeArray(
+                        "com.agenttest.storeMultiIntArray3.Main",
+                        "int",
+                        0,
+                        "6"
+                    )
+                }
+            )
         }
     }
 
@@ -1038,19 +1122,16 @@ internal class TraceIteratorTest {
          *
          * @param containingClass The class the store happens in.
          * @param varType The type of the variable the value was stored in.
-         * @param varName The name of the variable.
          * @param arrayIndex The index in the array the value was stored in.
          * @param value The value that was stored. Set to null if you don't care about the value.
          */
         private fun Trace.storeArray(
             containingClass: String,
             varType: String,
-            varName: String,
             arrayIndex: Int,
             value: String?
         ) = this is ArrayStoreTrace &&
             callerClass == containingClass &&
-            variableName == varName &&
             this.arrayIndex == arrayIndex &&
             typeValuePair.type == varType &&
             value?.let { typeValuePair.value == it } ?: true

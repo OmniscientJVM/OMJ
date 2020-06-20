@@ -40,14 +40,10 @@ class TraceCell : ListCell<Trace?>() {
                 }
 
                 is ArrayStoreTrace -> {
-                    val (
-                        index, callerClass, callerLine, variableName, arrayRef, arrayIndex,
-                        typeValuePair
-                    ) = item
+                    val (index, callerClass, callerLine, arrayRef, arrayIndex, typeValuePair) = item
                     val (type, value) = typeValuePair
 
-                    text = "$index $callerClass:$callerLine " +
-                        "$variableName@$arrayRef[$arrayIndex]:$type=$value"
+                    text = "$index $callerClass:$callerLine $arrayRef[$arrayIndex]:$type=$value"
                 }
 
                 is MethodTrace -> {

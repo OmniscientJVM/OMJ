@@ -217,28 +217,28 @@ internal class Interpreter {
 
             is MethodInsnNode -> when (insn.opcode) {
                 Opcodes.INVOKEVIRTUAL -> OperandStackOperation.Invoke.Virtual(
-                        insn.owner,
-                        insn.name,
-                        insn.desc,
-                        insn.itf
+                    insn.owner,
+                    insn.name,
+                    insn.desc,
+                    insn.itf
                 )
                 Opcodes.INVOKESPECIAL -> OperandStackOperation.Invoke.Special(
-                        insn.owner,
-                        insn.name,
-                        insn.desc,
-                        insn.itf
+                    insn.owner,
+                    insn.name,
+                    insn.desc,
+                    insn.itf
                 )
                 Opcodes.INVOKESTATIC -> OperandStackOperation.Invoke.Static(
-                        insn.owner,
-                        insn.name,
-                        insn.desc,
-                        insn.itf
+                    insn.owner,
+                    insn.name,
+                    insn.desc,
+                    insn.itf
                 )
                 Opcodes.INVOKEINTERFACE -> OperandStackOperation.Invoke.Interface(
-                        insn.owner,
-                        insn.name,
-                        insn.desc,
-                        insn.itf
+                    insn.owner,
+                    insn.name,
+                    insn.desc,
+                    insn.itf
                 )
                 else -> throw UnsupportedOperationException("Unknown insn: $insn")
             }

@@ -42,7 +42,6 @@ public class TraceUtil {
       final String className,
       final long index,
       final int lineNumber,
-      final String variableName,
       final Object array,
       final int arrayIndex)
       throws IOException {
@@ -52,7 +51,6 @@ public class TraceUtil {
 
     writeNullTerminatedString(outputStream, className);
     write4Bytes(outputStream, lineNumber);
-    writeNullTerminatedString(outputStream, variableName);
     write4Bytes(outputStream, System.identityHashCode(array));
     write4Bytes(outputStream, arrayIndex);
   }

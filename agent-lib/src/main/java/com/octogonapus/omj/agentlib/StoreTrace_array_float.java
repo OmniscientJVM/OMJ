@@ -27,7 +27,6 @@ public class StoreTrace_array_float implements Trace {
   private final float value;
   private final String className;
   private final int lineNumber;
-  private final String variableName;
 
   public StoreTrace_array_float(
       final long index,
@@ -35,21 +34,19 @@ public class StoreTrace_array_float implements Trace {
       final int arrayIndex,
       final float value,
       final String className,
-      final int lineNumber,
-      final String variableName) {
+      final int lineNumber) {
     this.index = index;
     this.array = array;
     this.arrayIndex = arrayIndex;
     this.value = value;
     this.className = className;
     this.lineNumber = lineNumber;
-    this.variableName = variableName;
   }
 
   @Override
   public void serialize(final OutputStream outputStream) throws IOException {
     TraceUtil.writeArrayStoreTraceHeader(
-        outputStream, className, index, lineNumber, variableName, array, arrayIndex);
+        outputStream, className, index, lineNumber, array, arrayIndex);
     outputStream.write('F');
     TraceUtil.write4Bytes(outputStream, Float.floatToRawIntBits(value));
   }

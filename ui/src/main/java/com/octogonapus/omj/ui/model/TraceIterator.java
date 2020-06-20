@@ -137,10 +137,6 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     final int lineNumber = parseInt();
     logger.debug("lineNumber = {}", lineNumber);
 
-    // Parse variable name
-    final String variableName = parseString();
-    logger.debug("variableName = {}", variableName);
-
     // Parse array reference
     final String arrayRef = parseHashcode();
 
@@ -149,7 +145,7 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
 
     // Parse value
     return new ArrayStoreTrace(
-        index, className, lineNumber, variableName, arrayRef, arrayIndex, parseTypeValuePair());
+        index, className, lineNumber, arrayRef, arrayIndex, parseTypeValuePair());
   }
 
   private Trace parseMethodTrace(final long index) throws IOException {

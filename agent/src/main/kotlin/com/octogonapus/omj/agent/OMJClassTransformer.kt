@@ -16,10 +16,7 @@
  */
 package com.octogonapus.omj.agent
 
-import com.octogonapus.omj.agent.interpreter.DataFlow
-import com.octogonapus.omj.agent.interpreter.Interpreter
 import com.octogonapus.omj.di.OMJKoinComponent
-import java.util.concurrent.ThreadLocalRandom
 import mu.KotlinLogging
 import org.koin.core.inject
 import org.objectweb.asm.Opcodes
@@ -202,29 +199,12 @@ internal class OMJClassTransformer(
         insnNode: InsnNode,
         lineNumber: Int
     ): List<InsnListInsertion> {
-        val localIndex = DataFlow(Interpreter()).findLocalVariableHoldingArrayRef(insnNode)
-        val localVariable = localIndex?.let { index ->
-            methodNode.localVariables.first { it.index == index }
-        }
-
-        val variableName = localVariable?.name
-            ?: "UNKNOWN_ARRAY_LOCAL_${ThreadLocalRandom.current().nextInt()}"
-
-        // Recover the array and element types from the local variable. If we couldn't find a local
-        // variable, then guess using the *ASTORE insn.
-        val (arrayDescriptor, elementDescriptor) = localVariable?.let {
-            it.desc to Type.getType(it.desc).elementType.descriptor
-        } ?: (
-            OpcodeUtil.getArrayDescriptor(insnNode.opcode) to
-                OpcodeUtil.getArrayElementDescriptor(insnNode.opcode)
-            )
-
-        // <array ref desc> <index desc (always an int)> <element desc>
-        val descPrefix = "${arrayDescriptor}I$elementDescriptor"
+        val arrayDescriptor = OpcodeUtil.getArrayDescriptor(insnNode.opcode)
+        val elementDescriptor = OpcodeUtil.getArrayElementDescriptor(insnNode.opcode)
 
         return listOf(
             methodNode.instructions.replace(insnNode) {
-                recordStore(lineNumber, variableName, descPrefix)
+                recordArrayStore(lineNumber, arrayDescriptor, elementDescriptor)
             }
         )
     }
@@ -455,6 +435,31 @@ internal class OMJClassTransformer(
                 agentLibClassName,
                 "store",
                 "(${adaptedVariableDesc}Ljava/lang/String;ILjava/lang/String;)V",
+                false
+            )
+        )
+    }
+
+    /**
+     * Records an array store into any type of array.
+     *
+     * @param lineNumber The closest line number of the store.
+     * @param arrayDescriptor The type descriptor of the array.
+     * @param elementDescriptor The type descriptor of the array elements.
+     */
+    private fun InsnList.recordArrayStore(
+        lineNumber: Int,
+        arrayDescriptor: String,
+        elementDescriptor: String
+    ) {
+        add(LdcInsnNode(fullyQualifiedClassName))
+        add(LdcInsnNode(lineNumber))
+        add(
+            MethodInsnNode(
+                INVOKESTATIC,
+                agentLibClassName,
+                "store",
+                "(${arrayDescriptor}I${elementDescriptor}Ljava/lang/String;I)V",
                 false
             )
         )

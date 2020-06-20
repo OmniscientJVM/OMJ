@@ -234,18 +234,11 @@ public final class OMJAgentLib {
       final int arrayIndex,
       final boolean value,
       final String className,
-      final int lineNumber,
-      final String variableName) {
+      final int lineNumber) {
     array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_boolean(
-            traceCounter.getAndIncrement(),
-            array,
-            arrayIndex,
-            value,
-            className,
-            lineNumber,
-            variableName);
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
     traceQueue.add(trace);
   }
 
@@ -254,18 +247,11 @@ public final class OMJAgentLib {
       final int arrayIndex,
       final char value,
       final String className,
-      final int lineNumber,
-      final String variableName) {
+      final int lineNumber) {
     array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_char(
-            traceCounter.getAndIncrement(),
-            array,
-            arrayIndex,
-            value,
-            className,
-            lineNumber,
-            variableName);
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
     traceQueue.add(trace);
   }
 
@@ -274,18 +260,11 @@ public final class OMJAgentLib {
       final int arrayIndex,
       final byte value,
       final String className,
-      final int lineNumber,
-      final String variableName) {
+      final int lineNumber) {
     array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_byte(
-            traceCounter.getAndIncrement(),
-            array,
-            arrayIndex,
-            value,
-            className,
-            lineNumber,
-            variableName);
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
     traceQueue.add(trace);
   }
 
@@ -294,18 +273,11 @@ public final class OMJAgentLib {
       final int arrayIndex,
       final short value,
       final String className,
-      final int lineNumber,
-      final String variableName) {
+      final int lineNumber) {
     array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_short(
-            traceCounter.getAndIncrement(),
-            array,
-            arrayIndex,
-            value,
-            className,
-            lineNumber,
-            variableName);
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
     traceQueue.add(trace);
   }
 
@@ -314,18 +286,11 @@ public final class OMJAgentLib {
       final int arrayIndex,
       final int value,
       final String className,
-      final int lineNumber,
-      final String variableName) {
+      final int lineNumber) {
     array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_int(
-            traceCounter.getAndIncrement(),
-            array,
-            arrayIndex,
-            value,
-            className,
-            lineNumber,
-            variableName);
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
     traceQueue.add(trace);
   }
 
@@ -334,18 +299,11 @@ public final class OMJAgentLib {
       final int arrayIndex,
       final float value,
       final String className,
-      final int lineNumber,
-      final String variableName) {
+      final int lineNumber) {
     array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_float(
-            traceCounter.getAndIncrement(),
-            array,
-            arrayIndex,
-            value,
-            className,
-            lineNumber,
-            variableName);
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
     traceQueue.add(trace);
   }
 
@@ -354,18 +312,11 @@ public final class OMJAgentLib {
       final int arrayIndex,
       final long value,
       final String className,
-      final int lineNumber,
-      final String variableName) {
+      final int lineNumber) {
     array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_long(
-            traceCounter.getAndIncrement(),
-            array,
-            arrayIndex,
-            value,
-            className,
-            lineNumber,
-            variableName);
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
     traceQueue.add(trace);
   }
 
@@ -374,18 +325,11 @@ public final class OMJAgentLib {
       final int arrayIndex,
       final double value,
       final String className,
-      final int lineNumber,
-      final String variableName) {
+      final int lineNumber) {
     array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_double(
-            traceCounter.getAndIncrement(),
-            array,
-            arrayIndex,
-            value,
-            className,
-            lineNumber,
-            variableName);
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
     traceQueue.add(trace);
   }
 
@@ -394,18 +338,11 @@ public final class OMJAgentLib {
       final int arrayIndex,
       final Object value,
       final String className,
-      final int lineNumber,
-      final String variableName) {
+      final int lineNumber) {
     array[arrayIndex] = value;
     final var trace =
         new StoreTrace_array_Object(
-            traceCounter.getAndIncrement(),
-            array,
-            arrayIndex,
-            value,
-            className,
-            lineNumber,
-            variableName);
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
     traceQueue.add(trace);
   }
 
