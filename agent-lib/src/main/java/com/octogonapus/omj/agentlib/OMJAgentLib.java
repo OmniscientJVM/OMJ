@@ -227,7 +227,18 @@ public final class OMJAgentLib {
     traceQueue.add(trace);
   }
 
-  // TODO: Define store methods for up to 6 dims
+  public static void storeBooleanOrByteArray(
+      final Object array,
+      final int arrayIndex,
+      final byte value,
+      final String className,
+      final int lineNumber) {
+    if (array instanceof boolean[]) {
+      store((boolean[]) array, arrayIndex, value == 1, className, lineNumber);
+    } else {
+      store((byte[]) array, arrayIndex, value, className, lineNumber);
+    }
+  }
 
   public static void store(
       final boolean[] array,

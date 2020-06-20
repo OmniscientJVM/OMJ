@@ -23,6 +23,8 @@ import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.JumpInsnNode
+import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.MethodInsnNode
@@ -121,6 +123,20 @@ class CheckInsns(private val insnList: InsnList) {
     fun multiANewArrayInsn(desc: String, dims: Int) {
         checks.add {
             it is MultiANewArrayInsnNode && it.desc == desc && it.dims == dims
+        }
+    }
+
+    @InsnListDSL
+    fun jumpInsn(opcode: Int) {
+        checks.add {
+            it is JumpInsnNode && it.opcode == opcode
+        }
+    }
+
+    @InsnListDSL
+    fun label() {
+        checks.add {
+            it is LabelNode
         }
     }
 

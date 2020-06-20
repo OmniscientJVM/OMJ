@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.koin.dsl.module
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.AALOAD
 import org.objectweb.asm.Opcodes.AASTORE
 import org.objectweb.asm.Opcodes.ACC_PUBLIC
@@ -33,6 +34,7 @@ import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ANEWARRAY
 import org.objectweb.asm.Opcodes.ASM8
 import org.objectweb.asm.Opcodes.ASTORE
+import org.objectweb.asm.Opcodes.BASTORE
 import org.objectweb.asm.Opcodes.BIPUSH
 import org.objectweb.asm.Opcodes.DLOAD
 import org.objectweb.asm.Opcodes.DSTORE
@@ -56,6 +58,7 @@ import org.objectweb.asm.Opcodes.NEW
 import org.objectweb.asm.Opcodes.NEWARRAY
 import org.objectweb.asm.Opcodes.PUTFIELD
 import org.objectweb.asm.Opcodes.PUTSTATIC
+import org.objectweb.asm.Opcodes.T_BOOLEAN
 import org.objectweb.asm.Opcodes.T_INT
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
@@ -725,7 +728,8 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                     //   int[] i = new int[1];
                     //   i[0] = 6;
                     add(LineNumberNode(lineNumber, LabelNode()))
-                    add(VarInsnNode(ALOAD, 1))
+                    add(InsnNode(ICONST_0))
+                    add(IntInsnNode(NEWARRAY, T_INT))
                     add(InsnNode(ICONST_0))
                     add(IntInsnNode(BIPUSH, 6))
                     add(InsnNode(IASTORE))
@@ -745,12 +749,55 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 lineNumber(lineNumber)
 
                 // Keep the values on the stack that IASTORE needs
-                varInsn(ALOAD, 1)
+                insn(ICONST_0)
+                intInsn(NEWARRAY, T_INT)
                 insn(ICONST_0)
                 intInsn(BIPUSH, 6)
 
                 // But replace IASTORE with recording the store (which internally will do the store)
                 recordArrayStore(className, lineNumber, "[I", "I")
+            }
+        }
+
+        @Test
+        fun `store into boolean array`() {
+            val methodNode = makeMethodNode(
+                0,
+                methodName,
+                "()V",
+                listOf(
+                    makeLocalVariable(varName, "[Z", 1)
+                ),
+                InsnList().apply {
+                    // Generated from:
+                    //   boolean[] b = new boolean[1];
+                    //   b[0] = true;
+                    add(LineNumberNode(lineNumber, LabelNode()))
+                    add(InsnNode(ICONST_0))
+                    add(IntInsnNode(NEWARRAY, T_BOOLEAN))
+                    add(InsnNode(ICONST_0))
+                    add(InsnNode(ICONST_1))
+                    add(InsnNode(Opcodes.BASTORE))
+                }
+            )
+
+            val classNode = makeClassNode(className, superClassName, methodNode)
+
+            val transformer = OMJClassTransformer(
+                classNode,
+                // Recording method calls would make this test larger for no reason
+                ClassTransformerOptions(recordMethodCall = false)
+            )
+            transformer.transform()
+
+            checkInsns(methodNode.instructions) {
+                lineNumber(lineNumber)
+
+                insn(ICONST_0)
+                intInsn(NEWARRAY, T_BOOLEAN)
+                insn(ICONST_0)
+                insn(ICONST_1)
+                recordBooleanOrByteArrayStore(className, lineNumber)
             }
         }
 
@@ -1411,6 +1458,21 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
             agentLibClassName,
             "store",
             "(${arrayDesc}I${elemDesc}Ljava/lang/String;I)V",
+            false
+        )
+    }
+
+    private fun CheckInsns.recordBooleanOrByteArrayStore(
+        className: String,
+        lineNumber: Int
+    ) {
+        ldc(className)
+        ldc(lineNumber)
+        method(
+            INVOKESTATIC,
+            agentLibClassName,
+            "storeBooleanOrByteArray",
+            "(Ljava/lang/Object;IBLjava/lang/String;I)V",
             false
         )
     }

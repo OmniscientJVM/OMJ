@@ -178,8 +178,12 @@ internal class OMJClassTransformer(
                 }
 
                 is InsnNode -> when (it.opcode) {
-                    IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, BASTORE, CASTORE, SASTORE ->
+                    IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, CASTORE, SASTORE ->
                         instrumentArrayStore(methodNode, it, currentLineNumber.line)
+
+                    BASTORE ->
+                        instrumentBASTORE(methodNode, it, currentLineNumber.line)
+
                     else -> emptyList()
                 }
 
@@ -208,6 +212,16 @@ internal class OMJClassTransformer(
             }
         )
     }
+
+    private fun instrumentBASTORE(
+        methodNode: MethodNode,
+        insnNode: InsnNode,
+        lineNumber: Int
+    ) = listOf(
+        methodNode.instructions.replace(insnNode) {
+            recordBooleanOrByteArrayStore(lineNumber)
+        }
+    )
 
     private fun instrumentPutInsn(
         methodNode: MethodNode,
@@ -460,6 +474,25 @@ internal class OMJClassTransformer(
                 agentLibClassName,
                 "store",
                 "(${arrayDescriptor}I${elementDescriptor}Ljava/lang/String;I)V",
+                false
+            )
+        )
+    }
+
+    /**
+     * Records an array store into an array of booleans or bytes.
+     *
+     * @param lineNumber The closest line number of the store.
+     */
+    private fun InsnList.recordBooleanOrByteArrayStore(lineNumber: Int) {
+        add(LdcInsnNode(fullyQualifiedClassName))
+        add(LdcInsnNode(lineNumber))
+        add(
+            MethodInsnNode(
+                INVOKESTATIC,
+                agentLibClassName,
+                "storeBooleanOrByteArray",
+                "(Ljava/lang/Object;IBLjava/lang/String;I)V",
                 false
             )
         )

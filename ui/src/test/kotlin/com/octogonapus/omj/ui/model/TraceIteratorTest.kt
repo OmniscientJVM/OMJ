@@ -676,6 +676,120 @@ internal class TraceIteratorTest {
                 }
             )
         }
+
+        @Test
+        fun `test boolean array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeBooleanArray.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar("com.agenttest.storeBooleanArray.Main", "[Z", "b", null)
+                },
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeBooleanArray.Main",
+                        varType = "boolean",
+                        arrayIndex = 0,
+                        value = "true"
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `test byte array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeByteArray.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar("com.agenttest.storeByteArray.Main", "[B", "b", null)
+                },
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeByteArray.Main",
+                        varType = "byte",
+                        arrayIndex = 0,
+                        value = "250"
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `test char array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeCharArray.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar("com.agenttest.storeCharArray.Main", "[C", "c", null)
+                },
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeCharArray.Main",
+                        varType = "char",
+                        arrayIndex = 0,
+                        value = "Q"
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `test float array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeFloatArray.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar("com.agenttest.storeFloatArray.Main", "[F", "f", null)
+                },
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeFloatArray.Main",
+                        varType = "float",
+                        arrayIndex = 0,
+                        value = "2.3"
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `test long array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeLongArray.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar("com.agenttest.storeLongArray.Main", "[J", "l", null)
+                },
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeLongArray.Main",
+                        varType = "long",
+                        arrayIndex = 0,
+                        value = "123456789123456789"
+                    )
+                }
+            )
+        }
+
+        @Test
+        fun `test short array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeShortArray.jar")
+
+            traces.shouldHaveInOrder(
+                {
+                    it.storeVar("com.agenttest.storeShortArray.Main", "[S", "s", null)
+                },
+                {
+                    it.storeArray(
+                        containingClass = "com.agenttest.storeShortArray.Main",
+                        varType = "short",
+                        arrayIndex = 0,
+                        value = "12345"
+                    )
+                }
+            )
+        }
     }
 
     @Nested
