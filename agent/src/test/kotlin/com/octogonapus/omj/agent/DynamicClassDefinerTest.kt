@@ -243,6 +243,51 @@ internal class DynamicClassDefinerTest {
     }
 
     @Test
+    fun generateObjectArrayContainer() {
+        val body =
+            """
+            $imports
+            final public class OMJ_Generated_L_L extends MethodTrace {
+            private int Object_counter = 0;
+            private Object Object_0;
+            private Object Object_1;
+            ${writeConstructor("OMJ_Generated_L_L")}
+            @Override
+            public void set_argument_Object(final Object value) {
+            switch (Object_counter) {
+            case 0: Object_0 = value;
+            case 1: Object_1 = value;
+            }
+            Object_counter++;
+            }
+            $getIndex
+            @Override
+            public void serialize(final OutputStream outputStream) throws IOException {
+            $appendIndex
+            $methodIdentifier
+            $className
+            $lineNumber
+            $methodName
+            $isStatic
+            ${writeNumberOfArguments(2)}
+            ${writeObjectName("Object_0")}
+            ${writeHashCode("Object_0")}
+            ${writeObjectName("Object_1")}
+            ${writeHashCode("Object_1")}
+            }
+            }
+            """.trimIndent()
+        val dynamicClass = DynamicClassDefiner(null, null).generateClassCodeForMethod(
+            listOf(
+                Type.getType(java.lang.Object::class.java),
+                Type.getType("[I")
+            ),
+            false
+        )
+        assertEquals(body, dynamicClass.body)
+    }
+
+    @Test
     fun generateObjectObjectContainerForStaticMethod() {
         val body =
             """
