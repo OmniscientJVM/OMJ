@@ -196,7 +196,7 @@ public final class DynamicClassDefiner {
                                   if (it.getSort() == Type.ARRAY || it.getSort() == Type.OBJECT) {
                                     return adaptedSort == Type.OBJECT;
                                   } else {
-                                    return it.getSort() == type.getSort();
+                                    return it.getSort() == adaptedSort;
                                   }
                                 })
                             .collect(Collectors.toList());
