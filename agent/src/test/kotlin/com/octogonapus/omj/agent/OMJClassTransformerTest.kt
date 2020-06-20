@@ -750,7 +750,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 intInsn(BIPUSH, 6)
 
                 // But replace IASTORE with recording the store (which internally will do the store)
-                recordStore(className, lineNumber, varName, "[III")
+                recordArrayStore(className, lineNumber, "[I", "I")
             }
         }
 
@@ -797,7 +797,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 intInsn(BIPUSH, 6)
 
                 // But replace IASTORE with recording the store (which internally will do the store)
-                recordStore(className, lineNumber, varName, "[III")
+                recordArrayStore(className, lineNumber, "[I", "I")
 
                 // The ASTORE also gets recorded
                 insn(DUP)
@@ -873,12 +873,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 method(INVOKESPECIAL, "Ljava/lang/Object;", "<init>", "()V", false)
 
                 // Replace the AASTORE with recording the store (which internally will do the store)
-                recordStore(
-                    className,
-                    lineNumber,
-                    varName,
-                    "[Ljava/lang/Object;ILjava/lang/Object;"
-                )
+                recordArrayStore(className, lineNumber, "[Ljava/lang/Object;", "Ljava/lang/Object;")
 
                 // DUP what will be stored
                 insn(DUP)
@@ -957,7 +952,7 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 intInsn(BIPUSH, 6)
 
                 // But replace IASTORE with recording the store (which internally will do the store)
-                recordStore(className, lineNumber2, varName, "[[III")
+                recordArrayStore(className, lineNumber2, "[I", "I")
             }
         }
 
@@ -1040,14 +1035,12 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 intInsn(BIPUSH, 6)
 
                 // But replace IASTORE with recording the store (which internally will do the store)
-                recordStore(className, lineNumber2, varName, "[[[III")
+                recordArrayStore(className, lineNumber2, "[I", "I")
             }
         }
 
         @Test
         fun `store into 3d int array one-liner`() {
-            // TODO: This is broken because the DFA doesn't know that the innermost array is part
-            //  of a 3D array.
             val methodNode = makeMethodNode(
                 0,
                 methodName,
@@ -1125,10 +1118,11 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
                 intInsn(BIPUSH, 6)
 
                 // Replace IASTORE with recording the store (which internally will do the store)
-                recordStore(className, lineNumber, varName, "[[[III")
+                recordArrayStore(className, lineNumber, "[I", "I")
 
-                insn(AASTORE)
-                insn(AASTORE)
+                recordArrayStore(className, lineNumber, "[Ljava/lang/Object;", "Ljava/lang/Object;")
+
+                recordArrayStore(className, lineNumber, "[Ljava/lang/Object;", "Ljava/lang/Object;")
 
                 // Record the ASTORE. Dup what it stores.
                 insn(DUP)
@@ -1400,6 +1394,23 @@ internal class OMJClassTransformerTest : KoinTestFixture() {
             agentLibClassName,
             "store",
             "(${descPrefix}Ljava/lang/String;ILjava/lang/String;)V",
+            false
+        )
+    }
+
+    private fun CheckInsns.recordArrayStore(
+        className: String,
+        lineNumber: Int,
+        arrayDesc: String,
+        elemDesc: String
+    ) {
+        ldc(className)
+        ldc(lineNumber)
+        method(
+            INVOKESTATIC,
+            agentLibClassName,
+            "store",
+            "(${arrayDesc}I${elemDesc}Ljava/lang/String;I)V",
             false
         )
     }
