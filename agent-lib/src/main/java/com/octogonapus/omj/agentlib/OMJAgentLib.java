@@ -37,6 +37,7 @@ public final class OMJAgentLib {
   private static final ThreadLocal<Integer> currentLineNumber = ThreadLocal.withInitial(() -> 0);
   private static final ThreadLocal<String> currentMethodName = ThreadLocal.withInitial(() -> "");
   private static final ConcurrentLinkedQueue<Trace> traceQueue = new ConcurrentLinkedQueue<>();
+  private static Semaphore traceProcessorThreadStarted = new Semaphore(0);
   private static volatile boolean finishProcessingTraces = false;
 
   static {
@@ -47,6 +48,7 @@ public final class OMJAgentLib {
     final var traceProcessorThread =
         new Thread(
             () -> {
+              traceProcessorThreadStarted.release();
               traceProcessorRunning.acquireUninterruptibly();
 
               logger.debug("Opening trace file {}", traceFile.toString());
@@ -83,6 +85,7 @@ public final class OMJAgentLib {
         .addShutdownHook(
             new Thread(
                 () -> {
+                  traceProcessorThreadStarted.acquireUninterruptibly();
                   finishProcessingTraces = true;
 
                   // Wait for the trace processor to finish so data is flushed out
@@ -95,7 +98,8 @@ public final class OMJAgentLib {
   }
 
   private static void loopWriteTraces(final OutputStream os) {
-    while (!finishProcessingTraces) {
+    // Must do at least one iteration of serializing traces
+    do {
       final var trace = traceQueue.poll();
       if (trace != null) {
         try {
@@ -114,7 +118,7 @@ public final class OMJAgentLib {
           e.printStackTrace();
         }
       }
-    }
+    } while (!finishProcessingTraces);
 
     traceQueue.forEach(
         trace -> {
