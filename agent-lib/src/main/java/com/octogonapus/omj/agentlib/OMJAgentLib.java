@@ -109,7 +109,7 @@ public final class OMJAgentLib {
         // Only wait if there are no more traces to process
         // TODO: Don't busy-wait here
         try {
-          Thread.sleep(1);
+          Thread.sleep(5);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
