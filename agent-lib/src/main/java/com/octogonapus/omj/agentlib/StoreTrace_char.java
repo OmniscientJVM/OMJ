@@ -41,6 +41,11 @@ public class StoreTrace_char implements Trace {
   }
 
   @Override
+  public long getIndex() {
+    return index;
+  }
+
+  @Override
   public void serialize(final OutputStream outputStream) throws IOException {
     TraceUtil.writeStoreTraceHeader(outputStream, className, index, lineNumber, variableName);
     outputStream.write('C');

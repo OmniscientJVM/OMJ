@@ -21,5 +21,7 @@ import java.io.OutputStream;
 
 public interface Trace {
 
+  long getIndex();
+
   void serialize(final OutputStream outputStream) throws IOException;
 }

@@ -33,6 +33,11 @@ public abstract class MethodTrace implements Trace {
     this.index = index;
   }
 
+  @Override
+  public long getIndex() {
+    return index;
+  }
+
   public void setClassName(final String className) {
     this.className = className;
   }

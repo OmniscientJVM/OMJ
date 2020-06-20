@@ -21,6 +21,8 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
@@ -31,7 +33,8 @@ import org.slf4j.LoggerFactory;
 public final class OMJAgentLib {
 
   private static final Logger logger = LoggerFactory.getLogger(OMJAgentLib.class);
-  private static final AtomicLong traceCounter = new AtomicLong(0);
+  private static final long initialTraceCounterValue = 0;
+  private static final AtomicLong traceCounter = new AtomicLong(initialTraceCounterValue);
   private static final ThreadLocal<MethodTrace> currentMethodTrace = new ThreadLocal<>();
   private static final ThreadLocal<String> currentClassName = ThreadLocal.withInitial(() -> "");
   private static final ThreadLocal<Integer> currentLineNumber = ThreadLocal.withInitial(() -> 0);
@@ -86,6 +89,14 @@ public final class OMJAgentLib {
             new Thread(
                 () -> {
                   traceProcessorThreadStarted.acquireUninterruptibly();
+
+                  // Wait a bit in case the trace processor thread just started running.
+                  try {
+                    Thread.sleep(500);
+                  } catch (InterruptedException e) {
+                    e.printStackTrace();
+                  }
+
                   finishProcessingTraces = true;
 
                   // Wait for the trace processor to finish so data is flushed out
@@ -97,37 +108,105 @@ public final class OMJAgentLib {
     traceProcessorThread.start();
   }
 
+  /**
+   * Serializes traces in a loop until {@link #finishProcessingTraces} is set to true.
+   *
+   * @param os The output stream.
+   */
   private static void loopWriteTraces(final OutputStream os) {
+    final var localTraceQueue =
+        new PriorityQueue<Trace>((trace1, trace2) -> (int) (trace1.getIndex() - trace2.getIndex()));
+    long lastTraceIndex = initialTraceCounterValue - 1;
+
     // Must do at least one iteration of serializing traces
     do {
-      final var trace = traceQueue.poll();
-      if (trace != null) {
-        try {
-          trace.serialize(os);
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
+      lastTraceIndex = serializeTraces(os, localTraceQueue, lastTraceIndex);
 
       if (traceQueue.isEmpty()) {
         // Only wait if there are no more traces to process
         // TODO: Don't busy-wait here
         try {
-          Thread.sleep(5);
+          Thread.sleep(1);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
       }
     } while (!finishProcessingTraces);
 
-    traceQueue.forEach(
-        trace -> {
-          try {
-            trace.serialize(os);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        });
+    int finalLoopCount = 0;
+    while (localTraceQueue.size() != 0) {
+      serializeTraces(os, localTraceQueue, lastTraceIndex);
+
+      if (finalLoopCount++ > 10) {
+        final Trace top = localTraceQueue.peek();
+        logger.error(
+            "Got stuck in the final localTraceQueue loop! localTraceQueue.size()={}, "
+                + "lastTraceIndex={}, top of localTraceQueue = {}",
+            localTraceQueue.size(),
+            lastTraceIndex,
+            top != null ? top.getIndex() : null);
+        break;
+      }
+    }
+  }
+
+  /**
+   * Serializes 0 or 1 traces from the {@link #traceQueue} and greedily serializes as many traces as
+   * possible from the `localTraceQueue`.
+   *
+   * @param os The output stream.
+   * @param localTraceQueue The `localTraceQueue`.
+   * @param lastTraceIndex The `lastTraceIndex`.
+   * @return The new `lastTraceIndex`.
+   */
+  private static long serializeTraces(
+      final OutputStream os,
+      final PriorityQueue<Trace> localTraceQueue,
+      final long lastTraceIndex) {
+    long newLastTraceIndex = lastTraceIndex;
+
+    final var trace = traceQueue.poll();
+    if (trace != null) {
+      logger.debug("Polled trace with index: {}", trace.getIndex());
+      // Check if the trace's index is the next index we are looking for. If it is, serialize the
+      // trace immediately instead of enqueueing it to save time.
+      if (trace.getIndex() == lastTraceIndex + 1) {
+        newLastTraceIndex = serializeTrace(os, trace);
+      } else {
+        // Enqueue the trace because it's not the next one we need.
+        localTraceQueue.add(trace);
+      }
+    }
+
+    // Serialize everything in the local queue we can
+    var topTrace = localTraceQueue.peek();
+    while (topTrace != null && topTrace.getIndex() == lastTraceIndex + 1) {
+      final Trace traceToWrite = Objects.requireNonNull(localTraceQueue.poll());
+      newLastTraceIndex = serializeTrace(os, traceToWrite);
+      topTrace = localTraceQueue.peek();
+    }
+
+    return newLastTraceIndex;
+  }
+
+  /**
+   * Serializes a single trace.
+   *
+   * @param os The output stream.
+   * @param trace The trace.
+   * @return The new `lastTraceIndex`.
+   */
+  private static long serializeTrace(final OutputStream os, final Trace trace) {
+    final long lastTraceIndex;
+    try {
+      trace.serialize(os);
+      logger.debug("Serialized trace with index: {}", trace.getIndex());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    lastTraceIndex = trace.getIndex();
+    return lastTraceIndex;
   }
 
   public static void className(final String className) {

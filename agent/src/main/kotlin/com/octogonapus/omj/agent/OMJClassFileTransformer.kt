@@ -44,15 +44,6 @@ internal class OMJClassFileTransformer(
         protectionDomain: ProtectionDomain,
         classfileBuffer: ByteArray
     ): ByteArray? {
-        logger.debug {
-            """
-            loader = $loader
-            className = $className
-            classBeingRedefined = $classBeingRedefined
-            protectionDomain = $protectionDomain
-            """.trimIndent()
-        }
-
         // Check the include and exclude class filters as to whether we should transform this
         // class. We need to check this here so that we can return `null` to obey `transform`'s
         // contract.

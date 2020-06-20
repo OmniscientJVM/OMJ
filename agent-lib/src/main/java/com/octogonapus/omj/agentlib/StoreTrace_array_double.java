@@ -44,6 +44,11 @@ public class StoreTrace_array_double implements Trace {
   }
 
   @Override
+  public long getIndex() {
+    return index;
+  }
+
+  @Override
   public void serialize(final OutputStream outputStream) throws IOException {
     TraceUtil.writeArrayStoreTraceHeader(
         outputStream, className, index, lineNumber, array, arrayIndex);
