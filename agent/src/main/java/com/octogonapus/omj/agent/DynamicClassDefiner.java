@@ -180,12 +180,31 @@ public final class DynamicClassDefiner {
         argumentTypes.stream()
             .map(
                 type -> {
+                  final int adaptedSort;
+                  if (type.getSort() == Type.ARRAY) {
+                    adaptedSort = Type.OBJECT;
+                  } else {
+                    adaptedSort = type.getSort();
+                  }
+
                   // Only generate code if we haven't processed the sort yet
-                  if (processedSorts.add(type.getSort())) {
+                  if (processedSorts.add(adaptedSort)) {
                     final List<Type> sameSortTypes =
                         argumentTypes.stream()
-                            .filter(it -> it.getSort() == type.getSort())
+                            .filter(
+                                it -> {
+                                  if (it.getSort() == Type.ARRAY || it.getSort() == Type.OBJECT) {
+                                    return adaptedSort == Type.OBJECT;
+                                  } else {
+                                    return it.getSort() == type.getSort();
+                                  }
+                                })
                             .collect(Collectors.toList());
+
+                    logger.debug(
+                        "Generating set argument override for {} with sort {}",
+                        type.getClassName(),
+                        type.getSort());
 
                     return generateSetArgumentOverride(sameSortTypes);
                   } else {
@@ -227,6 +246,13 @@ public final class DynamicClassDefiner {
 
     // Append all the methods
     snippets.forEach(it -> classCodeBuilder.append(it.methods));
+
+    // Append the getIndex method override
+    classCodeBuilder
+        .append("@Override\n")
+        .append("public long getIndex() {\n")
+        .append("return index;\n")
+        .append("}\n");
 
     // Append the serialize method override
     classCodeBuilder.append(generateSerializeOverride(snippets));

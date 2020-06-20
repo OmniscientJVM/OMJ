@@ -19,6 +19,7 @@ package com.octogonapus.omj.ui.model
 import com.octogonapus.omj.testutil.CompileUtil
 import com.octogonapus.omj.testutil.shouldHaveInOrder
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldBeStrictlyIncreasingWith
 import io.kotest.matchers.collections.shouldExist
 import io.kotest.matchers.collections.shouldHaveSize
 import java.io.BufferedInputStream
@@ -789,6 +790,27 @@ internal class TraceIteratorTest {
                     )
                 }
             )
+        }
+
+        @Test
+        fun `test multithreaded int array store`(@TempDir tempDir: File) {
+            val traces = generateTraces(tempDir, "agent-test_storeIntMultithreaded.jar")
+
+            // One thread writes even numbers and the other writes odd numbers. Both use a lock so
+            // all numbers should be traced.
+            repeat(20) { number ->
+                traces.shouldExist {
+                    it.storeVar(
+                        "com.agenttest.storeIntMultithreaded.Main",
+                        "int",
+                        "com.agenttest.storeIntMultithreaded.Main.i",
+                        "$number"
+                    )
+                }
+            }
+
+            // All traces should be in order
+            traces.shouldBeStrictlyIncreasingWith(Comparator { t1, t2 -> (t1.index - t2.index).toInt() })
         }
     }
 

@@ -17,7 +17,7 @@
 package com.octogonapus.omj.ui.model
 
 data class StoreTrace(
-    val index: Long,
+    override val index: Long,
     val callerClass: String,
     val callerLine: Int,
     val variableName: String,
