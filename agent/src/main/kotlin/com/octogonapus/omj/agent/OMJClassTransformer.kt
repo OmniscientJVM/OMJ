@@ -20,21 +20,29 @@ import com.octogonapus.omj.di.OMJKoinComponent
 import mu.KotlinLogging
 import org.koin.core.inject
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.AASTORE
 import org.objectweb.asm.Opcodes.ACC_PUBLIC
 import org.objectweb.asm.Opcodes.ACC_STATIC
 import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ASTORE
+import org.objectweb.asm.Opcodes.BASTORE
+import org.objectweb.asm.Opcodes.CASTORE
+import org.objectweb.asm.Opcodes.DASTORE
 import org.objectweb.asm.Opcodes.DSTORE
 import org.objectweb.asm.Opcodes.DUP
+import org.objectweb.asm.Opcodes.FASTORE
 import org.objectweb.asm.Opcodes.FSTORE
+import org.objectweb.asm.Opcodes.IASTORE
 import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.ISTORE
+import org.objectweb.asm.Opcodes.LASTORE
 import org.objectweb.asm.Opcodes.LSTORE
 import org.objectweb.asm.Opcodes.NEW
 import org.objectweb.asm.Opcodes.PUTFIELD
 import org.objectweb.asm.Opcodes.PUTSTATIC
+import org.objectweb.asm.Opcodes.SASTORE
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
@@ -169,6 +177,16 @@ internal class OMJClassTransformer(
                     else -> emptyList()
                 }
 
+                is InsnNode -> when (it.opcode) {
+                    IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, CASTORE, SASTORE ->
+                        instrumentArrayStore(methodNode, it, currentLineNumber.line)
+
+                    BASTORE ->
+                        instrumentBASTORE(methodNode, it, currentLineNumber.line)
+
+                    else -> emptyList()
+                }
+
                 else -> emptyList()
             }
         }
@@ -179,6 +197,31 @@ internal class OMJClassTransformer(
 
         return bodyInstrumentation + insertions
     }
+
+    private fun instrumentArrayStore(
+        methodNode: MethodNode,
+        insnNode: InsnNode,
+        lineNumber: Int
+    ): List<InsnListInsertion> {
+        val arrayDescriptor = OpcodeUtil.getArrayDescriptor(insnNode.opcode)
+        val elementDescriptor = OpcodeUtil.getArrayElementDescriptor(insnNode.opcode)
+
+        return listOf(
+            methodNode.instructions.replace(insnNode) {
+                recordArrayStore(lineNumber, arrayDescriptor, elementDescriptor)
+            }
+        )
+    }
+
+    private fun instrumentBASTORE(
+        methodNode: MethodNode,
+        insnNode: InsnNode,
+        lineNumber: Int
+    ) = listOf(
+        methodNode.instructions.replace(insnNode) {
+            recordBooleanOrByteArrayStore(lineNumber)
+        }
+    )
 
     private fun instrumentPutInsn(
         methodNode: MethodNode,
@@ -406,6 +449,50 @@ internal class OMJClassTransformer(
                 agentLibClassName,
                 "store",
                 "(${adaptedVariableDesc}Ljava/lang/String;ILjava/lang/String;)V",
+                false
+            )
+        )
+    }
+
+    /**
+     * Records an array store into any type of array.
+     *
+     * @param lineNumber The closest line number of the store.
+     * @param arrayDescriptor The type descriptor of the array.
+     * @param elementDescriptor The type descriptor of the array elements.
+     */
+    private fun InsnList.recordArrayStore(
+        lineNumber: Int,
+        arrayDescriptor: String,
+        elementDescriptor: String
+    ) {
+        add(LdcInsnNode(fullyQualifiedClassName))
+        add(LdcInsnNode(lineNumber))
+        add(
+            MethodInsnNode(
+                INVOKESTATIC,
+                agentLibClassName,
+                "store",
+                "(${arrayDescriptor}I${elementDescriptor}Ljava/lang/String;I)V",
+                false
+            )
+        )
+    }
+
+    /**
+     * Records an array store into an array of booleans or bytes.
+     *
+     * @param lineNumber The closest line number of the store.
+     */
+    private fun InsnList.recordBooleanOrByteArrayStore(lineNumber: Int) {
+        add(LdcInsnNode(fullyQualifiedClassName))
+        add(LdcInsnNode(lineNumber))
+        add(
+            MethodInsnNode(
+                INVOKESTATIC,
+                agentLibClassName,
+                "storeBooleanOrByteArray",
+                "(Ljava/lang/Object;IBLjava/lang/String;I)V",
                 false
             )
         )

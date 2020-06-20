@@ -22,9 +22,13 @@ import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
+import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.JumpInsnNode
+import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.MultiANewArrayInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
 
@@ -58,7 +62,7 @@ class CheckInsns(private val insnList: InsnList) {
     }
 
     @InsnListDSL
-    fun local(opcode: Int, index: Int) {
+    fun varInsn(opcode: Int, index: Int) {
         checks.add {
             it is VarInsnNode && it.opcode == opcode && it.`var` == index
         }
@@ -98,6 +102,41 @@ class CheckInsns(private val insnList: InsnList) {
                 it.owner == fieldOwner &&
                 it.name == fieldName &&
                 it.desc == fieldDesc
+        }
+    }
+
+    @InsnListDSL
+    fun intInsn(opcode: Int, operand: Int) {
+        checks.add {
+            it is IntInsnNode && it.opcode == opcode && it.operand == operand
+        }
+    }
+
+    @InsnListDSL
+    fun typeInsn(opcode: Int, desc: String) {
+        checks.add {
+            it is TypeInsnNode && it.opcode == opcode && it.desc == desc
+        }
+    }
+
+    @InsnListDSL
+    fun multiANewArrayInsn(desc: String, dims: Int) {
+        checks.add {
+            it is MultiANewArrayInsnNode && it.desc == desc && it.dims == dims
+        }
+    }
+
+    @InsnListDSL
+    fun jumpInsn(opcode: Int) {
+        checks.add {
+            it is JumpInsnNode && it.opcode == opcode
+        }
+    }
+
+    @InsnListDSL
+    fun label() {
+        checks.add {
+            it is LabelNode
         }
     }
 

@@ -37,6 +37,7 @@ public final class OMJAgentLib {
   private static final ThreadLocal<Integer> currentLineNumber = ThreadLocal.withInitial(() -> 0);
   private static final ThreadLocal<String> currentMethodName = ThreadLocal.withInitial(() -> "");
   private static final ConcurrentLinkedQueue<Trace> traceQueue = new ConcurrentLinkedQueue<>();
+  private static Semaphore traceProcessorThreadStarted = new Semaphore(0);
   private static volatile boolean finishProcessingTraces = false;
 
   static {
@@ -47,6 +48,7 @@ public final class OMJAgentLib {
     final var traceProcessorThread =
         new Thread(
             () -> {
+              traceProcessorThreadStarted.release();
               traceProcessorRunning.acquireUninterruptibly();
 
               logger.debug("Opening trace file {}", traceFile.toString());
@@ -83,6 +85,7 @@ public final class OMJAgentLib {
         .addShutdownHook(
             new Thread(
                 () -> {
+                  traceProcessorThreadStarted.acquireUninterruptibly();
                   finishProcessingTraces = true;
 
                   // Wait for the trace processor to finish so data is flushed out
@@ -95,7 +98,8 @@ public final class OMJAgentLib {
   }
 
   private static void loopWriteTraces(final OutputStream os) {
-    while (!finishProcessingTraces) {
+    // Must do at least one iteration of serializing traces
+    do {
       final var trace = traceQueue.poll();
       if (trace != null) {
         try {
@@ -109,12 +113,12 @@ public final class OMJAgentLib {
         // Only wait if there are no more traces to process
         // TODO: Don't busy-wait here
         try {
-          Thread.sleep(1);
+          Thread.sleep(5);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
       }
-    }
+    } while (!finishProcessingTraces);
 
     traceQueue.forEach(
         trace -> {
@@ -224,6 +228,136 @@ public final class OMJAgentLib {
     final var trace =
         new StoreTrace_Object(
             traceCounter.getAndIncrement(), className, lineNumber, variableName, value);
+    traceQueue.add(trace);
+  }
+
+  public static void storeBooleanOrByteArray(
+      final Object array,
+      final int arrayIndex,
+      final byte value,
+      final String className,
+      final int lineNumber) {
+    if (array instanceof boolean[]) {
+      store((boolean[]) array, arrayIndex, value == 1, className, lineNumber);
+    } else {
+      store((byte[]) array, arrayIndex, value, className, lineNumber);
+    }
+  }
+
+  public static void store(
+      final boolean[] array,
+      final int arrayIndex,
+      final boolean value,
+      final String className,
+      final int lineNumber) {
+    array[arrayIndex] = value;
+    final var trace =
+        new StoreTrace_array_boolean(
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final char[] array,
+      final int arrayIndex,
+      final char value,
+      final String className,
+      final int lineNumber) {
+    array[arrayIndex] = value;
+    final var trace =
+        new StoreTrace_array_char(
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final byte[] array,
+      final int arrayIndex,
+      final byte value,
+      final String className,
+      final int lineNumber) {
+    array[arrayIndex] = value;
+    final var trace =
+        new StoreTrace_array_byte(
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final short[] array,
+      final int arrayIndex,
+      final short value,
+      final String className,
+      final int lineNumber) {
+    array[arrayIndex] = value;
+    final var trace =
+        new StoreTrace_array_short(
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final int[] array,
+      final int arrayIndex,
+      final int value,
+      final String className,
+      final int lineNumber) {
+    array[arrayIndex] = value;
+    final var trace =
+        new StoreTrace_array_int(
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final float[] array,
+      final int arrayIndex,
+      final float value,
+      final String className,
+      final int lineNumber) {
+    array[arrayIndex] = value;
+    final var trace =
+        new StoreTrace_array_float(
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final long[] array,
+      final int arrayIndex,
+      final long value,
+      final String className,
+      final int lineNumber) {
+    array[arrayIndex] = value;
+    final var trace =
+        new StoreTrace_array_long(
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final double[] array,
+      final int arrayIndex,
+      final double value,
+      final String className,
+      final int lineNumber) {
+    array[arrayIndex] = value;
+    final var trace =
+        new StoreTrace_array_double(
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
+    traceQueue.add(trace);
+  }
+
+  public static void store(
+      final Object[] array,
+      final int arrayIndex,
+      final Object value,
+      final String className,
+      final int lineNumber) {
+    array[arrayIndex] = value;
+    final var trace =
+        new StoreTrace_array_Object(
+            traceCounter.getAndIncrement(), array, arrayIndex, value, className, lineNumber);
     traceQueue.add(trace);
   }
 

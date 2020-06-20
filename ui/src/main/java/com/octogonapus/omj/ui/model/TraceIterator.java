@@ -24,6 +24,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,12 +89,18 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
             .getLong();
 
     final byte type = parseByte();
-    if (type == 0x1) {
-      return parseStoreTrace(index);
-    } else if (type == 0x2) {
-      return parseMethodTrace(index);
-    } else {
-      throw new UnsupportedOperationException("Unknown trace type: " + type);
+
+    // TODO: Waiting on a new google-java-format release to use enhanced switch statements
+    //noinspection EnhancedSwitchMigration
+    switch (type) {
+      case 0x1:
+        return parseStoreTrace(index);
+      case 0x2:
+        return parseMethodTrace(index);
+      case 0x3:
+        return parseArrayStoreTrace(index);
+      default:
+        throw new UnsupportedOperationException("Unknown trace type: " + type);
     }
   }
 
@@ -119,6 +126,26 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
     logger.debug("variableName = {}", variableName);
 
     return new StoreTrace(index, className, lineNumber, variableName, parseTypeValuePair());
+  }
+
+  private Trace parseArrayStoreTrace(final long index) throws IOException {
+    // Parse class name
+    final String className = parseString();
+    logger.debug("className = {}", className);
+
+    // Parse line number
+    final int lineNumber = parseInt();
+    logger.debug("lineNumber = {}", lineNumber);
+
+    // Parse array reference
+    final String arrayRef = parseHashcode();
+
+    // Parse array index
+    final int arrayIndex = parseInt();
+
+    // Parse value
+    return new ArrayStoreTrace(
+        index, className, lineNumber, arrayRef, arrayIndex, parseTypeValuePair());
   }
 
   private Trace parseMethodTrace(final long index) throws IOException {
@@ -167,11 +194,7 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
         return new TypeValuePair(classType, stringValue);
       } else {
         // For objects, the value is the hashcode
-        final String hashCode =
-            Integer.toHexString(traceStream.read())
-                + Integer.toHexString(traceStream.read())
-                + Integer.toHexString(traceStream.read())
-                + Integer.toHexString(traceStream.read());
+        final String hashCode = parseHashcode();
 
         return new TypeValuePair(classType, hashCode);
       }
@@ -183,6 +206,14 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
       return new TypeValuePair(
           SimpleTypeUtil.getAdaptedClassName(type), parsePrimitiveBytesToString(type, valueBytes));
     }
+  }
+
+  @NotNull
+  private String parseHashcode() throws IOException {
+    return Integer.toHexString(traceStream.read())
+        + Integer.toHexString(traceStream.read())
+        + Integer.toHexString(traceStream.read())
+        + Integer.toHexString(traceStream.read());
   }
 
   private SimpleTypeUtil.SimpleType parseType() throws IOException {
@@ -258,6 +289,7 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
   private String parsePrimitiveBytesToString(
       final SimpleTypeUtil.SimpleType type, final byte[] bytes) {
     // TODO: Waiting on a new google-java-format release to use enhanced switch statements
+    //noinspection EnhancedSwitchMigration
     switch (type) {
       case BOOLEAN:
         return bytes[0] == 0x1 ? "true" : "false";

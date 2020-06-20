@@ -55,22 +55,31 @@ internal sealed class InsnListInsertion {
             insnList.insert(previousInsn, toInsert)
         }
     }
+
+    internal data class Replace(
+        val insnList: InsnList,
+        val toReplace: AbstractInsnNode,
+        val toReplaceWith: InsnList
+    ) : InsnListInsertion() {
+
+        override fun insert() {
+            insnList.insertBefore(toReplace, toReplaceWith)
+            insnList.remove(toReplace)
+        }
+    }
 }
 
 internal inline fun InsnList.insertBefore(
     insnNode: AbstractInsnNode,
     toInsert: InsnList.() -> Unit
-) = InsnListInsertion.InsertBefore(
-    this,
-    insnNode,
-    InsnList().apply(toInsert)
-)
+) = InsnListInsertion.InsertBefore(this, insnNode, InsnList().apply(toInsert))
 
 internal inline fun InsnList.insertAfter(
     insnNode: AbstractInsnNode,
     toInsert: InsnList.() -> Unit
-) = InsnListInsertion.InsertAfter(
-    this,
-    insnNode,
-    InsnList().apply(toInsert)
-)
+) = InsnListInsertion.InsertAfter(this, insnNode, InsnList().apply(toInsert))
+
+internal inline fun InsnList.replace(
+    toReplace: AbstractInsnNode,
+    toReplaceWith: InsnList.() -> Unit
+) = InsnListInsertion.Replace(this, toReplace, InsnList().apply(toReplaceWith))

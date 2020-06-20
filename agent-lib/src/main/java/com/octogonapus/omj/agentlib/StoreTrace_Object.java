@@ -44,13 +44,6 @@ public class StoreTrace_Object implements Trace {
   public void serialize(final OutputStream outputStream) throws IOException {
     TraceUtil.writeStoreTraceHeader(outputStream, className, index, lineNumber, variableName);
     outputStream.write('L');
-    TraceUtil.writeNullTerminatedString(outputStream, value.getClass().getName());
-    if (value instanceof String) {
-      final byte[] value_string_bytes = ((String) value).getBytes();
-      TraceUtil.write4Bytes(outputStream, value_string_bytes.length);
-      outputStream.write(value_string_bytes);
-    } else {
-      TraceUtil.write4Bytes(outputStream, System.identityHashCode(value));
-    }
+    TraceUtil.writeObject(outputStream, value);
   }
 }

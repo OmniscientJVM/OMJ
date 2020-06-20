@@ -21,7 +21,9 @@ import io.kotest.matchers.MatcherResult
 import io.kotest.matchers.neverNullMatcher
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldNot
+import io.kotest.property.Exhaustive
 
+// TODO: Remove these once Kotest 4.1 is released.
 fun <T> Array<T>.shouldHaveInOrder(vararg ps: (T) -> Boolean) =
     asList().shouldHaveInOrder(ps.toList())
 
@@ -72,6 +74,8 @@ fun <T> hasExactlyInOrder(vararg ps: (T) -> Boolean): Matcher<Collection<T>?> =
 /**
  * Assert that a collection has a subsequence matching the sequence of predicates, possibly with
  * values in between.
+ *
+ * TODO: Remove this once Kotest 4.1 is released.
  */
 fun <T> hasInOrder(predicates: List<(T) -> Boolean>): Matcher<Collection<T>?> =
     neverNullMatcher { actual ->
@@ -94,6 +98,8 @@ fun <T> hasInOrder(predicates: List<(T) -> Boolean>): Matcher<Collection<T>?> =
 /**
  * Assert that a collection has a subsequence matching the sequence of predicates with no values in
  * between.
+ *
+ * TODO: Remove this once Kotest 4.1 is released.
  */
 fun <T> hasExactlyInOrder(predicates: List<(T) -> Boolean>): Matcher<Collection<T>?> =
     neverNullMatcher { actual ->
@@ -121,4 +127,11 @@ fun <T> hasExactlyInOrder(predicates: List<(T) -> Boolean>): Matcher<Collection<
             { "$actual did not match the predicates $predicates in order" },
             { "$actual should not match the predicates $predicates in order" }
         )
+    }
+
+// TODO: Remove this once Kotest 4.1 is released.
+fun <A, B : A, C : A> Exhaustive<B>.merge(other: Exhaustive<C>): Exhaustive<A> =
+    object : Exhaustive<A>() {
+        override val values: List<A> = this@merge.values.zip(other.values)
+            .flatMap { listOf(it.first, it.second) }
     }
