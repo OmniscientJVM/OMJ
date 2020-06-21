@@ -90,8 +90,6 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
 
     final byte type = parseByte();
 
-    // TODO: Waiting on a new google-java-format release to use enhanced switch statements
-    //noinspection EnhancedSwitchMigration
     switch (type) {
       case 0x1:
         return parseStoreTrace(index);
@@ -288,8 +286,6 @@ public final class TraceIterator implements Iterator<Trace>, AutoCloseable {
    */
   private String parsePrimitiveBytesToString(
       final SimpleTypeUtil.SimpleType type, final byte[] bytes) {
-    // TODO: Waiting on a new google-java-format release to use enhanced switch statements
-    //noinspection EnhancedSwitchMigration
     switch (type) {
       case BOOLEAN:
         return bytes[0] == 0x1 ? "true" : "false";

@@ -398,7 +398,6 @@ public final class DynamicClassDefiner {
    */
   private void appendFieldValue(final Field field, final StringBuilder builder) {
     final SimpleTypeUtil.SimpleType type = TypeUtil.getSimpleType(field.type);
-    // TODO: Waiting on a new google-java-format release to use enhanced switch statements
     switch (type) {
       case VOID:
         throw new IllegalStateException("Somehow got a field with type void.");
