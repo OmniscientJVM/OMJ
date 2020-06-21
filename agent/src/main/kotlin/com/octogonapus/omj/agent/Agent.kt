@@ -31,6 +31,15 @@ object Agent {
 
     @JvmStatic
     fun premain(args: String?, instrumentation: Instrumentation) {
+        mainImpl(instrumentation)
+    }
+
+    @JvmStatic
+    fun agentmain(args: String?, instrumentation: Instrumentation) {
+        mainImpl(instrumentation)
+    }
+
+    private fun mainImpl(instrumentation: Instrumentation) {
         OMJKoinContext.koinApp = koinApplication {
             modules(
                 module {
