@@ -33,7 +33,7 @@ object Versions {
     const val kotlin = "1.3.72"
     const val ktlint = "0.36.0"
     const val junit = "5.6.2"
-    const val kotest = "4.0.5"
+    const val kotest = "4.1.+"
     const val asm = "8.0.1"
     const val byteBuddy = "1.10.10"
     const val slf4j_log4j12 = "1.7.28"

@@ -16,7 +16,6 @@
  */
 package com.octogonapus.omj.agent
 
-import com.octogonapus.omj.testutil.shouldHaveExactlyInOrder
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.IincInsnNode
@@ -140,7 +139,11 @@ class CheckInsns(private val insnList: InsnList) {
         }
     }
 
-    fun check() = insnList.toList().shouldHaveExactlyInOrder(checks)
+    fun check() {
+        insnList.zip(checks).all { (insn, predicate) ->
+            predicate(insn)
+        }
+    }
 }
 
 @InsnListDSL

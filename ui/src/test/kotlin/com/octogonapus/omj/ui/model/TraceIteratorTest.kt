@@ -17,10 +17,10 @@
 package com.octogonapus.omj.ui.model
 
 import com.octogonapus.omj.testutil.CompileUtil
-import com.octogonapus.omj.testutil.shouldHaveInOrder
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeStrictlyIncreasingWith
 import io.kotest.matchers.collections.shouldExist
+import io.kotest.matchers.collections.shouldExistInOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import java.io.BufferedInputStream
 import java.io.File
@@ -39,7 +39,7 @@ internal class TraceIteratorTest {
         fun `parse method call with no args`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_noargs.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.noargs.Foo",
@@ -60,7 +60,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args byte 3C`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_byte3c.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.byte3c.Foo",
@@ -82,7 +82,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args char Q`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_charQ.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.charQ.Foo",
@@ -104,7 +104,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args double 1p2`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_double1p2.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.double1p2.Foo",
@@ -126,7 +126,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args float 4p3`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_float4p3.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.float4p3.Foo",
@@ -148,7 +148,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args int 42`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_int42.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.int42.Foo",
@@ -170,7 +170,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args long 123456789123456789`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_long123456789123456789.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.long123456789123456789.Foo",
@@ -192,7 +192,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args string hello`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_stringHello.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.stringHello.Foo",
@@ -214,7 +214,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args string hello with null byte`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_stringHelloNull1.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.stringHelloNull1.Foo",
@@ -236,7 +236,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args object`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_objectStringArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.objectStringArray.Foo",
@@ -258,7 +258,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args short 12345`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_short12345.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.short12345.Foo",
@@ -280,7 +280,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args boolean true`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_booleanTrue.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.booleanTrue.Foo",
@@ -302,7 +302,7 @@ internal class TraceIteratorTest {
         fun `parse method call with args object MyDataClass`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_objectTestDataClass.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.objectTestDataClass.Foo",
@@ -324,7 +324,7 @@ internal class TraceIteratorTest {
         fun `parse constructor call with int 6`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_constructorInt6.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.constructorCall(
                         receiverType = "com.agenttest.constructorInt6.Foo",
@@ -339,7 +339,7 @@ internal class TraceIteratorTest {
         fun `parse a static method call in a static block`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_staticBlockCallStaticMethod.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.staticMethodCall(
                         methodName = "callMe",
@@ -353,7 +353,7 @@ internal class TraceIteratorTest {
         fun `parse a static method call with an int after a double`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_methodCallIntAfterDouble.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.staticMethodCall(
                         methodName = "callMe",
@@ -472,7 +472,7 @@ internal class TraceIteratorTest {
         fun `test int array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeIntArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar("com.agenttest.storeIntArray.Main", "[I", "i", null)
                 },
@@ -491,7 +491,7 @@ internal class TraceIteratorTest {
         fun `test int array store one-liner`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeIntArrayOneLiner.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeArray(
                         containingClass = "com.agenttest.storeIntArrayOneLiner.Main",
@@ -510,7 +510,7 @@ internal class TraceIteratorTest {
         fun `test double array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeDoubleArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar("com.agenttest.storeDoubleArray.Main", "[D", "d", null)
                 },
@@ -529,7 +529,7 @@ internal class TraceIteratorTest {
         fun `test double array store one-liner`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeDoubleArrayOneLiner.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeArray(
                         containingClass = "com.agenttest.storeDoubleArrayOneLiner.Main",
@@ -548,7 +548,7 @@ internal class TraceIteratorTest {
         fun `test object array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeObjectArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar(
                         "com.agenttest.storeObjectArray.Main",
@@ -572,7 +572,7 @@ internal class TraceIteratorTest {
         fun `test object array store one-liner`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeObjectArrayOneLiner.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeArray(
                         containingClass = "com.agenttest.storeObjectArrayOneLiner.Main",
@@ -596,7 +596,7 @@ internal class TraceIteratorTest {
         fun `test string array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeStringArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar(
                         "com.agenttest.storeStringArray.Main",
@@ -620,7 +620,7 @@ internal class TraceIteratorTest {
         fun `test string array store one-liner`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeStringArrayOneLiner.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeArray(
                         containingClass = "com.agenttest.storeStringArrayOneLiner.Main",
@@ -644,7 +644,7 @@ internal class TraceIteratorTest {
         fun `test 2D int array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeMultiIntArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar("com.agenttest.storeMultiIntArray.Main", "[[I", "i", null)
                 },
@@ -663,7 +663,7 @@ internal class TraceIteratorTest {
         fun `test 3D int array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeMultiIntArray3.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar("com.agenttest.storeMultiIntArray3.Main", "[[[I", "i", null)
                 },
@@ -682,7 +682,7 @@ internal class TraceIteratorTest {
         fun `test boolean array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeBooleanArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar("com.agenttest.storeBooleanArray.Main", "[Z", "b", null)
                 },
@@ -701,7 +701,7 @@ internal class TraceIteratorTest {
         fun `test byte array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeByteArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar("com.agenttest.storeByteArray.Main", "[B", "b", null)
                 },
@@ -720,7 +720,7 @@ internal class TraceIteratorTest {
         fun `test char array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeCharArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar("com.agenttest.storeCharArray.Main", "[C", "c", null)
                 },
@@ -739,7 +739,7 @@ internal class TraceIteratorTest {
         fun `test float array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeFloatArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar("com.agenttest.storeFloatArray.Main", "[F", "f", null)
                 },
@@ -758,7 +758,7 @@ internal class TraceIteratorTest {
         fun `test long array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeLongArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar("com.agenttest.storeLongArray.Main", "[J", "l", null)
                 },
@@ -777,7 +777,7 @@ internal class TraceIteratorTest {
         fun `test short array store`(@TempDir tempDir: File) {
             val traces = generateTraces(tempDir, "agent-test_storeShortArray.jar")
 
-            traces.shouldHaveInOrder(
+            traces.shouldExistInOrder(
                 {
                     it.storeVar("com.agenttest.storeShortArray.Main", "[S", "s", null)
                 },
