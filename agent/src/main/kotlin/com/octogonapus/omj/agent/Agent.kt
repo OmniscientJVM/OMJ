@@ -18,13 +18,13 @@ package com.octogonapus.omj.agent
 
 import com.octogonapus.omj.di.OMJKoinContext
 import com.octogonapus.omj.util.Util
+import mu.KotlinLogging
+import org.koin.dsl.koinApplication
+import org.koin.dsl.module
 import java.io.IOException
 import java.lang.instrument.Instrumentation
 import java.util.jar.JarFile
 import kotlin.system.exitProcess
-import mu.KotlinLogging
-import org.koin.dsl.koinApplication
-import org.koin.dsl.module
 
 @Suppress("unused")
 object Agent {

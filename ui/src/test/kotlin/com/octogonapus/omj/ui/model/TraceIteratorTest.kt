@@ -22,13 +22,13 @@ import io.kotest.matchers.collections.shouldBeStrictlyIncreasingWith
 import io.kotest.matchers.collections.shouldExist
 import io.kotest.matchers.collections.shouldExistInOrder
 import io.kotest.matchers.collections.shouldHaveSize
-import java.io.BufferedInputStream
-import java.io.File
-import java.io.FileInputStream
 import mu.KotlinLogging
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.FileInputStream
 
 internal class TraceIteratorTest {
 

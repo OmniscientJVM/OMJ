@@ -19,12 +19,12 @@ package com.octogonapus.omj.testutil
 import arrow.core.Tuple3
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldBeEmpty
+import mu.KotlinLogging
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
-import mu.KotlinLogging
 
 object CompileUtil {
 

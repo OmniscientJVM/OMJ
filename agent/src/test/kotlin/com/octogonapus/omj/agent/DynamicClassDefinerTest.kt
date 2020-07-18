@@ -16,12 +16,12 @@
  */
 package com.octogonapus.omj.agent
 
-import java.io.File
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.objectweb.asm.Type
+import java.io.File
 
 internal class DynamicClassDefinerTest {
 
