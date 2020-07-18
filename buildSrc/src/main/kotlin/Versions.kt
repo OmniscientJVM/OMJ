@@ -31,7 +31,7 @@ object Versions {
     const val downloadPlugin = "4.0.4"
 
     const val kotlin = "1.3.72"
-    const val ktlint = "0.37.+"
+    const val ktlint = "0.37.2"
     const val junit = "5.6.+"
     const val kotest = "4.1.+"
     const val asm = "8.0.+"
