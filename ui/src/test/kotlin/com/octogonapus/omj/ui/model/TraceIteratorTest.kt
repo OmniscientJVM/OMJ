@@ -363,23 +363,6 @@ internal class TraceIteratorTest {
                 }
             )
         }
-
-        @Test
-        fun `parse an invoke dynamic method call with an int that returns a string`(@TempDir tempDir: File) {
-            val traces = generateTraces(tempDir, "agent-test_invokeDynamicWithBooleanTrue.jar")
-
-            traces.shouldHaveInOrder(
-                {
-                    // Not sure if tracing this as a static method is the most correct thing to
-                    // do, but it works for now.
-                    it.staticMethodCall(
-                        methodName = "apply",
-                        callerClass = "com.agenttest.invokeDynamicWithBooleanTrue.Main",
-                        args = listOf("java.lang.Integer" to null)
-                    )
-                }
-            )
-        }
     }
 
     @Nested
