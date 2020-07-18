@@ -93,3 +93,6 @@ gradle-app.setting
 .classpath
 .project
 .settings
+
+# JVM
+*.hprof
