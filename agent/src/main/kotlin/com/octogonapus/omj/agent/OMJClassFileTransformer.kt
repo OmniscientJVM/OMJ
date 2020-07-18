@@ -17,10 +17,6 @@
 package com.octogonapus.omj.agent
 
 import com.octogonapus.omj.di.OMJKoinComponent
-import java.io.PrintWriter
-import java.lang.instrument.ClassFileTransformer
-import java.security.ProtectionDomain
-import kotlin.system.exitProcess
 import mu.KotlinLogging
 import org.koin.core.inject
 import org.objectweb.asm.ClassReader
@@ -28,6 +24,10 @@ import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes.ASM8
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.util.TraceClassVisitor
+import java.io.PrintWriter
+import java.lang.instrument.ClassFileTransformer
+import java.security.ProtectionDomain
+import kotlin.system.exitProcess
 
 internal class OMJClassFileTransformer(
     private val transformer: Transformer = Transformer()

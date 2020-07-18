@@ -16,8 +16,8 @@
  */
 package com.octogonapus.omj.agent
 
-import java.util.regex.Pattern
 import mu.KotlinLogging
+import java.util.regex.Pattern
 
 internal class ClassFilter private constructor(
     private val includeFilter: Pattern,

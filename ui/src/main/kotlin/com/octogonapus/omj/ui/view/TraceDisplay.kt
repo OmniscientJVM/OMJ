@@ -18,10 +18,10 @@ package com.octogonapus.omj.ui.view
 
 import com.octogonapus.omj.ui.model.Trace
 import com.octogonapus.omj.ui.model.TraceIterator
+import javafx.scene.control.ListView
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
-import javafx.scene.control.ListView
 import kotlin.concurrent.thread
 
 internal class TraceDisplay(traceFile: File) : ListView<Trace?>() {
