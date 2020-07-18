@@ -1,17 +1,14 @@
 ### Description of the Change
 
-<!--
-We must be able to understand the design of your change from this
-description. If we can't get a good idea of what the code will be doing from
-the description here, the pull request may be closed at the maintainers'
-discretion. Keep in mind that the maintainer reviewing this PR may not be
-familiar with or have worked with the code here recently, so please walk us
-through the concepts.
--->
+<!-- We must be able to understand the design of your change from this description. -->
 
 ### Motivation
 
 <!-- Why does this change need to be made? -->
+
+### Possible Drawbacks
+
+<!-- What are the possible side-effects or negative impacts of the code change? -->
 
 ### Verification Process
 
@@ -25,4 +22,4 @@ What process did you follow to verify that your change has the desired effects?
 
 ### Applicable Issues
 
-<!-- Enter any applicable Issues here -->
+<!-- Enter any applicable Issues here. E.g., "Closes #49." -->
