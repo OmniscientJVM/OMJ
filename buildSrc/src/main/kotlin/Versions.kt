@@ -24,14 +24,14 @@ object Versions {
 
     const val spotlessPlugin = "3.29.0"
     const val testLoggerPlugin = "2.0.0"
-    const val ktlintPlugin = "9.2.1"
+    const val ktlintPlugin = "9.3.0"
     const val detektPlugin = "1.9.0"
     const val shadowPlugin = "5.2.0"
     const val javafxPlugin = "0.0.8"
     const val downloadPlugin = "4.0.4"
 
     const val kotlin = "1.3.72"
-    const val ktlint = "0.36.+"
+    const val ktlint = "0.37.+"
     const val junit = "5.6.+"
     const val kotest = "4.1.+"
     const val asm = "8.0.+"
