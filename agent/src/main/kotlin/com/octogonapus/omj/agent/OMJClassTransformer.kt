@@ -49,6 +49,7 @@ import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.IincInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
+import org.objectweb.asm.tree.InvokeDynamicInsnNode
 import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.LineNumberNode
@@ -163,6 +164,10 @@ internal class OMJClassTransformer(
                 is MethodInsnNode -> if (classFilter.shouldTransform(it.owner)) {
                     instrumentMethodInsn(methodNode, it, currentLineNumber.line)
                 } else emptyList()
+
+                // Can't check for the owner because we have no idea at compile time
+                is InvokeDynamicInsnNode ->
+                    instrumentMethodInsn(methodNode, it, currentLineNumber.line)
 
                 is VarInsnNode -> when (it.opcode) {
                     ISTORE, LSTORE, FSTORE, DSTORE, ASTORE ->
@@ -327,6 +332,16 @@ internal class OMJClassTransformer(
     private fun instrumentMethodInsn(
         methodNode: MethodNode,
         methodInsnNode: MethodInsnNode,
+        lineNumber: Int
+    ) = listOf(
+        methodNode.instructions.insertBefore(methodInsnNode) {
+            emitPreamble(lineNumber, methodInsnNode.name)
+        }
+    )
+
+    private fun instrumentMethodInsn(
+        methodNode: MethodNode,
+        methodInsnNode: InvokeDynamicInsnNode,
         lineNumber: Int
     ) = listOf(
         methodNode.instructions.insertBefore(methodInsnNode) {
